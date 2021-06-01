@@ -9,7 +9,6 @@ chardet==4.0.0
 click==7.1.2
 click-plugins==1.1.1
 cligj==0.7.1
-CopDEM==0.0.1
 decorator==4.4.2
 eodag==2.2.0
 eotile==0.1
