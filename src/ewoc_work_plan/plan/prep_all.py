@@ -1,11 +1,12 @@
 import json
+
 import geopandas as gpd
 from eotile import eotile_module
 from tqdm import tqdm
 
-from plan.utils import *
-from remote.landsat_cloud_mask import Landsat_Cloud_Mask
-from remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
+from ewoc_work_plan.plan.utils import *
+from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
+from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
 
 logging.basicConfig(level=logging.ERROR)
 
@@ -31,15 +32,20 @@ class PlanProc:
                 vec = vec.to_crs(4326)
             s2_tiles = eotile_module.main(self.aoi)
         else:
-            s2_tiles = eotile_module.main(self.aoi)
+            #s2_tiles = eotile_module.main(self.aoi)
+            self.rest_ids=[self.aoi]
+        
+
         # Init json plan
         plan = {}
         valid =self.rest_ids
         for s2_tile in tqdm(valid, desc="Planning S2"):
             tile_id = s2_tile
-            tmp = eotile_module.main(tile_id)
-            df = gpd.GeoDataFrame(gpd.GeoSeries(tmp[0][0].polyBB))
-            df = df.rename(columns={0:'geometry'}).set_geometry('geometry')
+            print("HERE: %s"%s2_tile)
+            tmp = eotile_module.main(s2_tile)
+            print(tmp)
+            df = tmp[0]
+            #df = df.rename(columns={0:'geometry'}).set_geometry('geometry')
             plan[tile_id] = {}
             # SAR part
             plan[tile_id]["SAR_PROC"] = {}
