@@ -41,9 +41,7 @@ class PlanProc:
         valid =self.rest_ids
         for s2_tile in tqdm(valid, desc="Planning S2"):
             tile_id = s2_tile
-            print("HERE: %s"%s2_tile)
             tmp = eotile_module.main(s2_tile)
-            print(tmp)
             df = tmp[0]
             #df = df.rename(columns={0:'geometry'}).set_geometry('geometry')
             plan[tile_id] = {}
@@ -54,7 +52,7 @@ class PlanProc:
             # Get S1 products over the S2 tile
             s1_prods_types = {"peps": "S1_SAR_GRD", "astraea_eod": "sentinel1_l1c_grd","creodias":"S1_SAR_GRD"}
             product_type = s1_prods_types[self.provider.lower()]
-            s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type="S1_SAR_GRD", creds=self.creds)
+            s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
             s1_prods = [s1_prod for s1_prod in s1_prods if is_ascending(s1_prod,self.provider)]
             for s1_prod in s1_prods:
                 plan[tile_id]["SAR_PROC"]["INPUTS"].append(s1_prod.properties["id"])
