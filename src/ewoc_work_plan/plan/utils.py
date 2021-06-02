@@ -13,14 +13,12 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=No
                     collection: Landsat8
         """)
     dag.set_preferred_provider(provider)
-    bbox = df.total_bounds
-    extent = {'lonmin': bbox[0], 'latmin': bbox[1], 'lonmax': bbox[2], 'latmax': bbox[3]}
-
+    poly = df.geometry[0].to_wkt()
     max_items = 2000
     if cloudCover is None:
-        products, est = dag.search(productType=product_type, start=start_date, end=end_date, geom=extent, items_per_page=max_items)
+        products, est = dag.search(productType=product_type, start=start_date, end=end_date, geom=poly, items_per_page=max_items)
     else:
-        products, est = dag.search(productType=product_type, start=start_date, end=end_date, geom=extent,
+        products, est = dag.search(productType=product_type, start=start_date, end=end_date, geom=poly,
                                    items_per_page=max_items, cloudCover=cloudCover)
     return products
 
