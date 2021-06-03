@@ -1,4 +1,5 @@
-#EWoC work plan generation 
+# EWoC work plan generation 
+
 The aim of this tool is to prepare and organize the satellite products that will be processed by the EWoC system.
 The generated json plan is the starting point for the Argo workflows.
 
