@@ -6,10 +6,15 @@
 :license: see LICENSE file
 :created: 2021
 '''
+
+import os
 import sys
 import logging
 import argparse
 import json
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from shapely.geometry import shape
@@ -22,10 +27,6 @@ from eodag.api.core import EODataAccessGateway
 
 def filter_tiles(S2_Tiles, s2_exclusion_json):
     out_s2tiles = []
-
-    logging.info("Before filtering : %s S2 tiles / After filtering : %s S2 tiles",
-                 str(len(S2_Tiles)),
-                 str(len(out_s2tiles)))
 
     for tile in S2_Tiles:
 
@@ -102,7 +103,7 @@ def main(arguments):
                         default=0)
     parser.add_argument('-o',
                         '--out',
-                        help="filtered.json")
+                        help="daily.dat")
     parser.add_argument('--debug',
                         action='store_true',
                         help='Activate Debug Mode')
@@ -114,15 +115,6 @@ def main(arguments):
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format=logging_format)
     else:
         logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=logging_format)
-
-    #  geo = osr.SpatialReference()
-    #  geo.ImportFromEPSG(4326)
-    #  drv = ogr.GetDriverByName( 'GeoJSON' )
-    #  if os.path.exists(args.out):
-        #  os.remove(args.out)
-    #  dst_ds = drv.CreateDataSource(args.out)
-    #  dst_layer = dst_ds.CreateLayer('', srs=geo , \
-                                   #  geom_type=ogr.wkbPolygon )
 
     # load GeoJSON file containing AEZs
     with open(args.aez) as aezs:
@@ -144,6 +136,10 @@ def main(arguments):
     print("DoY:"
           +"; Date"
           +"; S2 tiles to be processed")
+
+    doy_lst = []
+    dat_lst = []
+    s2t_lst = []
 
     for doy in range(1,365):
         today_s2tiles = 0
@@ -198,142 +194,33 @@ def main(arguments):
                 today_s2tiles += len(filtered_s2_tiles)
                 contributing_aez += str(a["properties"]["zoneID"])+"["+str(len(filtered_s2_tiles))+"](WW) "
 
+        doy_lst.append(doy)
+        dat_lst.append(datetime.strptime(args.year + "-" + str(doy), "%Y-%j").strftime("%Y-%m-%d"))
+        s2t_lst.append(today_s2tiles)
+
         print("DoY:"+str(doy)
               +";"+datetime.strptime(args.year + "-" + str(doy), "%Y-%j").strftime("%Y-%m-%d")
               +";"+str(today_s2tiles)
               +";"+contributing_aez)
 
+    data = np.column_stack((doy_lst, s2t_lst))
+    np.savetxt(args.out, data)
 
+    fig, ax = plt.subplots()
+    ax.plot(*np.loadtxt(args.out,unpack=True),
+         label='Projected S2 tiles to be processed',
+         linewidth=2.0)
+    ax.set(xlabel='Day of the Year',
+           ylabel='S2 tiles to be processed')
+    plt.title("Processing Forecast in 2019",
+              fontsize=10)
+    plt.legend(prop={'size': 6}, loc='upper left')
+    # Major ticks every month.
+    fmt_month = mdates.MonthLocator()
+    ax.xaxis.set_major_locator(fmt_month)
+    ax.grid(True)
 
-
-
-
-        #  # Print the area in deg^2
-        #  print(str(aez.area) +" deg^2")
-        #
-        #  # Print the area in km^2
-        #  geod = Geod(ellps="WGS84")
-        #  area = abs(geod.geometry_area_perimeter(aez)[0])
-        #  area_str='{:12.3f}'.format(area/1e6)
-        #  print(area_str +" km^2")
-        #
-        #  [S2_Tiles, L8_Tiles, SRTM_Tiles, Copernicus_Tiles] = eotile_module.main(aez.wkt,
-        #                                                                          srtm=True,
-        #                                                                          cop=True)
-        #
-        #  filtered_s2_tiles = filter_tiles(S2_Tiles, s2_exclusion_json)
-        #
-        #  if a["properties"]["m1sos_min"] and a["properties"]["m1eos_min"]:
-        #      year = str(args.year)
-        #      if (a["properties"]["m1sos_min"]) > int(a["properties"]["m1eos_max"]):
-        #          year = str(int(args.year)+1)
-        #      m1eos = int(a["properties"]["m1eos_max"])
-        #      m1trigweek = datetime.strptime(year + "-" + str(m1eos), "%Y-%j").strftime("%Y-%U")
-        #      cltrigweek = m1trigweek
-        #
-        #  if a["properties"]["m2sos_min"] and a["properties"]["m2eos_min"]:
-        #      year = str(args.year)
-        #      if (a["properties"]["m2sos_min"]) > int(a["properties"]["m2eos_max"]):
-        #          year = str(int(args.year)+1)
-        #      m2eos = int(a["properties"]["m2eos_max"])
-        #      m2trigweek = datetime.strptime(year + "-" + str(m2eos), "%Y-%j").strftime("%Y-%U")
-        #      cltrigweek = m2trigweek
-        #
-        #
-        #  if a["properties"]["wwsos_min"] and a["properties"]["wweos_min"]:
-        #      year = str(args.year)
-        #      if (a["properties"]["wwsos_min"]) > int(a["properties"]["wweos_max"]):
-        #          year = str(int(args.year)+1)
-        #      wweos = int(a["properties"]["wweos_max"])
-        #      wwtrigweek = datetime.strptime(year + "-" + str(wweos), "%Y-%j").strftime("%Y-%U")
-        #
-        #
-        #  if len(filtered_s2_tiles) >= int(args.threshold):
-        #      if a["properties"]["m1sos_min"]:
-        #          if m1trigweek == cltrigweek:
-        #              print("fid:"+str(int(a["properties"]["fid"]))
-        #                    +";"+str(a["properties"]["zoneID"])
-        #                    +";"+area_str
-        #                    +";M1 + CL"
-        #                    +";"
-        #                    +";"
-        #                    +";"+cltrigweek
-        #                    +";"+str(len(S2_Tiles))
-        #                    +";"+str(len(filtered_s2_tiles))
-        #                    +";"
-        #                    +";"+str(len(L8_Tiles))
-        #                    +";"
-        #                    +";"
-        #                    +";"+str(len(SRTM_Tiles))
-        #                    +";"+str(len(Copernicus_Tiles)))
-        #          else:
-        #              print("fid:"+str(int(a["properties"]["fid"]))
-        #                    +";"+str(a["properties"]["zoneID"])
-        #                    +";"+area_str
-        #                    +";M1"
-        #                    +";"
-        #                    +";"
-        #                    +";"+m1trigweek
-        #                    +";"+str(len(S2_Tiles))
-        #                    +";"+str(len(filtered_s2_tiles))
-        #                    +";"
-        #                    +";"+str(len(L8_Tiles))
-        #                    +";"
-        #                    +";"
-        #                    +";"+str(len(SRTM_Tiles))
-        #                    +";"+str(len(Copernicus_Tiles)))
-        #
-        #      if a["properties"]["m2sos_min"]:
-        #          if m2trigweek == cltrigweek:
-        #              print("fid:"+str(int(a["properties"]["fid"]))
-        #                    +";"+str(a["properties"]["zoneID"])
-        #                    +";"+area_str
-        #                    +";M2 + CL"
-        #                    +";"
-        #                    +";"
-        #                    +";"+cltrigweek
-        #                    +";"+str(len(S2_Tiles))
-        #                    +";"+str(len(filtered_s2_tiles))
-        #                    +";"
-        #                    +";"+str(len(L8_Tiles))
-        #                    +";"
-        #                    +";"
-        #                    +";"+str(len(SRTM_Tiles))
-        #                    +";"+str(len(Copernicus_Tiles)))
-        #          else:
-        #              print("fid:"+str(int(a["properties"]["fid"]))
-        #                    +";"+str(a["properties"]["zoneID"])
-        #                    +";"+area_str
-        #                    +";M2"
-        #                    +";"
-        #                    +";"
-        #                    +";"+m2trigweek
-        #                    +";"+str(len(S2_Tiles))
-        #                    +";"+str(len(filtered_s2_tiles))
-        #                    +";"
-        #                    +";"+str(len(L8_Tiles))
-        #                    +";"
-        #                    +";"
-        #                    +";"+str(len(SRTM_Tiles))
-        #                    +";"+str(len(Copernicus_Tiles)))
-        #
-        #      if a["properties"]["wwsos_min"]:
-        #          print("fid:"+str(int(a["properties"]["fid"]))
-        #                +";"+str(a["properties"]["zoneID"])
-        #                +";"+area_str
-        #                +";WW"
-        #                +";"
-        #                +";"
-        #                +";"+wwtrigweek
-        #                +";"+str(len(S2_Tiles))
-        #                +";"+str(len(filtered_s2_tiles))
-        #                +";"
-        #                +";"+str(len(L8_Tiles))
-        #                +";"
-        #                +";"
-        #                +";"+str(len(SRTM_Tiles))
-        #                +";"+str(len(Copernicus_Tiles)))
-
+    plt.savefig(os.path.splitext(args.out)[0]+".png", dpi=300)
 
 
 if __name__ == '__main__':
