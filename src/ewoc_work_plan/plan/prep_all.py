@@ -54,18 +54,32 @@ class PlanProc:
             product_type = s1_prods_types[self.provider.lower()]
             s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
             s1_prods = [s1_prod for s1_prod in s1_prods if is_ascending(s1_prod,self.provider)]
+
+            current_date = 0
+            current_list = []
+            date_begins = 17
+            date_ends = 25
             for s1_prod in s1_prods:
-                plan[tile_id]["SAR_PROC"]["INPUTS"].append(s1_prod.properties["id"])
+                if s1_prod.properties["id"][date_begins:date_ends] == current_date:
+                    current_list.append(s1_prod.properties["id"])
+                else:
+                    if len(current_list) > 0:
+                        plan[tile_id]["SAR_PROC"]["INPUTS"].append(current_list)
+                    current_date = s1_prod.properties["id"][date_begins:date_ends]
+                    current_list = [s1_prod.properties["id"]]
+            if len(current_list) > 0:
+                plan[tile_id]["SAR_PROC"]["INPUTS"].append(current_list)
 
             # Optical part
             # S2 part
-            s2_prods_types = {"peps": "S2_MSI_L1C", "astraea_eod": "sentinel2_l1c","creodias":"S2_MSI_L1C"}
+            s2_prods_types = {"peps": "S2_MSI_L1C", "astraea_eod": "sentinel2_l1c", "creodias": "S2_MSI_L1C"}
             product_type = s2_prods_types[self.provider.lower()]
-            s2_prods = eodag_prods(df,start_date,end_date,provider=self.provider,product_type=product_type,creds=self.creds,cloudCover=self.maxcloud)
+            s2_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=product_type,
+                                   creds=self.creds, cloudCover=self.maxcloud)
             plan[tile_id]["S2_PROC"] = {}
             plan[tile_id]["S2_PROC"]["INPUTS"] = []
-            #plan[tile_id]["S2_PROC"]["AUX"] = {}
-            s2_dates_list=[]
+            # plan[tile_id]["S2_PROC"]["AUX"] = {}
+            s2_dates_list = []
             for s2_prod in tqdm(s2_prods):
                 s2_prod_id = s2_prod.properties["id"]
                 date = (s2_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
