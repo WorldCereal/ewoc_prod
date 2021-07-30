@@ -62,7 +62,7 @@ class PlanProc:
             s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
             s1_prods = [s1_prod for s1_prod in s1_prods if is_ascending(s1_prod,self.provider)]
 
-            current_date = 0
+            current_date = ""
             current_list = []
             date_begins = 17
             date_ends = 25
@@ -118,6 +118,9 @@ class PlanProc:
             #l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith('RT')]
             print(l8_prods)
             l8_date_list = []
+            current_date = ""
+            current_path = ""
+            current_list = []
             for l8_prod in l8_prods:
                 l8_prod_id = l8_prod.properties["id"]
                 mask_file = ""
@@ -131,14 +134,21 @@ class PlanProc:
                         tirs_b10_file = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
                         print(tirs_b10_file)
 
-                    if process_l8=='y':
+                    if process_l8 == 'y':
                         tmp = {"id": l8_prod_id, "cloud_mask": mask_file}
                         plan[tile_id]["L8_PROC"]["INPUTS"].append(tmp)
                         plan[tile_id]["L8_TIRS"].append(tirs_b10_file)
                     else:
-                        plan[tile_id]["L8_TIRS"].append(tirs_b10_file)
+                        if date == current_date and path == current_path:
+                            current_list.append(tirs_b10_file)
+                        else:
+                            if len(current_list) > 0:
+                                plan[tile_id]["L8_TIRS"].append(current_list)
+                            current_date = date
+                            current_path = path
                     l8_date_list.append(date)
-
+            if len(current_list) > 0:
+                plan[tile_id]["L8_TIRS"].append(current_list)
             self.plan = plan
 
     def write_plan(self, out_file):
