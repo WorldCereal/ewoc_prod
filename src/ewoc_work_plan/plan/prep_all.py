@@ -4,6 +4,7 @@ import geopandas as gpd
 from eotile import eotile_module
 from tqdm import tqdm
 import csv
+import re
 from ewoc_work_plan.plan.utils import *
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
@@ -64,15 +65,13 @@ class PlanProc:
 
             current_date = ""
             current_list = []
-            date_begins = 17
-            date_ends = 25
             for s1_prod in s1_prods:
-                if s1_prod.properties["id"][date_begins:date_ends] == current_date:
+                if re.split("_|T", s1_prod.properties["id"])[4] == current_date:
                     current_list.append(s1_prod.properties["id"])
                 else:
                     if len(current_list) > 0:
                         plan[tile_id]["SAR_PROC"]["INPUTS"].append(current_list)
-                    current_date = s1_prod.properties["id"][date_begins:date_ends]
+                    current_date = re.split("_|T", s1_prod.properties["id"])[4]
                     current_list = [s1_prod.properties["id"]]
             if len(current_list) > 0:
                 plan[tile_id]["SAR_PROC"]["INPUTS"].append(current_list)
@@ -146,6 +145,7 @@ class PlanProc:
                                 plan[tile_id]["L8_TIRS"].append(current_list)
                             current_date = date
                             current_path = path
+                            current_list = [tirs_b10_file]
                     l8_date_list.append(date)
             if len(current_list) > 0:
                 plan[tile_id]["L8_TIRS"].append(current_list)
