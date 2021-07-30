@@ -55,7 +55,6 @@ class PlanProc:
             plan[tile_id] = {}
             # SAR part
             plan[tile_id]["SAR_PROC"] = {}
-            plan[tile_id]["SAR_PROC"]["INPUTS"] = []
             #plan[tile_id]["SAR_PROC"]["AUX"] = {}
             # Get S1 products over the S2 tile
             s1_prods_types = {"peps": "S1_SAR_GRD", "astraea_eod": "sentinel1_l1c_grd","creodias":"S1_SAR_GRD"}
@@ -70,7 +69,7 @@ class PlanProc:
                     dic[date].append(s1_prod.properties["id"])
                 elif len(s1_prod.properties["id"]) > 0:
                     dic[date] = [s1_prod.properties["id"]]
-            plan[tile_id]["SAR_PROC"]["INPUTS"].append(list(dic.values()))
+            plan[tile_id]["SAR_PROC"]["INPUTS"] = list(dic.values())
 
             # Optical part
             # S2 part
