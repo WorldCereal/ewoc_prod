@@ -114,30 +114,36 @@ class PlanProc:
             print(l8_prods)
             l8_date_list = []
             dic = {}
+            dic_process = {}
             for l8_prod in l8_prods:
                 l8_prod_id = l8_prod.properties["id"]
                 mask_file = ""
                 tirs_b10_file = ""
                 path, row  = get_path_row(l8_prod,self.provider.lower())
                 date = (l8_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
-                if not date in l8_date_list:
-                    l8_mask = Landsat_Cloud_Mask(path,row,date)
-                    if l8_mask.mask_exists():
-                        mask_file = f"s3://{l8_mask.bucket}/{l8_mask.cloud_key}"
-                        tirs_b10_file = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
-                        print(tirs_b10_file)
+                l8_mask = Landsat_Cloud_Mask(path,row,date)
+                if l8_mask.mask_exists():
+                    mask_file = f"s3://{l8_mask.bucket}/{l8_mask.cloud_key}"
+                    tirs_b10_file = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
+                    print(tirs_b10_file)
 
-                    if process_l8 == 'y':
-                        tmp = {"id": l8_prod_id, "cloud_mask": mask_file}
-                        plan[tile_id]["L8_PROC"]["INPUTS"].append(tmp)
-                        plan[tile_id]["L8_TIRS"].append(tirs_b10_file)
-                    else:
-                        if path + date in dic and len(tirs_b10_file) > 0:
-                            dic[path + date].append(tirs_b10_file)
-                        elif len(tirs_b10_file) > 0:
-                            dic[path + date] = [tirs_b10_file]
-                    l8_date_list.append(date)
+                if process_l8 == 'y':
+                    tmp = {"id": l8_prod_id, "cloud_mask": mask_file}
+                    if path + date in dic and len(tirs_b10_file) > 0:
+                        dic[path + date].append(tirs_b10_file)
+                        dic_process[path + date].append(tmp)
+                    elif len(tirs_b10_file) > 0:
+                        dic[path + date] = [tirs_b10_file]
+                        dic_process[path + date] = [tmp]
+                else:
+                    if path + date in dic and len(tirs_b10_file) > 0:
+                        dic[path + date].append(tirs_b10_file)
+                    elif len(tirs_b10_file) > 0:
+                        dic[path + date] = [tirs_b10_file]
+                l8_date_list.append(date)
             plan[tile_id]["L8_TIRS"] = list(dic.values())
+            if process_l8 == 'y':
+                plan[tile_id]["L8_TIRS"]["INPUTS"] = list(dic_process.values())
             self.plan = plan
 
     def write_plan(self, out_file):
