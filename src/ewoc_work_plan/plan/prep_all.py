@@ -10,7 +10,7 @@ from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
 
 logging.basicConfig(level=logging.ERROR)
 
-CHECK_MSK = False
+CHECK_MSK = False # If true, S2_proc becomes a dict
 
 class PlanProc:
     def __init__(self, aoi, eodag_creds, eodag_provider):
@@ -92,6 +92,8 @@ class PlanProc:
                 date = (s2_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
                 if not date in s2_dates_list:
                     if CHECK_MSK:
+                        ## Legacy
+                        ## Should this be removed?
                         mask_file = ""
                         if tile_id in s2_prod_id:
                             s2_mask = Sentinel_Cloud_Mask(tile_id, date)
@@ -101,7 +103,7 @@ class PlanProc:
                             plan[tile_id]["S2_PROC"]["INPUTS"].append(tmp)
                             s2_dates_list.append(s2_prod_id)
                     elif tile_id in s2_prod_id:
-                        plan[tile_id]["S2_PROC"]["INPUTS"].append({"id": s2_prod_id})
+                        plan[tile_id]["S2_PROC"]["INPUTS"].append(s2_prod_id)
 
             # L8 part
             plan[tile_id]["L8_PROC"] = {}
