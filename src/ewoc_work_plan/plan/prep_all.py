@@ -143,7 +143,7 @@ class PlanProc:
                 l8_date_list.append(date)
             plan[tile_id]["L8_TIRS"] = list(dic.values())
             if process_l8 == 'y':
-                plan[tile_id]["L8_TIRS"]["INPUTS"] = list(dic_process.values())
+                plan[tile_id]["L8_PROC"]["INPUTS"] = list(dic_process.values())
             self.plan = plan
 
     def write_plan(self, out_file):
