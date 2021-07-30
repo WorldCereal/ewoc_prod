@@ -138,9 +138,9 @@ class PlanProc:
                         plan[tile_id]["L8_PROC"]["INPUTS"].append(tmp)
                         plan[tile_id]["L8_TIRS"].append(tirs_b10_file)
                     else:
-                        if date == current_date and path == current_path:
+                        if date == current_date and path == current_path and len(tirs_b10_file) > 0:
                             current_list.append(tirs_b10_file)
-                        else:
+                        elif len(tirs_b10_file) > 0:
                             if len(current_list) > 0:
                                 plan[tile_id]["L8_TIRS"].append(current_list)
                             current_date = date
