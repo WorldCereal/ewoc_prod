@@ -68,7 +68,7 @@ class PlanProc:
                 date = re.split("_|T", s1_prod.properties["id"])[4]
                 if date in dic and len(s1_prod.properties["id"]) > 0:
                     dic[date].append(s1_prod.properties["id"])
-                elif len(tirs_b10_file) > 0:
+                elif len(s1_prod.properties["id"]) > 0:
                     dic[date] = [s1_prod.properties["id"]]
             plan[tile_id]["SAR_PROC"]["INPUTS"].append(list(dic.values()))
 
@@ -137,8 +137,7 @@ class PlanProc:
                         elif len(tirs_b10_file) > 0:
                             dic[path + date] = [tirs_b10_file]
                     l8_date_list.append(date)
-            if len(current_list) > 0:
-                plan[tile_id]["L8_TIRS"] = list(dic.values())
+            plan[tile_id]["L8_TIRS"] = list(dic.values())
             self.plan = plan
 
     def write_plan(self, out_file):
