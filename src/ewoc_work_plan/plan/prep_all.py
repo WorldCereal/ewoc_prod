@@ -63,18 +63,14 @@ class PlanProc:
             s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
             s1_prods = [s1_prod for s1_prod in s1_prods if is_ascending(s1_prod,self.provider)]
 
-            current_date = ""
-            current_list = []
+            dic = {}
             for s1_prod in s1_prods:
-                if re.split("_|T", s1_prod.properties["id"])[4] == current_date:
-                    current_list.append(s1_prod.properties["id"])
-                else:
-                    if len(current_list) > 0:
-                        plan[tile_id]["SAR_PROC"]["INPUTS"].append(current_list)
-                    current_date = re.split("_|T", s1_prod.properties["id"])[4]
-                    current_list = [s1_prod.properties["id"]]
-            if len(current_list) > 0:
-                plan[tile_id]["SAR_PROC"]["INPUTS"].append(current_list)
+                date = re.split("_|T", s1_prod.properties["id"])[4]
+                if date in dic and len(s1_prod.properties["id"]) > 0:
+                    dic[date].append(s1_prod.properties["id"])
+                elif len(tirs_b10_file) > 0:
+                    dic[date] = [s1_prod.properties["id"]]
+            plan[tile_id]["SAR_PROC"]["INPUTS"].append(list(dic.values()))
 
             # Optical part
             # S2 part
@@ -117,9 +113,7 @@ class PlanProc:
             #l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith('RT')]
             print(l8_prods)
             l8_date_list = []
-            current_date = ""
-            current_path = ""
-            current_list = []
+            dic = {}
             for l8_prod in l8_prods:
                 l8_prod_id = l8_prod.properties["id"]
                 mask_file = ""
@@ -138,17 +132,13 @@ class PlanProc:
                         plan[tile_id]["L8_PROC"]["INPUTS"].append(tmp)
                         plan[tile_id]["L8_TIRS"].append(tirs_b10_file)
                     else:
-                        if date == current_date and path == current_path and len(tirs_b10_file) > 0:
-                            current_list.append(tirs_b10_file)
+                        if path + date in dic and len(tirs_b10_file) > 0:
+                            dic[path + date].append(tirs_b10_file)
                         elif len(tirs_b10_file) > 0:
-                            if len(current_list) > 0:
-                                plan[tile_id]["L8_TIRS"].append(current_list)
-                            current_date = date
-                            current_path = path
-                            current_list = [tirs_b10_file]
+                            dic[path + date] = [tirs_b10_file]
                     l8_date_list.append(date)
             if len(current_list) > 0:
-                plan[tile_id]["L8_TIRS"].append(current_list)
+                plan[tile_id]["L8_TIRS"] = list(dic.values())
             self.plan = plan
 
     def write_plan(self, out_file):
