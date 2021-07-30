@@ -3,7 +3,7 @@ import json
 import geopandas as gpd
 from eotile import eotile_module
 from tqdm import tqdm
-
+import csv
 from ewoc_work_plan.plan.utils import *
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
@@ -31,6 +31,13 @@ class PlanProc:
             if vec.crs.to_epsg() != 4326:
                 vec = vec.to_crs(4326)
             s2_tiles = eotile_module.main(self.aoi)
+        elif self.aoi.endswith(('.csv')):
+            self.rest_ids = []
+            with open(self.aoi) as csvfile:
+                reader = csv.reader(csvfile)
+                for line in reader:
+                    for id in line:
+                        self.rest_ids.append(id)
         else:
             #s2_tiles = eotile_module.main(self.aoi)
             self.rest_ids=[self.aoi]
