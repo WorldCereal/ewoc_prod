@@ -6,13 +6,8 @@ import logging
 
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=None):
     dag = EODataAccessGateway(creds)
-    dag.update_providers_config("""
-        creodias:
-            products:
-                L8_OLI_TIRS_C1L1:
-                    collection: Landsat8
-        """)
     dag.set_preferred_provider(provider)
+    print(provider)
     poly = df.geometry[0].to_wkt()
     max_items = 2000
     if cloudCover is None:
@@ -22,7 +17,7 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=No
                                    items_per_page=max_items, cloudCover=cloudCover)
     return products
 
-def is_ascending(s1_product,provider):
+def is_descending(s1_product,provider):
     if provider.lower() == 'creodias':
         if s1_product.properties['orbitDirection'] == "descending":
             return True
@@ -39,9 +34,9 @@ def is_ascending(s1_product,provider):
             orbit = root.iter("{http://www.esa.int/safe/sentinel-1.0/sentinel-1}pass")
             orbit= list(orbit)[0]
             if orbit.text == "ASCENDING":
-                return True
-            else:
                 return False
+            else:
+                return True
         except RuntimeError:
             logging.ERROR('Could not determine orbit direction')
 
@@ -56,6 +51,6 @@ def get_path_row(product,provider):
         if len(row) == 2:
             row = "0"+row
     elif provider.lower() == "astraea_eod":
-        path = product.assets['B5']['href'].split('/')[5]
-        row = product.assets['B5']['href'].split('/')[6]
+        path = product.assets['B5']['href'].split('/')[8]
+        row = product.assets['B5']['href'].split('/')[9]
     return path, row

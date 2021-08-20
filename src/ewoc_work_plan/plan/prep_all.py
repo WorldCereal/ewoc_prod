@@ -60,7 +60,7 @@ class PlanProc:
             s1_prods_types = {"peps": "S1_SAR_GRD", "astraea_eod": "sentinel1_l1c_grd","creodias":"S1_SAR_GRD"}
             product_type = s1_prods_types[self.provider.lower()]
             s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
-            s1_prods = [s1_prod for s1_prod in s1_prods if is_ascending(s1_prod,self.provider)]
+            s1_prods = [s1_prod for s1_prod in s1_prods if is_descending(s1_prod,self.provider)]
 
             dic = {}
             for s1_prod in s1_prods:
@@ -104,9 +104,11 @@ class PlanProc:
             plan[tile_id]["L8_PROC"]["INPUTS"] = []
             #plan[tile_id]["L8_PROC"]["AUX"] = {}
             plan[tile_id]["L8_TIRS"] = []
-            l8_prods_types = {"peps": "L8_OLI_TIRS_C1L1", "astraea_eod": "landsat8_l1tp","creodias":"L8_OLI_TIRS_C1L1"}
-            product_type = l8_prods_types[self.provider.lower()]
-            l8_prods = eodag_prods(df,start_date,end_date,provider=self.provider, product_type=product_type,creds=self.creds,cloudCover=self.maxcloud)
+            # Quick fix for L8
+            l8_provider ="astraea_eod"
+            l8_prods_types = {"peps": "L8_OLI_TIRS_C1L1", "astraea_eod": "landsat8_c2l1t1","creodias":"L8_OLI_TIRS_C1L1"}
+            product_type = l8_prods_types[l8_provider.lower()]
+            l8_prods = eodag_prods(df,start_date,end_date,provider=l8_provider, product_type=product_type,creds=self.creds,cloudCover=self.maxcloud)
             # filter the prods: keep only T1 products
             l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
             #l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith('RT')]
@@ -118,14 +120,14 @@ class PlanProc:
                 l8_prod_id = l8_prod.properties["id"]
                 mask_file = ""
                 tirs_b10_file = ""
-                path, row  = get_path_row(l8_prod,self.provider.lower())
+                path, row  = get_path_row(l8_prod,l8_provider.lower())
                 date = (l8_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
+                print(path,row,date)
                 l8_mask = Landsat_Cloud_Mask(path,row,date)
                 if l8_mask.mask_exists():
                     mask_file = f"s3://{l8_mask.bucket}/{l8_mask.cloud_key}"
                     tirs_b10_file = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
                     print(tirs_b10_file)
-
                 if process_l8 == 'y':
                     tmp = {"id": l8_prod_id, "cloud_mask": mask_file}
                     if path + date in dic and len(tirs_b10_file) > 0:
