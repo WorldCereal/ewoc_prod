@@ -164,9 +164,11 @@ class PlanProc:
         _logger.info("")
         _logger.info(" -- Summary -- ")
         if ascending_selected:
-            _logger.info(" {} ascending S2 products have been downloaded".format(len(s1_prods)))
+            _logger.info(" {} ascending S2 products have been downloaded ({} descending)".format(len(s1_prods),
+                                                                                                len(s1_prods_desc)))
         else:
-            _logger.info(" {} descending S2 products have been downloaded".format(len(s1_prods)))
+            _logger.info(" {} descending S2 products have been downloaded ({} ascending)".format(len(s1_prods),
+                                                                                                 len(s1_prods_asc)))
         _logger.info(" {} L8 products have been downloaded".format(len(l8_prods)))
 
     def write_plan(self, out_file):
