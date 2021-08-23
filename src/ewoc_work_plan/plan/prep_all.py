@@ -28,7 +28,7 @@ class PlanProc:
             # Vector file to get bbox
             vec = gpd.read_file(self.aoi)
             self.rest_ids = list(vec['tile'])
-            print(self.rest_ids)
+            _logger.debug(self.rest_ids)
             # Re-project geometry if needed
             if vec.crs.to_epsg() != 4326:
                 vec = vec.to_crs(4326)
@@ -125,7 +125,7 @@ class PlanProc:
             # filter the prods: keep only T1 products
             l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
             #l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith('RT')]
-            print(l8_prods)
+            _logger.debug(l8_prods)
             l8_date_list = []
             dic = {}
             dic_process = {}
@@ -135,12 +135,12 @@ class PlanProc:
                 tirs_b10_file = ""
                 path, row  = get_path_row(l8_prod,l8_provider.lower())
                 date = (l8_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
-                print(path,row,date)
+                _logger.debug(path,row,date)
                 l8_mask = Landsat_Cloud_Mask(path,row,date)
                 if l8_mask.mask_exists():
                     mask_file = f"s3://{l8_mask.bucket}/{l8_mask.cloud_key}"
                     tirs_b10_file = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
-                    print(tirs_b10_file)
+                    _logger.debug(tirs_b10_file)
                 if process_l8 == 'y':
                     tmp = {"id": l8_prod_id, "cloud_mask": mask_file}
                     if path + date in dic and len(tirs_b10_file) > 0:
@@ -164,10 +164,10 @@ class PlanProc:
         _logger.info("")
         _logger.info(" -- Summary -- ")
         if ascending_selected:
-            _logger.info(" {} ascending S2 products have been downloaded ({} descending)".format(len(s1_prods),
+            _logger.info(" {} ascending S1 products have been downloaded ({} descending)".format(len(s1_prods),
                                                                                                 len(s1_prods_desc)))
         else:
-            _logger.info(" {} descending S2 products have been downloaded ({} ascending)".format(len(s1_prods),
+            _logger.info(" {} descending S1 products have been downloaded ({} ascending)".format(len(s1_prods),
                                                                                                  len(s1_prods_asc)))
         _logger.info(" {} L8 products have been downloaded".format(len(l8_prods)))
 
