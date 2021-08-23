@@ -10,6 +10,7 @@ from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
 
 logging.basicConfig(level=logging.ERROR)
+_logger = logging.getLogger(__name__)
 
 CHECK_MSK = False # If true, S2_proc becomes a dict
 
@@ -60,8 +61,12 @@ class PlanProc:
             s1_prods_types = {"peps": "S1_SAR_GRD", "astraea_eod": "sentinel1_l1c_grd","creodias":"S1_SAR_GRD"}
             product_type = s1_prods_types[self.provider.lower()]
             s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
-            s1_prods = [s1_prod for s1_prod in s1_prods if is_descending(s1_prod,self.provider)]
 
+
+            if len(s1_prods_desc) >= len(s1_prods_asc):
+                s1_prods = s1_prods_desc
+            else:
+                s1_prods = s1_prods_asc
             dic = {}
             for s1_prod in s1_prods:
                 date = re.split("_|T", s1_prod.properties["id"])[4]
