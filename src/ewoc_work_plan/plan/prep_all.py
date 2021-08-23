@@ -62,7 +62,12 @@ class PlanProc:
             product_type = s1_prods_types[self.provider.lower()]
             s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
 
+            s1_prods_desc = [s1_prod for s1_prod in s1_prods if is_descending(s1_prod, self.provider)]
+            s1_prods_asc = [s1_prod for s1_prod in s1_prods if not is_descending(s1_prod, self.provider)]
+            _logger.info('Number of descending products : {}'.format(len(s1_prods_desc)))
+            _logger.info('Number of ascending products : {}'.format(len(s1_prods_asc)))
 
+            # Filtering by orbit type
             if len(s1_prods_desc) >= len(s1_prods_asc):
                 s1_prods = s1_prods_desc
             else:
