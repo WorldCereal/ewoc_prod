@@ -9,7 +9,7 @@ from ewoc_work_plan.plan.utils import *
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 CHECK_MSK = False # If true, S2_proc becomes a dict
@@ -68,10 +68,13 @@ class PlanProc:
             _logger.info('Number of ascending products : {}'.format(len(s1_prods_asc)))
 
             # Filtering by orbit type
+            ascending_selected = True
             if len(s1_prods_desc) >= len(s1_prods_asc):
                 s1_prods = s1_prods_desc
+                ascending_selected = False
             else:
                 s1_prods = s1_prods_asc
+
             dic = {}
             for s1_prod in s1_prods:
                 date = re.split("_|T", s1_prod.properties["id"])[4]
@@ -156,6 +159,15 @@ class PlanProc:
             if process_l8 == 'y':
                 plan[tile_id]["L8_PROC"]["INPUTS"] = list(dic_process.values())
             self.plan = plan
+
+        # Summary
+        _logger.info("")
+        _logger.info(" -- Summary -- ")
+        if ascending_selected:
+            _logger.info(" {} ascending S2 products have been downloaded".format(len(s1_prods)))
+        else:
+            _logger.info(" {} descending S2 products have been downloaded".format(len(s1_prods)))
+        _logger.info(" {} L8 products have been downloaded".format(len(l8_prods)))
 
     def write_plan(self, out_file):
         # Write the json
