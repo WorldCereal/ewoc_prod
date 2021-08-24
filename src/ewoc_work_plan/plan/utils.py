@@ -4,8 +4,8 @@ import boto3
 import xml.etree.ElementTree as et
 import logging
 import json
-import sys
 import botocore
+from dataship.dag.pid_to_ard import l2a_to_ard, l8_to_ard, to_ewoc_s1_ard
 
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=None):
     dag = EODataAccessGateway(creds)
@@ -116,6 +116,7 @@ def reproc(bucket, in_plan, path=""):
         plan = json.load(f)
     out = {}
     for tile in plan:
+        out[tile] = {}
         # S1
         # TODO
         # S2_band_count = 2
@@ -123,7 +124,6 @@ def reproc(bucket, in_plan, path=""):
         # S2
         S2_band_count = 10
         prods = plan[tile]['S2_PROC']['INPUTS']
-        out[tile] = {}
         out[tile]['S2_PROC'] = {}
         out[tile]['S2_PROC']['INPUTS'] = []
         for prod in prods:
@@ -131,67 +131,21 @@ def reproc(bucket, in_plan, path=""):
             if len([prod_path for prod_path in bucket_prods if prod_transformed in prod_path]) != S2_band_count:
                 print("lost")
                 print(prod_transformed)
-                out[tile]['S2_PROC']['INPUTS'].append(prod_transformed)
-        # L8
-        L8_band_count = 2
+                out[tile]['S2_PROC']['INPUTS'].append(prod)
+        # L8 TIRS
+        L8_tirs_band_count = 2
         prod_list = plan[tile]['L8_TIRS']
         out[tile]['L8_TIRS'] = []
         for prods in prod_list:
             lost_prod_list = []
             for prod in prods:
                 prod_transformed = l8_to_ard(prod, tile)
-                if len([prod_path for prod_path in bucket_prods if prod_transformed in prod_path]) != L8_band_count:
+                if len([prod_path for prod_path in bucket_prods if prod_transformed in prod_path]) != L8_tirs_band_count:
                     print("lost")
                     print(prod_transformed)
-                    lost_prod_list.append(prod_transformed)
+                    lost_prod_list.append(prod)
             out[tile]['L8_TIRS'].append(lost_prod_list)
 
     out_plan = in_plan[:-5] + "_reproc.json"
     write_plan(out, out_plan)
 
-
-def l2a_to_ard(product_id):
-    """
-    Convert an L2A product into EWoC ARD format
-    :param l2a_folder: L2A SAFE folder
-    :param work_dir: Output directory
-    """
-
-    platform = product_id.split("_")[0]
-    processing_level = product_id.split("_")[1]
-    date = product_id.split("_")[2]
-    year = date[:4]
-    # Get tile id , remove the T in the beginning
-    tile_id = product_id.split("_")[5][1:]
-    unique_id = "".join(product_id.split("_")[3:6])
-    folder_st = os.path.join(
-        "OPTICAL",
-        tile_id[:2],
-        tile_id[2],
-        tile_id[3:],
-        year,
-        date.split("T")[0],
-    )
-    dir_name = f"{platform}_{processing_level}_{date}_{unique_id}_{tile_id}"
-    ard_folder = os.path.join(folder_st, dir_name)
-    return ard_folder
-
-
-def l8_to_ard(key,s2_tile,out_dir=None):
-    product_id = os.path.split(key)[-1]
-    platform = product_id.split('_')[0]
-    processing_level = product_id.split('_')[1]
-    date = product_id.split('_')[3]
-    year = date[:4]
-    # Get tile id , remove the T in the beginning
-    tile_id = s2_tile
-    unique_id = f"{product_id.split('_')[2]}{product_id.split('_')[5]}{product_id.split('_')[6]}"
-    folder_st = os.path.join('TIR', tile_id[:2], tile_id[2], tile_id[3:], year,date.split('T')[0])
-    dir_name = f"{platform}_{processing_level}_{date}_{unique_id}_{tile_id}"
-    out_name = f"{platform}_{processing_level}_{date}_{unique_id}_{tile_id}"
-    raster_fn = os.path.join(folder_st, dir_name, out_name)
-    if out_dir is not None:
-        tmp = os.path.join(out_dir, folder_st, dir_name)
-        if not os.path.exists(tmp):
-            os.makedirs(tmp)
-    return raster_fn
