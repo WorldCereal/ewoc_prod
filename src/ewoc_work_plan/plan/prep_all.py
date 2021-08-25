@@ -9,7 +9,8 @@ from ewoc_work_plan.plan.utils import *
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
 
 CHECK_MSK = False # If true, S2_proc becomes a dict
 
@@ -27,7 +28,7 @@ class PlanProc:
             # Vector file to get bbox
             vec = gpd.read_file(self.aoi)
             self.rest_ids = list(vec['tile'])
-            print(self.rest_ids)
+            _logger.debug(self.rest_ids)
             # Re-project geometry if needed
             if vec.crs.to_epsg() != 4326:
                 vec = vec.to_crs(4326)
@@ -60,7 +61,19 @@ class PlanProc:
             s1_prods_types = {"peps": "S1_SAR_GRD", "astraea_eod": "sentinel1_l1c_grd","creodias":"S1_SAR_GRD"}
             product_type = s1_prods_types[self.provider.lower()]
             s1_prods = eodag_prods(df, start_date, end_date, provider=self.provider, product_type=s1_prods_types[self.provider], creds=self.creds)
-            s1_prods = [s1_prod for s1_prod in s1_prods if is_descending(s1_prod,self.provider)]
+
+            s1_prods_desc = [s1_prod for s1_prod in s1_prods if is_descending(s1_prod, self.provider)]
+            s1_prods_asc = [s1_prod for s1_prod in s1_prods if not is_descending(s1_prod, self.provider)]
+            _logger.info('Number of descending products : {}'.format(len(s1_prods_desc)))
+            _logger.info('Number of ascending products : {}'.format(len(s1_prods_asc)))
+
+            # Filtering by orbit type
+            ascending_selected = True
+            if len(s1_prods_desc) >= len(s1_prods_asc):
+                s1_prods = s1_prods_desc
+                ascending_selected = False
+            else:
+                s1_prods = s1_prods_asc
 
             dic = {}
             for s1_prod in s1_prods:
@@ -112,7 +125,7 @@ class PlanProc:
             # filter the prods: keep only T1 products
             l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
             #l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith('RT')]
-            print(l8_prods)
+            _logger.debug(l8_prods)
             l8_date_list = []
             dic = {}
             dic_process = {}
@@ -122,12 +135,12 @@ class PlanProc:
                 tirs_b10_file = ""
                 path, row  = get_path_row(l8_prod,l8_provider.lower())
                 date = (l8_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
-                print(path,row,date)
+                _logger.debug(path,row,date)
                 l8_mask = Landsat_Cloud_Mask(path,row,date)
                 if l8_mask.mask_exists():
                     mask_file = f"s3://{l8_mask.bucket}/{l8_mask.cloud_key}"
                     tirs_b10_file = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
-                    print(tirs_b10_file)
+                    _logger.debug(tirs_b10_file)
                 if process_l8 == 'y':
                     tmp = {"id": l8_prod_id, "cloud_mask": mask_file}
                     if path + date in dic and len(tirs_b10_file) > 0:
@@ -146,6 +159,17 @@ class PlanProc:
             if process_l8 == 'y':
                 plan[tile_id]["L8_PROC"]["INPUTS"] = list(dic_process.values())
             self.plan = plan
+
+        # Summary
+        _logger.info("")
+        _logger.info(" -- Summary -- ")
+        if ascending_selected:
+            _logger.info(" {} ascending S1 products have been downloaded ({} descending)".format(len(s1_prods),
+                                                                                                len(s1_prods_desc)))
+        else:
+            _logger.info(" {} descending S1 products have been downloaded ({} ascending)".format(len(s1_prods),
+                                                                                                 len(s1_prods_asc)))
+        _logger.info(" {} L8 products have been downloaded".format(len(l8_prods)))
 
     def write_plan(self, out_file):
         # Write the json
