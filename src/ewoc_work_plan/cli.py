@@ -33,7 +33,7 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser(description="Prepares and organizes the satellite products for the EWoC system")
     parser.add_argument(
         "--version",
         action="version",
@@ -76,20 +76,17 @@ def setup_logging(loglevel):
     )
 
 def main(args):
-    """Wrapper allowing :func:`fib` to be called with string arguments in a CLI fashion
-
-    Instead of returning the value from :func:`fib`, it prints the result to the
-    ``stdout`` in a nicely formatted message.
+    """Wrapper of generate_work_plan
 
     Args:
       args (List[str]): command line parameters as list of strings
-          (for example  ``["--verbose", "42"]``).
+          (for example  TODO).
     """
     args = parse_args(args)
+
     setup_logging(args.loglevel)
-    _logger.debug("Starting crazy calculations...")
+
     generate_work_plan(args.aoi,args.sd,args.ed,args.o,args.creds,args.provider,args.process_l8)
-    _logger.info("Script ends here")
 
 def run():
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
@@ -99,14 +96,4 @@ def run():
     main(sys.argv[1:])
 
 if __name__ == "__main__":
-    # ^  This is a guard statement that will prevent the following code from
-    #    being executed in the case someone imports this file instead of
-    #    executing it as a script.
-    #    https://docs.python.org/3/library/__main__.html
-
-    # After installing your project with pip, users can also run your Python
-    # modules as scripts via the ``-m`` flag, as defined in PEP 338::
-    #
-    #     python -m ewoc_work_plan.skeleton 42
-    #
     run()

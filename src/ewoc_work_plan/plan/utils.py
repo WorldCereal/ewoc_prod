@@ -6,6 +6,7 @@ import logging
 import json
 import botocore
 
+_logger = logging.getLogger(__name__)
 
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=None):
     dag = EODataAccessGateway(creds)
@@ -42,7 +43,7 @@ def is_descending(s1_product,provider):
             else:
                 return True
         except RuntimeError:
-            logging.ERROR('Could not determine orbit direction')
+            _logger.error('Could not determine orbit direction')
 
 
 def get_path_row(product,provider):
