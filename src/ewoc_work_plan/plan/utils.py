@@ -5,7 +5,7 @@ import xml.etree.ElementTree as et
 import logging
 import json
 import botocore
-from dataship.dag.pid_to_ard import l2a_to_ard, l8_to_ard, to_ewoc_s1_ard
+
 
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=None):
     dag = EODataAccessGateway(creds)
@@ -19,6 +19,7 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=No
         products, est = dag.search(productType=product_type, start=start_date, end=end_date, geom=poly,
                                    items_per_page=max_items, cloudCover=cloudCover)
     return products
+
 
 def is_descending(s1_product,provider):
     if provider.lower() == 'creodias':
@@ -42,6 +43,7 @@ def is_descending(s1_product,provider):
                 return True
         except RuntimeError:
             logging.ERROR('Could not determine orbit direction')
+
 
 def get_path_row(product,provider):
     path = ""
@@ -84,68 +86,4 @@ def write_plan(plan, out_file):
     # Write the json
     with open(out_file, "w") as fp:
         json.dump(plan, fp, indent=4)
-
-
-def reproc(bucket, in_plan, path=""):
-    s3c = get_s3_client()
-    paginator = s3c.get_paginator("list_objects")
-
-    kwargs = {'Bucket': bucket, "Prefix": path}
-
-    count = 0
-    bucket_prods = []
-    for page in paginator.paginate(**kwargs):
-        try:
-            contents = page["Contents"]
-        except KeyError:
-            break
-        for obj in contents:
-            key = obj["Key"]
-            sub_k = key.split('/')[8]
-            sub_k = sub_k.split('_')
-            prod_tr = sub_k[-1] + '_' + sub_k[2]
-            if not prod_tr in bucket_prods:
-                bucket_prods.append(prod_tr)
-            count += 1
-
-    print(count)
-
-    ## Read the json plan
-    bucket_prods = list(set(bucket_prods))
-    with open(in_plan) as f:
-        plan = json.load(f)
-    out = {}
-    for tile in plan:
-        out[tile] = {}
-        # S1
-        # TODO
-        # S2_band_count = 2
-        # prods = plan[tile]['SAR_PROC']['INPUTS']
-        # S2
-        S2_band_count = 10
-        prods = plan[tile]['S2_PROC']['INPUTS']
-        out[tile]['S2_PROC'] = {}
-        out[tile]['S2_PROC']['INPUTS'] = []
-        for prod in prods:
-            prod_transformed = l2a_to_ard(prod)
-            if len([prod_path for prod_path in bucket_prods if prod_transformed in prod_path]) != S2_band_count:
-                print("lost")
-                print(prod_transformed)
-                out[tile]['S2_PROC']['INPUTS'].append(prod)
-        # L8 TIRS
-        L8_tirs_band_count = 2
-        prod_list = plan[tile]['L8_TIRS']
-        out[tile]['L8_TIRS'] = []
-        for prods in prod_list:
-            lost_prod_list = []
-            for prod in prods:
-                prod_transformed = l8_to_ard(prod, tile)
-                if len([prod_path for prod_path in bucket_prods if prod_transformed in prod_path]) != L8_tirs_band_count:
-                    print("lost")
-                    print(prod_transformed)
-                    lost_prod_list.append(prod)
-            out[tile]['L8_TIRS'].append(lost_prod_list)
-
-    out_plan = in_plan[:-5] + "_reproc.json"
-    write_plan(out, out_plan)
 
