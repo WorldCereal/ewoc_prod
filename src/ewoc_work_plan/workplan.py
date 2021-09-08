@@ -7,7 +7,7 @@ from eotile import eotile_module
 from datetime import datetime
 from ewoc_work_plan import __version__
 from ewoc_work_plan.plan.utils import eodag_prods, is_descending
-
+from ewoc_db.fill.super_fill import fill_from_wp
 
 logger = logging.getLogger(__name__)
 
@@ -208,13 +208,14 @@ class WorkPlan:
             json.dump(self._plan, fp, indent=4)
 
     def to_ewoc_db(self):
-        raise NotImplementedError
+        fill_from_wp(self._plan, nb_of_products=100)
 
 if __name__ == "__main__":
     from pathlib import Path
     logging.basicConfig(level=logging.DEBUG)
     #wp2 = WorkPlan.from_aoi(Path("/home/mgerma/Documents/Documents/EODAG/EOTILE/testdata/ewoc/test.shp"),
     #                        "2020-10-01", "2020-10-10", 'creodias', False)
-    #wp = WorkPlan(['31TCJ', '31TDJ'], "2020-10-01", "2020-10-30", 'creodias', [False, False])
-    wp.to_json(Path('/tmp/wp2.json'))
+    wp = WorkPlan(['31TDJ'], "2020-10-01", "2020-10-30", 'creodias', [False])
+    #wp.to_json(Path('/tmp/wp2.json'))
+    #wp.to_ewoc_db()
 
