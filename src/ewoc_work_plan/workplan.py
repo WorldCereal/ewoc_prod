@@ -2,7 +2,7 @@ import csv
 import json
 import logging
 import re
-
+import geopandas as gpd
 from eotile import eotile_module
 from datetime import datetime
 from ewoc_work_plan import __version__
@@ -54,7 +54,7 @@ class WorkPlan:
 
         for i, tile_id in enumerate(tile_ids):
             tile_plan = dict()
-            tile_plan['tile_id'] = tile_id    
+            tile_plan['tile_id'] = tile_id
             s1_prd_ids, orbit_dir = self._identify_s1(tile_id, eodag_config_filepath=eodag_config_filepath)
             s2_prd_ids = self._identify_s2(tile_id, eodag_config_filepath=eodag_config_filepath)
             l8_prd_ids = self._identify_l8(tile_id, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
@@ -145,27 +145,63 @@ class WorkPlan:
         return list()
 
     @classmethod
-    def from_aoi(cls, aoi_filepath):
+    def from_aoi(cls, aoi_filepath,
+                 start_date, end_date,
+                 data_provider,
+                 l8_sr=False, aez_id=0,
+                 user="EWoC_admin",
+                 visibility="public",
+                 season_type="cropland",
+                 eodag_config_filepath=None, cloudcover=90):
         supported_format=['.shp', '.geojson', '.gpkg']
-        if aoi_filepath.suffix() in supported_format:
-            raise NotImplementedError
+        if aoi_filepath.suffix in supported_format:
+            # Vector file to get bbox
+            geometries = gpd.read_file(aoi_filepath)
+            # Re-project geometry if needed
+            if geometries.crs.to_epsg() != 4326:
+                geometries = vec.to_crs(4326)
+            s2_tiles = []
+            for geometry in geometries.geometry:
+                current_s2_tiles = eotile_module.main(str(geometry))[0]
+                for s2_tile in current_s2_tiles["id"]:
+                    if s2_tile not in s2_tiles:
+                        s2_tiles.append(s2_tile)
+            return WorkPlan(s2_tiles,
+                            start_date, end_date,
+                            data_provider,
+                            l8_sr,
+                            aez_id,
+                            user,
+                            visibility,
+                            season_type,
+                            eodag_config_filepath , cloudcover)
         else:
             logging.critical('%s is not supported (%s)', aoi_filepath.name,
                                                          supported_format)
             raise ValueError
 
     @classmethod
-    def from_csv(cls, csv_filepath, data_provider, 
-                l8_sr = False, eodag_config_filepath=None, cloudcover=90):
+    def from_csv(cls, csv_filepath, start_date, end_date,
+                data_provider,
+                l8_sr=False, aez_id=0,
+                user="EWoC_admin",
+                visibility="public",
+                season_type="cropland",
+                eodag_config_filepath=None, cloudcover=90):
         tile_ids=list()
         with open(csv_filepath) as csvfile:
             reader = csv.reader(csvfile)
             for line in reader:
                 for tile_id in line:
                     tile_ids.append(tile_id)
-        return WorkPlan(tile_ids, data_provider,  # DATES ARE MISSING HERE -> TODO
-                        l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath,
-                        cloudcover=90)
+        return WorkPlan(tile_ids, data_provider, start_date, end_date,
+                data_provider,
+                l8_sr,
+                aez_id,
+                user,
+                visibility,
+                season_type,
+                eodag_config_filepath , cloudcover)
 
     def to_json(self, out_filepath):
         with open(out_filepath, "w") as fp:
@@ -177,4 +213,8 @@ class WorkPlan:
 if __name__ == "__main__":
     from pathlib import Path
     logging.basicConfig(level=logging.DEBUG)
-    WorkPlan(['31TCJ', '31TDJ'], "2020-10-01", "2020-10-30", 'creodias', [False, False]).to_json(Path('/tmp/wp.json'))
+    #wp2 = WorkPlan.from_aoi(Path("/home/mgerma/Documents/Documents/EODAG/EOTILE/testdata/ewoc/test.shp"),
+    #                        "2020-10-01", "2020-10-10", 'creodias', False)
+    #wp = WorkPlan(['31TCJ', '31TDJ'], "2020-10-01", "2020-10-30", 'creodias', [False, False])
+    wp.to_json(Path('/tmp/wp2.json'))
+
