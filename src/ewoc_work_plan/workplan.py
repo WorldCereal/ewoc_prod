@@ -15,10 +15,11 @@ class WorkPlan:
     #  TODO : passer les valeurs par défaut dans la cli (ou les supprimer ?)
     def __init__(self, tile_ids,
                 start_date, end_date,
-                data_provider, aez_id=0,
+                data_provider,
+                l8_sr=False, aez_id=0,
                 user="EWoC_admin",
                 visibility="public",
-                l8_sr = False,
+                season_type="cropland",
                 eodag_config_filepath=None, cloudcover=90) -> None:
         self._tile_ids = tile_ids
         self._start_date = start_date
@@ -34,10 +35,13 @@ class WorkPlan:
         self._plan = dict()
         ## Common MetaData
         self._plan['version'] = str(__version__)
+        self._plan['user'] = user
+        self._plan['visibility'] = visibility
         self._plan['generated'] = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
         self._plan['aez_id'] = aez_id
         self._plan['session_start'] = start_date
         self._plan['session_end'] = end_date
+        self._plan['season_type'] = season_type
         self._plan['S1_provider'] = data_provider
         self._plan['S2_provider'] = data_provider
         #  TODO : Fill or change the provider translator system
@@ -48,15 +52,27 @@ class WorkPlan:
         ## Addind tiles
         tiles_plan=list()
 
-        for tile_id in tile_ids:
+        for i, tile_id in enumerate(tile_ids):
             tile_plan = dict()
             tile_plan['tile_id'] = tile_id    
-            s1_prd_ids = self._identify_s1(tile_id, eodag_config_filepath=eodag_config_filepath)
+            s1_prd_ids, orbit_dir = self._identify_s1(tile_id, eodag_config_filepath=eodag_config_filepath)
             s2_prd_ids = self._identify_s2(tile_id, eodag_config_filepath=eodag_config_filepath)
             l8_prd_ids = self._identify_l8(tile_id, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
-            tile_plan['s1'] = s1_prd_ids
-            tile_plan['s2'] = s2_prd_ids
-            tile_plan['l8'] = l8_prd_ids
+            tile_plan['s1_ids'] = s1_prd_ids
+            tile_plan['S1_orbit_dir'] = orbit_dir
+            tile_plan['S1_nb'] = len(s1_prd_ids)
+            tile_plan['s2_ids'] = s2_prd_ids
+            tile_plan['s2_nb'] = len(s2_prd_ids)
+            tile_plan['l8_ids'] = l8_prd_ids
+            tile_plan['l8_nb'] = len(l8_prd_ids)
+            if isinstance(l8_sr, list) and len(l8_sr) == len(tile_ids):
+                tile_plan["L8_enable_sr"]= l8_sr[i]
+            elif isinstance(l8_sr, list):
+                logger.error(f"Input l8_sr should be of size {len(tile_ids)}")
+                raise ValueError
+            else:
+                tile_plan["L8_enable_sr"] = l8_sr
+
 
             tiles_plan.append(tile_plan)
         
@@ -82,8 +98,10 @@ class WorkPlan:
         # Filtering by orbit type
         if len(s1_prods_desc) >= len(s1_prods_asc):
             s1_prods = s1_prods_desc
+            orbit_dir = "DES"
         else:
             s1_prods = s1_prods_asc
+            orbit_dir = "ASC"
 
         # Group by same acquisition date
         dic = {}
@@ -94,7 +112,7 @@ class WorkPlan:
             elif len(s1_prod.properties["id"]) > 0:
                 dic[date] = [s1_prod.properties["id"]]
 
-        return list(dic.values())
+        return list(dic.values()), orbit_dir
 
 
     def _identify_s2(self, tile_id, eodag_config_filepath=None):
@@ -157,7 +175,6 @@ class WorkPlan:
         raise NotImplementedError
 
 if __name__ == "__main__":
-    from datetime import date
     from pathlib import Path
     logging.basicConfig(level=logging.DEBUG)
-    WorkPlan(['31TCJ', '31TDJ'], "2020-10-01", "2020-10-30", 'creodias').to_json(Path('/tmp/wp.json'))
+    WorkPlan(['31TCJ', '31TDJ'], "2020-10-01", "2020-10-30", 'creodias', [False, False]).to_json(Path('/tmp/wp.json'))
