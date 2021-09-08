@@ -142,4 +142,4 @@ if __name__ == "__main__":
     from datetime import date
     from pathlib import Path
     logging.basicConfig(level=logging.DEBUG)
-    WorkPlan(['31TCJ', '31TDJ'], date(2020, 10, 1), date(2020, 10, 30), 'creodias').to_json(Path('/tmp/wp.json'))
+    WorkPlan(['31TCJ', '31TDJ'], "2020-10-01", "2020-10-30", 'creodias').to_json(Path('/tmp/wp.json'))
