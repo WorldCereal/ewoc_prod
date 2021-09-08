@@ -52,12 +52,11 @@ def search_json_and_dump(bucket_prods, in_plan, path):
     with open(in_plan) as f:
         plan = json.load(f)
     out = {}
-    for tile in plan:
-        out[tile] = {}
+    for tile in plan["tiles"]:
+        out = tile.copy()
         # S1
-        prod_list = plan[tile]['SAR_PROC']['INPUTS']
-        out[tile]['SAR_PROC'] = {}
-        out[tile]['SAR_PROC']['INPUTS'] = []
+        prod_list = tile["s1_ids"]
+        out["s1_ids"] = []
         for prods in prod_list:
             product_is_found = False
             for prod in prods:
@@ -68,11 +67,10 @@ def search_json_and_dump(bucket_prods, in_plan, path):
             if not product_is_found:
                 logger.info("lost")
                 logger.info(prods)
-                out[tile]['SAR_PROC']['INPUTS'].append(prods)
+                out["s1_ids"].append(prods)
         # S2
-        prods = plan[tile]['S2_PROC']['INPUTS']
-        out[tile]['S2_PROC'] = {}
-        out[tile]['S2_PROC']['INPUTS'] = []
+        prod_list = tile["s2_ids"]
+        out["s2_ids"] = []
         for prod in prods:
             prods_transformed = l2a_to_ard(prod, path)
             is_present = [any(str(prod_transformed).split("MSI")[0] in elt for elt in bucket_prods)
@@ -80,13 +78,13 @@ def search_json_and_dump(bucket_prods, in_plan, path):
             if not(all(is_present)) or len(is_present) != S2_band_count:
                 logger.info("lost")
                 logger.info(prods)
-                out[tile]['S2_PROC']['INPUTS'].append(prod)
+                out["s2_ids"].append(prod)
                 if len(is_present) != S2_band_count:
                     logger.info("There is", len(is_present), "S2 products and there should be ",S2_band_count)
 
         # L8 TIRS
-        prod_list = plan[tile]['L8_TIRS']
-        out[tile]['L8_TIRS'] = []
+        prod_list = tile["l8_ids"]
+        out["l8_ids"] = []
         for prods in prod_list:
             product_is_found = False
             for prod in prods:
@@ -97,7 +95,7 @@ def search_json_and_dump(bucket_prods, in_plan, path):
             if not product_is_found:
                 logger.info("lost")
                 logger.info(prods)
-                out[tile]['L8_TIRS'].append(prods)
+                out["l8_ids"].append(prods)
 
     out_plan = in_plan[:-5] + "_reproc.json"
     write_plan(out, out_plan)
