@@ -4,7 +4,7 @@ import logging
 import re
 
 from eotile import eotile_module
-
+from datetime import datetime
 from ewoc_work_plan import __version__
 from ewoc_work_plan.plan.utils import eodag_prods, is_descending
 
@@ -12,22 +12,40 @@ from ewoc_work_plan.plan.utils import eodag_prods, is_descending
 logger = logging.getLogger(__name__)
 
 class WorkPlan:
+    #  TODO : passer les valeurs par défaut dans la cli (ou les supprimer ?)
     def __init__(self, tile_ids,
                 start_date, end_date,
-                data_provider, 
+                data_provider, aez_id=0,
+                user="EWoC_admin",
+                visibility="public",
                 l8_sr = False,
                 eodag_config_filepath=None, cloudcover=90) -> None:
         self._tile_ids = tile_ids
-        self._start_date= start_date
-        self._end_date= end_date
+        self._start_date = start_date
+        self._end_date = end_date
+
+        self._cloudcover = cloudcover
         if data_provider in ['creodias', 'peps', 'astraea_eod']:
             self._data_provider = data_provider
         else:
             raise ValueError
-        self._cloudcover = cloudcover
-        
+
+        ## Filling the plan
         self._plan = dict()
+        ## Common MetaData
         self._plan['version'] = str(__version__)
+        self._plan['generated'] = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+        self._plan['aez_id'] = aez_id
+        self._plan['session_start'] = start_date
+        self._plan['session_end'] = end_date
+        self._plan['S1_provider'] = data_provider
+        self._plan['S2_provider'] = data_provider
+        #  TODO : Fill or change the provider translator system
+        provider_translator_L8_dict = {'creodias': 'usgs_AWS', 'peps': 'peps', 'astraea_eod': 'astraea_eod'}
+        self._plan['L8_provider'] = provider_translator_L8_dict[data_provider]
+
+
+        ## Addind tiles
         tiles_plan=list()
 
         for tile_id in tile_ids:
@@ -127,7 +145,7 @@ class WorkPlan:
             for line in reader:
                 for tile_id in line:
                     tile_ids.append(tile_id)
-        return WorkPlan(tile_ids, data_provider, 
+        return WorkPlan(tile_ids, data_provider,  # DATES ARE MISSING HERE -> TODO
                         l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath,
                         cloudcover=90)
 
