@@ -21,14 +21,8 @@ class WorkPlan:
                 visibility="public",
                 season_type="cropland",
                 eodag_config_filepath=None, cloudcover=90) -> None:
-        self._tile_ids = tile_ids
-        self._start_date = start_date
-        self._end_date = end_date
 
-        self._cloudcover = cloudcover
-        if data_provider in ['creodias', 'peps', 'astraea_eod']:
-            self._data_provider = data_provider
-        else:
+        if data_provider not in ['creodias', 'peps', 'astraea_eod']:
             raise ValueError
 
         ## Filling the plan
@@ -47,7 +41,6 @@ class WorkPlan:
         #  TODO : Fill or change the provider translator system
         provider_translator_L8_dict = {'creodias': 'usgs_AWS', 'peps': 'peps', 'astraea_eod': 'astraea_eod'}
         self._plan['L8_provider'] = provider_translator_L8_dict[data_provider]
-
 
         ## Addind tiles
         tiles_plan=list()
@@ -179,6 +172,14 @@ class WorkPlan:
             logging.critical('%s is not supported (%s)', aoi_filepath.name,
                                                          supported_format)
             raise ValueError
+
+
+    @classmethod
+    def load(cls, wp_filepath):
+        wp = cls.__new__()
+        wp._plan = json.load(wp_filepath)
+        return wp
+
 
     @classmethod
     def from_csv(cls, csv_filepath, start_date, end_date,
