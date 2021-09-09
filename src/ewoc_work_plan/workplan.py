@@ -8,6 +8,7 @@ from datetime import datetime
 from ewoc_work_plan import __version__
 from ewoc_work_plan.plan.utils import eodag_prods, is_descending
 from ewoc_db.fill.super_fill import fill_from_wp
+from ewoc_work_plan.plan.reproc import reproc_wp
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ class WorkPlan:
                 season_type="cropland",
                 eodag_config_filepath=None, cloudcover=90) -> None:
 
+
+        self._cloudcover = cloudcover
         if data_provider not in ['creodias', 'peps', 'astraea_eod']:
             raise ValueError
 
@@ -66,10 +69,13 @@ class WorkPlan:
             else:
                 tile_plan["L8_enable_sr"] = l8_sr
 
-
             tiles_plan.append(tile_plan)
         
         self._plan['tiles']= tiles_plan
+
+
+    def __str__(self):
+        return(json.dumps(self._plan, indent=4, sort_keys=False))
 
 
     def _identify_s1(self,tile_id, eodag_config_filepath=None):
@@ -78,13 +84,12 @@ class WorkPlan:
                           "astraea_eod": "sentinel1_l1c_grd",
                           "creodias":"S1_SAR_GRD"}
         s1_prods_full = eodag_prods( df, 
-                                self._start_date, self._end_date, 
-                                self._data_provider, 
-                                s1_prods_types[self._data_provider], 
+                                self._plan['session_start'], self._plan['session_end'],
+                                self._plan['S1_provider'],
+                                s1_prods_types[self._plan['S1_provider']],
                                 eodag_config_filepath)
-        
-        s1_prods_desc = [s1_prod for s1_prod in s1_prods_full if is_descending(s1_prod, self._data_provider)]
-        s1_prods_asc = [s1_prod for s1_prod in s1_prods_full if not is_descending(s1_prod, self._data_provider)]
+        s1_prods_desc = [s1_prod for s1_prod in s1_prods_full if is_descending(s1_prod, self._plan['S1_provider'])]
+        s1_prods_asc = [s1_prod for s1_prod in s1_prods_full if not is_descending(s1_prod, self._plan['S1_provider'])]
         logger.info('Number of descending products: {}'.format(len(s1_prods_desc)))
         logger.info('Number of ascending products: {}'.format(len(s1_prods_asc)))
 
@@ -113,10 +118,10 @@ class WorkPlan:
         s2_prods_types = {"peps": "S2_MSI_L1C", 
                           "astraea_eod": "sentinel2_l1c", 
                           "creodias": "S2_MSI_L1C"}
-        product_type = s2_prods_types[self._data_provider.lower()]
-        s2_prods = eodag_prods( df, self._start_date, self._end_date, 
-                                self._data_provider, 
-                                s2_prods_types[self._data_provider.lower()],
+        product_type = s2_prods_types[self._plan['S1_provider'].lower()]
+        s2_prods = eodag_prods( df, self._plan['session_start'], self._plan['session_end'],
+                                self._plan['S1_provider'],
+                                s2_prods_types[self._plan['S1_provider'].lower()],
                                 eodag_config_filepath, 
                                 cloudCover=self._cloudcover)
         s2_prod_ids = list()
@@ -126,7 +131,7 @@ class WorkPlan:
 
     def _identify_l8(self, tile_id, l8_sr=False, eodag_config_filepath=None):
         l8_prods = eodag_prods( eotile_module.main(tile_id)[0],
-                                self._start_date, self._end_date,
+                                self._plan['session_start'], self._plan['session_end'],
                                 'astraea_eod',
                                 'landsat8_c2l1t1',
                                 eodag_config_filepath,
@@ -176,8 +181,9 @@ class WorkPlan:
 
     @classmethod
     def load(cls, wp_filepath):
-        wp = cls.__new__()
-        wp._plan = json.load(wp_filepath)
+        wp = cls.__new__(cls)
+        with open(wp_filepath) as raw_workplan:
+            wp._plan = json.load(raw_workplan)
         return wp
 
 
@@ -208,8 +214,14 @@ class WorkPlan:
         with open(out_filepath, "w") as fp:
             json.dump(self._plan, fp, indent=4)
 
-    def to_ewoc_db(self):
-        fill_from_wp(self._plan, nb_of_products=100)
+    def to_ewoc_db(self, nb_of_products=100):
+        fill_from_wp(self._plan, nb_of_products=nb_of_products)
+
+
+    def reproc(self, bucket, path):
+        new_wp = WorkPlan.__new__(WorkPlan)
+        new_wp._plan = reproc_wp(bucket, self._plan, path)
+        return new_wp
 
 if __name__ == "__main__":
     from pathlib import Path
