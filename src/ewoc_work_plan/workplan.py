@@ -152,7 +152,8 @@ class WorkPlan:
             key = path + date
             l8_mask = Landsat_Cloud_Mask(path, row, date)
             if l8_mask.mask_exists():
-                l8_id = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
+                l8_id = l8_prod.properties['id']
+                #f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
                 if key in dic and len(l8_id) > 0:
                     dic[key].append(l8_id)
                 elif len(l8_id) > 0:
