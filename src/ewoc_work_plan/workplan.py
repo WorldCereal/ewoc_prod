@@ -244,12 +244,3 @@ class WorkPlan:
         new_wp._plan = reproc_wp(bucket, self._plan, path)
         return new_wp
 
-if __name__ == "__main__":
-    from pathlib import Path
-    logging.basicConfig(level=logging.DEBUG)
-    #wp2 = WorkPlan.from_aoi(Path("/home/mgerma/Documents/Documents/EODAG/EOTILE/testdata/ewoc/test.shp"),
-    #                        "2020-10-01", "2020-10-10", 'creodias', False)
-    wp = WorkPlan(['31TDJ'], "2020-10-01", "2020-10-30", 'creodias', [False])
-    #wp.to_json(Path('/tmp/wp2.json'))
-    #wp.to_ewoc_db()
-
