@@ -84,7 +84,7 @@ class WorkPlan:
                           "astraea_eod": "sentinel1_l1c_grd",
                           "creodias":"S1_SAR_GRD"}
         s1_prods_full = eodag_prods( df, 
-                                self._plan['session_start'], self._plan['session_end'],
+                                self._plan['season_start'], self._plan['season_end'],
                                 self._plan['S1_provider'],
                                 s1_prods_types[self._plan['S1_provider']],
                                 eodag_config_filepath)
@@ -119,7 +119,7 @@ class WorkPlan:
                           "astraea_eod": "sentinel2_l1c", 
                           "creodias": "S2_MSI_L1C"}
         product_type = s2_prods_types[self._plan['S1_provider'].lower()]
-        s2_prods = eodag_prods( df, self._plan['session_start'], self._plan['session_end'],
+        s2_prods = eodag_prods( df, self._plan['season_start'], self._plan['season_end'],
                                 self._plan['S1_provider'],
                                 s2_prods_types[self._plan['S1_provider'].lower()],
                                 eodag_config_filepath, 
@@ -131,7 +131,7 @@ class WorkPlan:
 
     def _identify_l8(self, tile_id, l8_sr=False, eodag_config_filepath=None):
         l8_prods = eodag_prods( eotile_module.main(tile_id)[0],
-                                self._plan['session_start'], self._plan['session_end'],
+                                self._plan['season_start'], self._plan['season_end'],
                                 'astraea_eod',
                                 'landsat8_c2l1t1',
                                 eodag_config_filepath,
