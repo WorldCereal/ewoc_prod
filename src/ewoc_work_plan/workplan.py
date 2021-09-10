@@ -36,8 +36,8 @@ class WorkPlan:
         self._plan['visibility'] = visibility
         self._plan['generated'] = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
         self._plan['aez_id'] = aez_id
-        self._plan['session_start'] = start_date
-        self._plan['session_end'] = end_date
+        self._plan['season_start'] = start_date
+        self._plan['season_end'] = end_date
         self._plan['season_type'] = season_type
         self._plan['S1_provider'] = data_provider
         self._plan['S2_provider'] = data_provider
@@ -56,7 +56,7 @@ class WorkPlan:
             l8_prd_ids = self._identify_l8(tile_id, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
             tile_plan['s1_ids'] = s1_prd_ids
             tile_plan['S1_orbit_dir'] = orbit_dir
-            tile_plan['S1_nb'] = len(s1_prd_ids)
+            tile_plan['s1_nb'] = len(s1_prd_ids)
             tile_plan['s2_ids'] = s2_prd_ids
             tile_plan['s2_nb'] = len(s2_prd_ids)
             tile_plan['l8_ids'] = l8_prd_ids

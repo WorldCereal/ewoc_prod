@@ -107,7 +107,7 @@ def search_json_and_dump(bucket_prods, plan, path):
                 logger.info("lost")
                 logger.info(prods)
                 out["l8_ids"].append(prods)
-        out["S1_nb"] = len(out["s1_ids"])
+        out["s1_nb"] = len(out["s1_ids"])
         out["s2_nb"] = len(out["s2_ids"])
         out["l8_nb"] = len(out["l8_ids"])
         out_tiles.append(out)
