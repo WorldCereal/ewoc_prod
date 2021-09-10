@@ -9,6 +9,9 @@ from ewoc_work_plan import __version__
 from ewoc_work_plan.plan.utils import eodag_prods, is_descending
 from ewoc_db.fill.super_fill import fill_from_wp
 from ewoc_work_plan.plan.reproc import reproc_wp
+from ewoc_work_plan.plan.utils import get_path_row
+
+from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +143,24 @@ class WorkPlan:
         l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
         logger.debug(l8_prods)
 
-        return list()
+
+        # Group by same path & date
+        dic = {}
+        for l8_prod in l8_prods:
+            date = (l8_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
+            path, row = get_path_row(l8_prod, 'astraea_eod'.lower()) # TODO change 'astraea_eod' to real l8 provider
+            key = path + date
+            l8_mask = Landsat_Cloud_Mask(path, row, date)
+            if l8_mask.mask_exists():
+                l8_id = f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
+                if key in dic and len(l8_id) > 0:
+                    dic[key].append(l8_id)
+                elif len(l8_id) > 0:
+                    dic[key] = [l8_id]
+            else:
+                logger.warning(f"Missing product {l8_prod.properties['id']}")
+
+        return list(dic.values())
 
     @classmethod
     def from_aoi(cls, aoi_filepath,
