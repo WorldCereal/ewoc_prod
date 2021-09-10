@@ -42,11 +42,11 @@ class WorkPlan:
         self._plan['season_start'] = start_date
         self._plan['season_end'] = end_date
         self._plan['season_type'] = season_type
-        self._plan['S1_provider'] = data_provider
-        self._plan['S2_provider'] = data_provider
+        self._plan['s1_provider'] = data_provider
+        self._plan['s2_provider'] = data_provider
         #  TODO : Fill or change the provider translator system
         provider_translator_L8_dict = {'creodias': 'usgs_AWS', 'peps': 'peps', 'astraea_eod': 'astraea_eod'}
-        self._plan['L8_provider'] = provider_translator_L8_dict[data_provider]
+        self._plan['l8_provider'] = provider_translator_L8_dict[data_provider]
 
         ## Addind tiles
         tiles_plan=list()
@@ -58,19 +58,19 @@ class WorkPlan:
             s2_prd_ids = self._identify_s2(tile_id, eodag_config_filepath=eodag_config_filepath)
             l8_prd_ids = self._identify_l8(tile_id, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
             tile_plan['s1_ids'] = s1_prd_ids
-            tile_plan['S1_orbit_dir'] = orbit_dir
+            tile_plan['s1_orbit_dir'] = orbit_dir
             tile_plan['s1_nb'] = len(s1_prd_ids)
             tile_plan['s2_ids'] = s2_prd_ids
             tile_plan['s2_nb'] = len(s2_prd_ids)
             tile_plan['l8_ids'] = l8_prd_ids
             tile_plan['l8_nb'] = len(l8_prd_ids)
             if isinstance(l8_sr, list) and len(l8_sr) == len(tile_ids):
-                tile_plan["L8_enable_sr"]= l8_sr[i]
+                tile_plan["l8_enable_sr"]= l8_sr[i]
             elif isinstance(l8_sr, list):
                 logger.error(f"Input l8_sr should be of size {len(tile_ids)}")
                 raise ValueError
             else:
-                tile_plan["L8_enable_sr"] = l8_sr
+                tile_plan["l8_enable_sr"] = l8_sr
 
             tiles_plan.append(tile_plan)
         
@@ -88,11 +88,11 @@ class WorkPlan:
                           "creodias":"S1_SAR_GRD"}
         s1_prods_full = eodag_prods( df, 
                                 self._plan['season_start'], self._plan['season_end'],
-                                self._plan['S1_provider'],
-                                s1_prods_types[self._plan['S1_provider']],
+                                self._plan['s1_provider'],
+                                s1_prods_types[self._plan['s1_provider']],
                                 eodag_config_filepath)
-        s1_prods_desc = [s1_prod for s1_prod in s1_prods_full if is_descending(s1_prod, self._plan['S1_provider'])]
-        s1_prods_asc = [s1_prod for s1_prod in s1_prods_full if not is_descending(s1_prod, self._plan['S1_provider'])]
+        s1_prods_desc = [s1_prod for s1_prod in s1_prods_full if is_descending(s1_prod, self._plan['s1_provider'])]
+        s1_prods_asc = [s1_prod for s1_prod in s1_prods_full if not is_descending(s1_prod, self._plan['s1_provider'])]
         logger.info('Number of descending products: {}'.format(len(s1_prods_desc)))
         logger.info('Number of ascending products: {}'.format(len(s1_prods_asc)))
 
@@ -121,10 +121,10 @@ class WorkPlan:
         s2_prods_types = {"peps": "S2_MSI_L1C", 
                           "astraea_eod": "sentinel2_l1c", 
                           "creodias": "S2_MSI_L1C"}
-        product_type = s2_prods_types[self._plan['S1_provider'].lower()]
+        product_type = s2_prods_types[self._plan['s1_provider'].lower()]
         s2_prods = eodag_prods( df, self._plan['season_start'], self._plan['season_end'],
-                                self._plan['S1_provider'],
-                                s2_prods_types[self._plan['S1_provider'].lower()],
+                                self._plan['s1_provider'],
+                                s2_prods_types[self._plan['s1_provider'].lower()],
                                 eodag_config_filepath, 
                                 cloudCover=self._cloudcover)
         s2_prod_ids = list()
