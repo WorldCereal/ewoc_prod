@@ -1,99 +1,125 @@
-import argparse
+import click
 import logging
 import sys
+from pathlib import Path
 
-from .plan.prep_all import PlanProc
 
 from ewoc_work_plan import __version__
+from ewoc_work_plan.workplan import WorkPlan
+from ewoc_work_plan.plan.reproc import reproc_wp
 
-__author__ = "Fahd Benatia"
+__author__ = "Mathis Germa"
 __copyright__ = "CS Group France"
 __license__ = "TBD"
 
 _logger = logging.getLogger(__name__)
 
-def generate_work_plan(aoi, start_date,end_date,out_file,eodag_creds,eodag_provider,process_l8):
-    plan = PlanProc(aoi, eodag_creds,eodag_provider)
-    plan.run(start_date,end_date,process_l8=process_l8)
-    plan.write_plan(out_file)
 
-# ---- CLI ----
-# The functions defined in this section are wrappers around the main Python
-# API allowing them to be called directly from the terminal as a CLI
-# executable/script.
+@click.command()
+@click.pass_context
+@click.option('-input', help="Input: a list of S2 tiles eg: '31TCJ,30STF', a csv file, a vector AOI file")
+@click.option('-sd', help="Start date")
+@click.option('-ed', help="End date")
+@click.option('-prov', help="Provider")
+@click.option('-l8_sr', help="l8 sd boolean parameter",default="False")
+@click.option('-aez_id', default=0, type=int, help="ID of the AED")
+@click.option('-user', default="EWoC_admin", help="Username")
+@click.option('-visibility', default="public", help="Visibility, public or private")
+@click.option('-season_type', default="cropland", help="Season type")
+@click.option('-eodag_config_filepath', help="Path to the Eodag config file")
+@click.option('-cloudcover', default="90", help="Cloudcover parameter")
+def generate(ctx, input, sd, ed, prov, l8_sr, aez_id,user,visibility,season_type,eodag_config_filepath,cloudcover):
+    ctx.ensure_object(dict)
+
+    if "." in input :
+        if ".csv" in input:
+            induced_type = "csv"
+        else:
+            supported_formats = ['.shp', '.geojson', '.gpkg']
+            for format in supported_formats:
+                if format in input:
+                    induced_type = "aoi"
+    else:
+        # Managing l8_sr
+        tiles_to_generate = input.split(",")
+        induced_type = "S2_tiles"
 
 
-def parse_args(args):
-    """Parse command line parameters
+    l8_split = l8_sr.split(",")
+    for i, l8_sr_str in enumerate(l8_split):
+        l8_split[i] = l8_sr_str == "True"
+    if len(l8_split)>1:
+        l8_sr = l8_split
+    else:
+        l8_sr = l8_split[0]
 
-    Args:
-      args (List[str]): command line parameters as list of strings
-          (for example  ``["--help"]``).
+    if induced_type == "S2_tiles":
+        ctx.obj["wp"] = WorkPlan(tiles_to_generate, sd, ed, prov, l8_sr)
+    elif induced_type == "csv":
+        ctx.obj["wp"] = WorkPlan.from_csv(input, sd, ed, prov, l8_sr)
+    elif induced_type == "aoi":
+        ctx.obj["wp"] = WorkPlan.from_aoi(input, sd, ed, prov, l8_sr)
+    else:
+        click.echo(f"Unrecognized {input} as input type")
+        raise NotImplementedError
 
-    Returns:
-      :obj:`argparse.Namespace`: command line parameters namespace
-    """
-    parser = argparse.ArgumentParser(description="Prepares and organizes the satellite products for the EWoC system")
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="ewoc_work_plan {ver}".format(ver=__version__),
-    )
-    parser.add_argument(dest="aoi", help="AOI file path geojson/shapefile", type=str)
-    parser.add_argument(dest="sd", help="Start date, format YYYY-mm-dd", type=str)
-    parser.add_argument(dest="ed", help="End date, format YYYY-mm-dd")
-    parser.add_argument(dest="o", help="Path to output json file")
-    parser.add_argument(dest="creds",help="EOdag creds yaml file path")
-    parser.add_argument(dest="provider", help="peps/creodias/astraea_eod")
-    parser.add_argument(dest="process_l8", help="Process L8 OLI bands or not")
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        dest="loglevel",
-        help="set loglevel to INFO",
-        action="store_const",
-        const=logging.INFO,
-    )
-    parser.add_argument(
-        "-vv",
-        "--very-verbose",
-        dest="loglevel",
-        help="set loglevel to DEBUG",
-        action="store_const",
-        const=logging.DEBUG,
-    )
-    return parser.parse_args(args)
 
-def setup_logging(loglevel):
-    """Setup basic logging
+@click.command()
+@click.pass_context
+@click.argument('file', type=click.Path(exists=True))
+def load(ctx, file):
+    ctx.ensure_object(dict)
+    ctx.obj["wp"] = WorkPlan.load(Path(file))
 
-    Args:
-      loglevel (int): minimum loglevel for emitting messages
-    """
-    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(
-        level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
-    )
 
-def main(args):
-    """Wrapper of generate_work_plan
+@click.command()
+@click.pass_context
+@click.argument('file', type=click.Path(exists=False))
+def write(ctx, file):
+    check_wp(ctx)
+    ctx.obj["wp"].to_json(file)
 
-    Args:
-      args (List[str]): command line parameters as list of strings
-          (for example  TODO).
-    """
-    args = parse_args(args)
 
-    setup_logging(args.loglevel)
+@click.command()
+@click.pass_context
+def print(ctx):
+    check_wp(ctx)
+    click.echo(ctx.obj["wp"])
 
-    generate_work_plan(args.aoi,args.sd,args.ed,args.o,args.creds,args.provider,args.process_l8)
 
+def check_wp(ctx):
+    ctx.ensure_object(dict)
+    if ctx.obj["wp"] is None:
+        click.echo("The WorkPlan needs to be set")
+        raise ValueError
+
+
+@click.command()
+@click.pass_context
+@click.option('-nb_of_products', default=100, type=int, help="Maximum number of product per line in the Database")
+def push(ctx, nb_of_products):
+    check_wp(ctx)
+    ctx.obj["wp"].to_ewoc_db(nb_of_products=nb_of_products)
+
+
+@click.command()
+@click.pass_context
+@click.option('-bucket', help="Bucket name")
+@click.option('-path', help="Path in the bucket")
+def reproc(ctx, bucket, path):
+    check_wp(ctx)
+    ctx.obj["wp"] = ctx.obj["wp"].reproc(bucket, path)
+
+
+@click.group(chain=True)
 def run():
-    """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
-
-    This function can be used as entry point to create console scripts with setuptools.
-    """
-    main(sys.argv[1:])
+    pass
 
 if __name__ == "__main__":
-    run()
+    run.add_command(generate)
+    run.add_command(load)
+    run.add_command(write)
+    run.add_command(push)
+    run.add_command(reproc)
+    run.add_command(print)
+    run(obj={})
