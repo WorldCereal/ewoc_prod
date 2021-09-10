@@ -7,44 +7,92 @@ The generated json plan is the starting point for the Argo workflows.
 A plan is a json file with a list of S2 MGRS tiles and the corresponding satellite products to process.
 ```json
 {
-  "31UFS": {
-    "SAR_PROC": {
-      "INPUTS": [
-        "S1A_IW_GRDH_1SDV_20201230T054238_20201230T054303_035911_0434B3_96C7",
-        "S1B_IW_GRDH_1SDV_20201229T055005_20201229T055030_024913_02F6E8_1262",
-        "S1A_IW_GRDH_1SDV_20201228T055903_20201228T055928_035882_0433B6_B991"
-      ]
-    },
-    "S2_PROC": {
-      "INPUTS": [
+    "version": "0.1.1",
+    "user": "EWoC_admin",
+    "visibility": "public",
+    "generated": "2021-09-10 17:27:27 CEST",
+    "aez_id": 0,
+    "season_start": "2020-10-20",
+    "season_end": "2020-10-30",
+    "season_type": "cropland",
+    "S1_provider": "creodias",
+    "S2_provider": "creodias",
+    "L8_provider": "usgs_AWS",
+    "tiles": [
         {
-          "id": "S2A_MSIL1C_20201226T105451_N0209_R051_T31UFS_20201226T130209"
-        },
-        {
-          "id": "S2B_MSIL1C_20201218T104349_N0209_R008_T31UFS_20201218T115054"
-        },
-        {
-          "id": "S2A_MSIL1C_20201213T104441_N0209_R008_T31UFS_20201213T125210"
-        },
-        {
-          "id": "S2B_MSIL1C_20201208T104429_N0209_R008_T31UFS_20201208T114513"
+            "tile_id": "31TCJ",
+            "s1_ids": [
+                [
+                    "S1A_IW_GRDH_1SDV_20201029T060104_20201029T060129_035007_041562_76A1",
+                    "S1A_IW_GRDH_1SDV_20201029T060048_20201029T060113_035007_041562_DAC7",
+                    "S1A_IW_GRDH_1SDV_20201029T060039_20201029T060104_035007_041562_9FE9"
+                ],
+                [
+                    "S1B_IW_GRDH_1SDV_20201028T060826_20201028T060851_024009_02DA2A_C6FC",
+                    "S1B_IW_GRDH_1SDV_20201028T060826_20201028T060851_024009_02DA2A_31F3",
+                    "S1B_IW_GRDH_1SDV_20201028T060801_20201028T060826_024009_02DA2A_CC6C",
+                    "S1B_IW_GRDH_1SDV_20201028T060801_20201028T060826_024009_02DA2A_9E22"
+                ],
+                [
+                    "S1B_IW_GRDH_1SDV_20201023T060008_20201023T060033_023936_02D7EE_771D",
+                    "S1B_IW_GRDH_1SDV_20201023T060006_20201023T060031_023936_02D7EE_7C33"
+                ],
+                [
+                    "S1A_IW_GRDH_1SDV_20201022T060914_20201022T060939_034905_0411DD_1B4A",
+                    "S1A_IW_GRDH_1SDV_20201022T060904_20201022T060929_034905_0411DD_8038",
+                    "S1A_IW_GRDH_1SDV_20201022T060849_20201022T060914_034905_0411DD_5D80"
+                ]
+            ],
+            "S1_orbit_dir": "DES",
+            "s1_nb": 4,
+            "s2_ids": [
+                [
+                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TCJ_20201027T130310"
+                ],
+                [
+                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TDH_20201027T130310"
+                ],
+                [
+                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TCK_20201027T130310"
+                ],
+                [
+                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TDJ_20201027T130310"
+                ],
+                [
+                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TCH_20201027T130310"
+                ],
+                [
+                    "S2A_MSIL1C_20201027T105141_N0209_R051_T30TYQ_20201027T130310"
+                ],
+                [
+                    "S2A_MSIL1C_20201027T105141_N0209_R051_T30TYP_20201027T130310"
+                ],
+                [
+                    "S2B_MSIL1C_20201025T110039_N0209_R094_T30TYP_20201025T120537"
+                ],
+                [
+                    "S2A_MSIL1C_20201024T104121_N0209_R008_T31TDH_20201024T141709"
+                ],
+                [
+                    "S2A_MSIL1C_20201024T104121_N0209_R008_T31TCJ_20201024T141709"
+                ],
+                [
+                    "S2A_MSIL1C_20201024T104121_N0209_R008_T31TDJ_20201024T141709"
+                ]
+            ],
+            "s2_nb": 11,
+            "l8_ids": [
+                [
+                    "LC08_L1TP_199029_20201026_20201106_02_T1",
+                    "LC08_L1TP_199030_20201026_20201106_02_T1"
+                ]
+            ],
+            "l8_nb": 1,
+            "L8_enable_sr": false
         }
-      ]
-    },
-    "L8_PROC": {
-      "INPUTS": []
-    },
-    "L8_TIRS": [
-      "s3://usgs-landsat/collection02/level-2/standard/oli-tirs/2020/199/025/LC08_L2SP_199025_20201229_20210310_02_T1/LC08_L2SP_199025_20201229_20210310_02_T1_ST_B10.TIF",
-      "s3://usgs-landsat/collection02/level-2/standard/oli-tirs/2020/196/025/LC08_L2SP_196025_20201208_20210313_02_T1/LC08_L2SP_196025_20201208_20210313_02_T1_ST_B10.TIF",
-      "s3://usgs-landsat/collection02/level-2/standard/oli-tirs/2020/198/025/LC08_L2SP_198025_20201206_20210313_02_T1/LC08_L2SP_198025_20201206_20210313_02_T1_ST_B10.TIF",
-      "s3://usgs-landsat/collection02/level-2/standard/oli-tirs/2020/197/024/LC08_L2SP_197024_20201129_20210316_02_T1/LC08_L2SP_197024_20201129_20210316_02_T1_ST_B10.TIF",
-      "s3://usgs-landsat/collection02/level-2/standard/oli-tirs/2020/198/025/LC08_L2SP_198025_20201120_20210315_02_T1/LC08_L2SP_198025_20201120_20210315_02_T1_ST_B10.TIF"
     ]
-  }
 }
 ```
-In its current version the plan contains 4 sections: SAR_PROC, S2_PROC, L8_PROC and L8_TIRS. The example above is a plan for 31UFS, note that in this case we don't need Landsat-8 level 1 data
 
 ## How to generate a plan 
 In order to generate a plan you'll need the following:
@@ -58,20 +106,49 @@ In order to generate a plan you'll need the following:
 
 Full help
 ```bash
-usage: generate_wp [-h] [--version] [-v] [-vv]
-                   aoi sd ed o creds provider process_l8
+Usage: workplan [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
 
-EWoC plan generation
+Options:
+  --help  Show this message and exit.
 
-positional arguments:
-  aoi                  AOI file path geojson/shapefile
-  sd                   Start date, format YYYY-mm-dd
-  ed                   End date, format YYYY-mm-dd
-  o                    Path to output json file
-  creds                EOdag creds yaml file path
-  provider             peps/creodias/astraea_eod
-  process_l8           Process L8 OLI bands or not
+Commands:
+  generate
+  load
+  print
+  push
+  reproc
+  write
 ```
+
+```bash
+$ workplan generate
+EWoC plan generation
+Usage: workplan generate [OPTIONS]
+
+Options:
+  -input TEXT                  Input: a list of S2 tiles eg: '31TCJ,30STF', a
+                               csv file, a vector AOI file
+
+  -sd TEXT                     Start date, format YYYY-mm-dd
+  -ed TEXT                     End date, format YYYY-mm-dd
+  -prov TEXT                   Provider (peps/creodias/astraea_eod)
+  -l8_sr TEXT                  Process L8 OLI bands or not
+  -aez_id INTEGER              ID of the AED
+  -user TEXT                   Username
+  -visibility TEXT             Visibility, public or private
+  -season_type TEXT            Season type
+  -eodag_config_filepath TEXT  Path to the Eodag yml config file
+  -cloudcover TEXT             Cloudcover parameter
+  --help                       Show this message and exit.
+
+```
+
+You can use as many commands at once as you like, for example:
+```bash
+$ workplan load wp.json reproc -bucket "bucket_name" -path "/SPAIN/" write wp_reproc.json
+```
+
+
 ## What's next
 Once you generate a plan, the EWoC system database needs to be updated with the new products and tiles to process.
 This update is done using an argo workflow. Once this update done, you can run the processors!
