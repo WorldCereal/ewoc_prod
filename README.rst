@@ -2,15 +2,15 @@
 ewoc-prod
 =========
 
-
-Add a short description here!
+ewoc-prod package is in charge to run production from end to end
 
 
 Description
 ===========
 
-A longer description of your project goes here...
-
+Prerequesites:
+- a ewoc database
+- a ewoc production cluster
 
 .. _pyscaffold-notes:
 
