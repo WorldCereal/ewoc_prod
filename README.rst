@@ -14,6 +14,7 @@ EWoc k8s cluster mode
 ----------------------
 
 Prerequesites:
+
 * a ewoc k8s cluster
 * a ewoc database hosted on a node of the k8s cluster 
 
@@ -22,6 +23,7 @@ This code is plan to run by default on the bastion of the k8s creodias cluster a
 EWoc local mode 
 ----------------------
 Prerequesites:
+
 * a ewoc database provided by a docker image
 
 ```sh
