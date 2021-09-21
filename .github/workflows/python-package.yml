@@ -5,9 +5,12 @@ name: Python package
 
 on:
   push:
-    branches: [ main ]
+    branches: [ '*' ]
+    tags: [ '[0-9]+.[0-9]+.[0-9]+' ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  workflow_dispatch:
+
 
 jobs:
   build:
@@ -16,25 +19,81 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7]
+        # python-version: [3.7, 3.8, 3.9]
+    env:
+      EWOC_DATASHIP_VERSION: "0.1.8"
+      EWOC_DB_VERSION: "0.1"
+      EOTILE_VERSION: "0.2rc3"
 
     steps:
+
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Download Dataship
+      uses: robinraju/release-downloader@v1.1
+      with:
+        repository: "WorldCereal/ewoc_dataship"
+        tag: "${{ env.EWOC_DATASHIP_VERSION }}"
+        fileName: "dataship-${{ env.EWOC_DATASHIP_VERSION }}.tar.gz"
+        token: ${{ secrets.CS_ORG_TOKEN }}
+
+    - name: Download EWoC DB
+      uses: robinraju/release-downloader@v1.1
+      with:
+        repository: "WorldCereal/ewoc_db"
+        tag: "${{ env.EWOC_DB_VERSION }}"
+        fileName: "ewoc_db-${{ env.EWOC_DB_VERSION }}-py2.py3-none-any.whl"
+        token: ${{ secrets.CS_ORG_TOKEN }}
+
+    - name: Download EOTile
+      uses: robinraju/release-downloader@v1.1
+      with:
+        repository: "WorldCereal/ewoc_eotile"
+        tag: "${{ env.EOTILE_VERSION }}"
+        fileName: "eotile-${{ env.EOTILE_VERSION }}-py3-none-any.whl"
+        token: ${{ secrets.CS_ORG_TOKEN }}
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest
+        python -m pip install eotile-${{ env.EOTILE_VERSION }}-py3-none-any.whl
+        python -m pip install dataship-${{ env.EWOC_DATASHIP_VERSION }}.tar.gz
+        python -m pip install ewoc_db-${{ env.EWOC_DB_VERSION }}-py2.py3-none-any.whl
+        pip install build
+        pip install pylint
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        pytest
+    - name: Analysing the code with pylint
+      run: pylint --output-format=text $(find -type f -name "*.py" ! -path "**/venv/**")
+    - name: Build package
+      run: python -m build
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: distribution
+        path: ./dist
+
+  release-python:
+
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: distribution
+          path: ./dist
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          prerelease: false
+          files: |
+            dist/ewoc_work_plan-*.whl
+            dist/ewoc_work_plan-*.tar.gz
