@@ -1,25 +1,3 @@
-"""
-This is a skeleton file that can serve as a starting point for a Python
-console script. To run this script uncomment the following lines in the
-``[options.entry_points]`` section in ``setup.cfg``::
-
-    console_scripts =
-         fibonacci = ewoc_prod.skeleton:run
-
-Then run ``pip install .`` (or ``pip install -e .`` for editable mode)
-which will install the command ``fibonacci`` inside your current environment.
-
-Besides console scripts, the header (i.e. until ``_logger``...) of this file can
-also be used as template for Python modules.
-
-Note:
-    This skeleton file can be safely removed if not needed!
-
-References:
-    - https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
-    - https://pip.pypa.io/en/stable/reference/pip_install
-"""
-
 import argparse
 from datetime import date, datetime
 import json
@@ -44,7 +22,7 @@ _logger = logging.getLogger(__name__)
 # ---- Python API ----
 # The functions defined in this section can be imported by users in their
 # Python scripts/interactive interpreter, e.g. via
-# `from ewoc_prod.skeleton import fib`,
+# `from ewoc_prod.cli import ewoc_prod`,
 # when using this Python module as a library.
 
 
@@ -95,7 +73,7 @@ def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
         _logger.debug('Search the aez information according the aez region id: %s', aez_region_id)
         aez_db = EWOC_AEZ_DB(aez_db_filepath)
         aez = aez_db.get_aez_from_id(aez_region_id)
-        tiles_id.append('XXXXX') # add key with tiles_id in aez db
+        tiles_id.append('XXXXX') # TODO Add key with tiles_id in aez db
         # TODO which ref year ?
         ref_year_str = str(date.today().year)
         # TODO Manage sos > eos
@@ -331,6 +309,6 @@ if __name__ == "__main__":
     # After installing your project with pip, users can also run your Python
     # modules as scripts via the ``-m`` flag, as defined in PEP 338::
     #
-    #     python -m ewoc_prod.cli 42
+    #     python -m ewoc_prod.cli
     #
     run()
