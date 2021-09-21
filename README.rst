@@ -28,8 +28,8 @@ Prerequesites:
 
 .. code-block:: sh
 
-docker run --name ewoc_db --network host -p 5432:5432 -e POSTGRES_PASSWORD=password -d -v /path/to/postgres_database_dir/:/var/lib/postgresql/data postgres
-psql -h localhost -p 5432 -U postgres postgres -f world_cereal_db_init.sql
+    docker run --name ewoc_db --network host -p 5432:5432 -e POSTGRES_PASSWORD=password -d -v /path/to/postgres_database_dir/:/var/lib/postgresql/data postgres
+    psql -h localhost -p 5432 -U postgres postgres -f world_cereal_db_init.sql
 
 WARNING: the local mode must limited to process one tile on short period for test purpose! 
 
