@@ -12,6 +12,10 @@ Prerequesites:
 - a ewoc database
 - a ewoc production cluster
 
+This code is plan to run by default on the master node of the cluster
+
+Aux data: AEZ with tiles id by AEZ region
+
 .. _pyscaffold-notes:
 
 Note
