@@ -9,16 +9,19 @@ import botocore
 _logger = logging.getLogger(__name__)
 
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=None):
-    dag = EODataAccessGateway(creds)
+    dag = EODataAccessGateway(user_conf_file_path=creds)
     dag.set_preferred_provider(provider)
-    print(provider)
     poly = df.geometry[0].to_wkt()
     max_items = 2000
     if cloudCover is None:
-        products, est = dag.search(productType=product_type, start=start_date, end=end_date, geom=poly, items_per_page=max_items)
+        products, __unused = dag.search( productType=product_type,
+                                    start=start_date, end=end_date,
+                                    geom=poly, items_per_page=max_items)
     else:
-        products, est = dag.search(productType=product_type, start=start_date, end=end_date, geom=poly,
-                                   items_per_page=max_items, cloudCover=cloudCover)
+        products, __unused = dag.search( productType=product_type,
+                                    start=start_date, end=end_date, geom=poly,
+                                     items_per_page=max_items,
+                                     cloudCover=cloudCover)
     return products
 
 
