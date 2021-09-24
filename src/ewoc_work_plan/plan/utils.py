@@ -4,7 +4,6 @@ import boto3
 import xml.etree.ElementTree as et
 import logging
 import json
-import botocore
 
 _logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ def is_descending(s1_product,provider):
             _logger.error('Could not determine orbit direction')
 
 
-def get_path_row(product,provider):
+def get_path_row(product, provider):
     path = ""
     row  = ""
     if provider.lower() == "creodias":
@@ -63,27 +62,6 @@ def get_path_row(product,provider):
         path = product.assets['B5']['href'].split('/')[8]
         row = product.assets['B5']['href'].split('/')[9]
     return path, row
-
-def get_s3_client():
-    # S3 function from argo workflow coded by Alex G.
-    client_config = botocore.config.Config(
-        max_pool_connections=100,
-    )
-    s3_client = None
-    if "amazon" in os.environ["S3_ENDPOINT"]:
-        s3_client = boto3.client('s3',
-                                 aws_access_key_id=os.environ["S3_ACCESS_KEY_ID"],
-                                 aws_secret_access_key=os.environ["S3_SECRET_ACCESS_KEY"],
-                                 region_name="eu-central-1",
-                                 config=client_config)
-    if "cloudferro" in os.environ["S3_ENDPOINT"]:
-        s3_client = boto3.client('s3',
-                                 aws_access_key_id=os.environ["S3_ACCESS_KEY_ID"],
-                                 aws_secret_access_key=os.environ["S3_SECRET_ACCESS_KEY"],
-                                 endpoint_url=os.environ["S3_ENDPOINT"],
-                                 config=client_config)
-
-    return s3_client
 
 
 def write_plan(plan, out_file):
