@@ -129,7 +129,8 @@ class WorkPlan:
                                 cloudCover=self._cloudcover)
         s2_prod_ids = list()
         for s2_prod in s2_prods:
-            s2_prod_ids.append([s2_prod.properties["id"]])
+            if tile_id in s2_prod.properties["id"]:
+                s2_prod_ids.append([s2_prod.properties["id"]])
         return s2_prod_ids
 
     def _identify_l8(self, tile_id, l8_sr=False, eodag_config_filepath=None):
