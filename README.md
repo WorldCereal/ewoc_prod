@@ -169,9 +169,10 @@ This update is done using an argo workflow. Once this update done, you can run t
 
 You can find here the steps to release a new package:
 
-1. Merge all the features into `develop` branch thourh PR on github
+1. Merge all the features into `develop` branch through PR on github
 2. Check the CI
 3. Merge `develop` into `main`
 4. Tag a new version: `git tag -a X.Y.Z -m 'message'` according to [SemVer](https://semver.org/)
 5. Push the `main` branch to github: `git push origin main --tags`
 6. Generate the new packages cf. [here](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives)
+7. Upload the package on the Github release page
