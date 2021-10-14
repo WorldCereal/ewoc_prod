@@ -1,10 +1,12 @@
-# EWoC work plan generation 
+# EWoC work plan generation
 
 The aim of this tool is to prepare and organize the satellite products that will be processed by the EWoC system.
 The generated json plan is the starting point for the Argo workflows.
 
 ## The anatomy of a plan
+
 A plan is a json file with a list of S2 MGRS tiles and the corresponding satellite products to process.
+
 ```json
 {
     "version": "0.1.1",
@@ -94,17 +96,26 @@ A plan is a json file with a list of S2 MGRS tiles and the corresponding satelli
 }
 ```
 
-## How to generate a plan 
+## How to generate a plan
+
 In order to generate a plan you'll need the following:
+
 - Start_date/ end_date: this parameters will define the time interval of the satellite products search (using EOdag)
 - AOI: you Area Of Interest, this can be a vector file or an S2 MGRS tile id such as 31TCJ.
 - Provider: the name of the satellite data cloud storage provider (creodias/peps/...) this list of accepted providers is the same as EOdag
 - EOdag config file: a valid EOdag config file with the credentials to the desired providers
+
 ### Steps:
-0. Clone this repository and install (pip install .)
-1. `generate_wp aoi sd ed o creds provider process_l8`
+
+0. Download the python package
+1. Create a virtualenv: `python3 -m venv venv-ewoc-wp`
+2. Activate the venv: `source /path/to/venv-ewoc-wp/bin/activate`
+3. Update pip: `pip install pip --upgrade`
+4. Install with `pip install /path/to/ewoc_workplan-x.y.z.tar.gz`
+5. Run `generate_wp aoi sd ed o creds provider process_l8`
 
 Full help
+
 ```bash
 Usage: workplan [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
 
@@ -144,11 +155,23 @@ Options:
 ```
 
 You can use as many commands at once as you like, for example:
+
 ```bash
 $ workplan load wp.json reproc -bucket "bucket_name" -path "/SPAIN/" write wp_reproc.json
 ```
 
+### What's next
 
-## What's next
 Once you generate a plan, the EWoC system database needs to be updated with the new products and tiles to process.
 This update is done using an argo workflow. Once this update done, you can run the processors!
+
+## How to release
+
+You can find here the steps to release a new package:
+
+1. Merge all the features into `develop` branch thourh PR on github
+2. Check the CI
+3. Merge `develop` into `main`
+4. Tag a new version: `git tag -a X.Y.Z -m 'message'` according to [SemVer](https://semver.org/)
+5. Push the `main` branch to github: `git push origin main --tags`
+6. Generate the new packages cf. [here](https://packaging.python.org/tutorials/packaging-projects/#generating-distribution-archives)
