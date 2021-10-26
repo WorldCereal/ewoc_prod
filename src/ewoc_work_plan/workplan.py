@@ -56,9 +56,10 @@ class WorkPlan:
         for i, tile_id in enumerate(tile_ids):
             tile_plan = dict()
             tile_plan['tile_id'] = tile_id
-            s1_prd_ids, orbit_dir = self._identify_s1(tile_id, eodag_config_filepath=eodag_config_filepath)
-            s2_prd_ids = self._identify_s2(tile_id, eodag_config_filepath=eodag_config_filepath)
-            l8_prd_ids = self._identify_l8(tile_id, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
+            s2_tile = eotile_module.main(tile_id)[0]
+            s1_prd_ids, orbit_dir = self._identify_s1(s2_tile, eodag_config_filepath=eodag_config_filepath)
+            s2_prd_ids = self._identify_s2(tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath)
+            l8_prd_ids = self._identify_l8(s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
             tile_plan['s1_ids'] = s1_prd_ids
             tile_plan['s1_orbit_dir'] = orbit_dir
             tile_plan['s1_nb'] = len(s1_prd_ids)
@@ -83,12 +84,11 @@ class WorkPlan:
         return json.dumps(self._plan, indent=4, sort_keys=False)
 
 
-    def _identify_s1(self,tile_id, eodag_config_filepath=None):
-        df = eotile_module.main(tile_id)[0]
+    def _identify_s1(self, s2_tile, eodag_config_filepath=None):
         s1_prods_types = {"peps": "S1_SAR_GRD",
                           "astraea_eod": "sentinel1_l1c_grd",
                           "creodias":"S1_SAR_GRD"}
-        s1_prods_full = eodag_prods( df,
+        s1_prods_full = eodag_prods( s2_tile,
                                 self._plan['season_start'], self._plan['season_end'],
                                 self._plan['s1_provider'],
                                 s1_prods_types[self._plan['s1_provider']],
@@ -117,14 +117,12 @@ class WorkPlan:
 
         return list(dic.values()), orbit_dir
 
-
-    def _identify_s2(self, tile_id, eodag_config_filepath=None):
-        df = eotile_module.main(tile_id)[0]
+    def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None):
         s2_prods_types = {"peps": "S2_MSI_L1C",
                           "astraea_eod": "sentinel2_l1c",
                           "creodias": "S2_MSI_L1C"}
         product_type = s2_prods_types[self._plan['s1_provider'].lower()]
-        s2_prods = eodag_prods( df, self._plan['season_start'], self._plan['season_end'],
+        s2_prods = eodag_prods( s2_tile, self._plan['season_start'], self._plan['season_end'],
                                 self._plan['s1_provider'],
                                 s2_prods_types[self._plan['s1_provider'].lower()],
                                 eodag_config_filepath,
@@ -135,8 +133,8 @@ class WorkPlan:
                 s2_prod_ids.append([s2_prod.properties["id"]])
         return s2_prod_ids
 
-    def _identify_l8(self, tile_id, l8_sr=False, eodag_config_filepath=None):
-        l8_prods = eodag_prods( eotile_module.main(tile_id)[0],
+    def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
+        l8_prods = eodag_prods( s2_tile,
                                 self._plan['season_start'], self._plan['season_end'],
                                 'astraea_eod',
                                 'landsat8_c2l1t1',
