@@ -1,8 +1,7 @@
-import click
 import logging
-import sys
 from pathlib import Path
 
+import click
 
 from ewoc_work_plan import __version__
 from ewoc_work_plan.workplan import WorkPlan
