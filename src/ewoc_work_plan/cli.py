@@ -96,10 +96,9 @@ def check_wp(ctx):
 
 @click.command()
 @click.pass_context
-@click.option('-nb_of_products', default=100, type=int, help="Maximum number of product per line in the Database")
-def push(ctx, nb_of_products):
+def push(ctx):
     check_wp(ctx)
-    ctx.obj["wp"].to_ewoc_db(nb_of_products=nb_of_products)
+    ctx.obj["wp"].to_ewoc_db()
 
 
 @click.command()
