@@ -1,17 +1,18 @@
 import csv
+from datetime import datetime
 import json
 import logging
 import re
-import geopandas as gpd
 import tempfile
+
+import geopandas as gpd
 from eotile import eotile_module
-from datetime import datetime
+from ewoc_db.fill.fill_db import main as main_ewoc_db
+
 from ewoc_work_plan import __version__
 from ewoc_work_plan.plan.utils import eodag_prods, is_descending
-from ewoc_db.fill.fill_db import main as main_ewoc_db
 from ewoc_work_plan.plan.reproc import reproc_wp
 from ewoc_work_plan.plan.utils import get_path_row
-
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 
 logger = logging.getLogger(__name__)
@@ -74,20 +75,20 @@ class WorkPlan:
                 tile_plan["l8_enable_sr"] = l8_sr
 
             tiles_plan.append(tile_plan)
-        
+
         self._plan['tiles']= tiles_plan
 
 
     def __str__(self):
-        return(json.dumps(self._plan, indent=4, sort_keys=False))
+        return json.dumps(self._plan, indent=4, sort_keys=False)
 
 
     def _identify_s1(self,tile_id, eodag_config_filepath=None):
         df = eotile_module.main(tile_id)[0]
-        s1_prods_types = {"peps": "S1_SAR_GRD", 
+        s1_prods_types = {"peps": "S1_SAR_GRD",
                           "astraea_eod": "sentinel1_l1c_grd",
                           "creodias":"S1_SAR_GRD"}
-        s1_prods_full = eodag_prods( df, 
+        s1_prods_full = eodag_prods( df,
                                 self._plan['season_start'], self._plan['season_end'],
                                 self._plan['s1_provider'],
                                 s1_prods_types[self._plan['s1_provider']],
@@ -119,14 +120,14 @@ class WorkPlan:
 
     def _identify_s2(self, tile_id, eodag_config_filepath=None):
         df = eotile_module.main(tile_id)[0]
-        s2_prods_types = {"peps": "S2_MSI_L1C", 
-                          "astraea_eod": "sentinel2_l1c", 
+        s2_prods_types = {"peps": "S2_MSI_L1C",
+                          "astraea_eod": "sentinel2_l1c",
                           "creodias": "S2_MSI_L1C"}
         product_type = s2_prods_types[self._plan['s1_provider'].lower()]
         s2_prods = eodag_prods( df, self._plan['season_start'], self._plan['season_end'],
                                 self._plan['s1_provider'],
                                 s2_prods_types[self._plan['s1_provider'].lower()],
-                                eodag_config_filepath, 
+                                eodag_config_filepath,
                                 cloudCover=self._cloudcover)
         s2_prod_ids = list()
         for s2_prod in s2_prods:
@@ -248,4 +249,3 @@ class WorkPlan:
         new_wp = WorkPlan.__new__(WorkPlan)
         new_wp._plan = reproc_wp(bucket, self._plan, path)
         return new_wp
-

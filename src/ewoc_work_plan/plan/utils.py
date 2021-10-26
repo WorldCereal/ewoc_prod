@@ -1,9 +1,11 @@
-from eodag.api.core import EODataAccessGateway
 import os
-import boto3
-import xml.etree.ElementTree as et
-import logging
 import json
+import logging
+import xml.etree.ElementTree as et
+
+import boto3
+from eodag.api.core import EODataAccessGateway
+
 
 _logger = logging.getLogger(__name__)
 
@@ -68,4 +70,3 @@ def write_plan(plan, out_file):
     # Write the json
     with open(out_file, "w") as fp:
         json.dump(plan, fp, indent=4)
-

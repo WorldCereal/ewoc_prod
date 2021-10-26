@@ -1,13 +1,17 @@
+import csv
 import json
+import logging
+import re
+from tqdm import tqdm
 
 import geopandas as gpd
 from eotile import eotile_module
-from tqdm import tqdm
-import csv
-import re
-from ewoc_work_plan.plan.utils import *
+
+
+from ewoc_work_plan.plan.utils import is_descending, get_path_row, eodag_prods
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.remote.sentinel_cloud_mask import Sentinel_Cloud_Mask
+
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -43,7 +47,7 @@ class PlanProc:
         else:
             #s2_tiles = eotile_module.main(self.aoi)
             self.rest_ids=[self.aoi]
-        
+
 
         # Init json plan
         plan = {}
@@ -175,5 +179,3 @@ class PlanProc:
         # Write the json
         with open(out_file, "w") as fp:
             json.dump(self.plan, fp, indent=4)
-
-
