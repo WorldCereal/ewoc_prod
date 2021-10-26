@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 import xml.etree.ElementTree as et
 
@@ -64,9 +63,3 @@ def get_path_row(product, provider):
         path = product.assets['B5']['href'].split('/')[8]
         row = product.assets['B5']['href'].split('/')[9]
     return path, row
-
-
-def write_plan(plan, out_file):
-    # Write the json
-    with open(out_file, "w") as fp:
-        json.dump(plan, fp, indent=4)
