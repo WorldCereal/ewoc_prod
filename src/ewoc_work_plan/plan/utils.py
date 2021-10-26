@@ -8,12 +8,12 @@ from eodag.api.core import EODataAccessGateway
 
 _logger = logging.getLogger(__name__)
 
-def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=None):
+def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=None):
     dag = EODataAccessGateway(user_conf_file_path=creds)
     dag.set_preferred_provider(provider)
     poly = df.geometry[0].to_wkt()
     max_items = 2000
-    if cloudCover is None:
+    if cloud_cover is None:
         products, __unused = dag.search( productType=product_type,
                                     start=start_date, end=end_date,
                                     geom=poly, items_per_page=max_items)
@@ -21,7 +21,7 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloudCover=No
         products, __unused = dag.search( productType=product_type,
                                     start=start_date, end=end_date, geom=poly,
                                      items_per_page=max_items,
-                                     cloudCover=cloudCover)
+                                     cloudCover=cloud_cover)
     return products
 
 
@@ -30,12 +30,13 @@ def is_descending(s1_product,provider):
         if s1_product.properties['orbitDirection'] == "descending":
             return True
     else:
-        manifest_key = os.path.split(s1_product.assets['vv']['href'])[0].replace('measurement', 'manifest.safe')
+        manifest_key = os.path.split(s1_product.assets['vv']['href'])[0].replace('measurement',
+                                                                                 'manifest.safe')
         bucket = "sentinel-s1-l1c"
         key = manifest_key.replace("s3://sentinel-s1-l1c/","")
-        s3 = boto3.client('s3')
+        s3_client = boto3.client('s3')
         try:
-            obj = s3.get_object(Bucket=bucket,Key=key,RequestPayer='requester')
+            obj = s3_client.get_object(Bucket=bucket,Key=key,RequestPayer='requester')
             xml_string = obj['Body'].read()
             tree = et.ElementTree(et.fromstring(xml_string))
             root = tree.getroot()
