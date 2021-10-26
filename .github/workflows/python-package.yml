@@ -15,11 +15,11 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-focal
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7]
+        python-version: [3.8]
         # python-version: [3.7, 3.8, 3.9]
     env:
       EWOC_DATASHIP_VERSION: "0.2.2"
