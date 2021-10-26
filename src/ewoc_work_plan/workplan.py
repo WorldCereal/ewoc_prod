@@ -3,11 +3,12 @@ import json
 import logging
 import re
 import geopandas as gpd
+import tempfile
 from eotile import eotile_module
 from datetime import datetime
 from ewoc_work_plan import __version__
 from ewoc_work_plan.plan.utils import eodag_prods, is_descending
-from ewoc_db.fill.super_fill import fill_from_wp
+from ewoc_db.fill.fill_db import main as main_ewoc_db
 from ewoc_work_plan.plan.reproc import reproc_wp
 from ewoc_work_plan.plan.utils import get_path_row
 
@@ -236,8 +237,11 @@ class WorkPlan:
         with open(out_filepath, "w") as fp:
             json.dump(self._plan, fp, indent=4)
 
-    def to_ewoc_db(self, nb_of_products=100):
-        fill_from_wp(self._plan, nb_of_products=nb_of_products)
+    def to_ewoc_db(self):
+        temporary_json_file = tempfile.NamedTemporaryFile(suffix='.json')
+        self.to_json(temporary_json_file.name)
+        main_ewoc_db(temporary_json_file.name)
+        temporary_json_file.close()
 
 
     def reproc(self, bucket, path):
