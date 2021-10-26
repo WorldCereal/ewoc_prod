@@ -10,9 +10,8 @@ from eotile import eotile_module
 from ewoc_db.fill.fill_db import main as main_ewoc_db
 
 from ewoc_work_plan import __version__
-from ewoc_work_plan.plan.utils import eodag_prods, is_descending
-from ewoc_work_plan.plan.reproc import reproc_wp
-from ewoc_work_plan.plan.utils import get_path_row
+from ewoc_work_plan.utils import eodag_prods, is_descending, get_path_row
+from ewoc_work_plan.reproc import reproc_wp
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 
 logger = logging.getLogger(__name__)
