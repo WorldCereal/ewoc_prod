@@ -2,7 +2,8 @@ import os
 import json
 import logging
 import xml.etree.ElementTree as et
-
+import re
+from datetime import datetime
 import boto3
 from eodag.api.core import EODataAccessGateway
 
@@ -70,3 +71,28 @@ def write_plan(plan, out_file):
     # Write the json
     with open(out_file, "w") as fp:
         json.dump(plan, fp, indent=4)
+
+
+def greatest_timedelta(EOProduct_list:list, date_format:str = "%Y%m%d") -> datetime.timedelta:
+    """
+    Computes the greatest time delta from a list of EOdag products
+
+    :param EOProduct_list: List of EOdag products to analyse
+    :param date_format: Date format for the strptime
+    :return: Datetime delta
+    """
+    if len(EOProduct_list) < 1:
+        raise ValueError("Input list is empty")
+
+    split_parameter = "_|T"
+
+    date = re.split(split_parameter, EOProduct_list[0].properties["id"])[4]
+    previous_date = datetime.strptime(date, date_format)
+    delta_max = previous_date - previous_date
+    for s1_prod in EOProduct_list:
+        date = re.split(split_parameter, s1_prod.properties["id"])[4]
+        current_date = datetime.strptime(date, date_format)
+        delta_max = max(abs(current_date - previous_date), delta_max)
+        previous_date = current_date
+
+    return delta_max
