@@ -10,9 +10,8 @@ from eotile import eotile_module
 from ewoc_db.fill.fill_db import main as main_ewoc_db
 
 from ewoc_work_plan import __version__
-from ewoc_work_plan.plan.utils import eodag_prods, is_descending
-from ewoc_work_plan.plan.reproc import reproc_wp
-from ewoc_work_plan.plan.utils import get_path_row
+from ewoc_work_plan.utils import eodag_prods, is_descending, get_path_row
+from ewoc_work_plan.reproc import reproc_wp
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 
 logger = logging.getLogger(__name__)
@@ -47,8 +46,10 @@ class WorkPlan:
         self._plan['s1_provider'] = data_provider
         self._plan['s2_provider'] = data_provider
         #  TODO : Fill or change the provider translator system
-        provider_translator_L8_dict = {'creodias': 'usgs_AWS', 'peps': 'peps', 'astraea_eod': 'astraea_eod'}
-        self._plan['l8_provider'] = provider_translator_L8_dict[data_provider]
+        provider_translator_l8_dict = {'creodias': 'usgs_AWS',
+                                       'peps': 'peps',
+                                       'astraea_eod': 'astraea_eod'}
+        self._plan['l8_provider'] = provider_translator_l8_dict[data_provider]
 
         ## Addind tiles
         tiles_plan=list()
@@ -56,9 +57,10 @@ class WorkPlan:
         for i, tile_id in enumerate(tile_ids):
             tile_plan = dict()
             tile_plan['tile_id'] = tile_id
-            s1_prd_ids, orbit_dir = self._identify_s1(tile_id, eodag_config_filepath=eodag_config_filepath)
+            s1_prd_ids, orbit_dir = self._identify_s1(tile_id,
+                eodag_config_filepath=eodag_config_filepath)
             s2_prd_ids = self._identify_s2(tile_id, eodag_config_filepath=eodag_config_filepath)
-            l8_prd_ids = self._identify_l8(tile_id, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
+            l8_prd_ids = self._identify_l8(tile_id, eodag_config_filepath=eodag_config_filepath)
             tile_plan['s1_ids'] = s1_prd_ids
             tile_plan['s1_orbit_dir'] = orbit_dir
             tile_plan['s1_nb'] = len(s1_prd_ids)
@@ -69,7 +71,7 @@ class WorkPlan:
             if isinstance(l8_sr, list) and len(l8_sr) == len(tile_ids):
                 tile_plan["l8_enable_sr"]= l8_sr[i]
             elif isinstance(l8_sr, list):
-                logger.error(f"Input l8_sr should be of size {len(tile_ids)}")
+                logger.error("Input l8_sr should be of size %s", len(tile_ids))
                 raise ValueError
             else:
                 tile_plan["l8_enable_sr"] = l8_sr
@@ -84,19 +86,19 @@ class WorkPlan:
 
 
     def _identify_s1(self,tile_id, eodag_config_filepath=None):
-        df = eotile_module.main(tile_id)[0]
+        s2_tile_df = eotile_module.main(tile_id)[0]
         s1_prods_types = {"peps": "S1_SAR_GRD",
                           "astraea_eod": "sentinel1_l1c_grd",
                           "creodias":"S1_SAR_GRD"}
-        s1_prods_full = eodag_prods( df,
+        s1_prods_full = eodag_prods( s2_tile_df,
                                 self._plan['season_start'], self._plan['season_end'],
                                 self._plan['s1_provider'],
                                 s1_prods_types[self._plan['s1_provider']],
                                 eodag_config_filepath)
         s1_prods_desc = [s1_prod for s1_prod in s1_prods_full if is_descending(s1_prod, self._plan['s1_provider'])]
         s1_prods_asc = [s1_prod for s1_prod in s1_prods_full if not is_descending(s1_prod, self._plan['s1_provider'])]
-        logger.info('Number of descending products: {}'.format(len(s1_prods_desc)))
-        logger.info('Number of ascending products: {}'.format(len(s1_prods_asc)))
+        logger.info('Number of descending products: %s', len(s1_prods_desc))
+        logger.info('Number of ascending products: %s', len(s1_prods_asc))
 
         # Filtering by orbit type
         if len(s1_prods_desc) >= len(s1_prods_asc):
@@ -119,29 +121,28 @@ class WorkPlan:
 
 
     def _identify_s2(self, tile_id, eodag_config_filepath=None):
-        df = eotile_module.main(tile_id)[0]
+        s2_tile_df = eotile_module.main(tile_id)[0]
         s2_prods_types = {"peps": "S2_MSI_L1C",
                           "astraea_eod": "sentinel2_l1c",
                           "creodias": "S2_MSI_L1C"}
-        product_type = s2_prods_types[self._plan['s1_provider'].lower()]
-        s2_prods = eodag_prods( df, self._plan['season_start'], self._plan['season_end'],
+        s2_prods = eodag_prods( s2_tile_df, self._plan['season_start'], self._plan['season_end'],
                                 self._plan['s1_provider'],
                                 s2_prods_types[self._plan['s1_provider'].lower()],
                                 eodag_config_filepath,
-                                cloudCover=self._cloudcover)
+                                cloud_cover=self._cloudcover)
         s2_prod_ids = list()
         for s2_prod in s2_prods:
             if tile_id in s2_prod.properties["id"]:
                 s2_prod_ids.append([s2_prod.properties["id"]])
         return s2_prod_ids
 
-    def _identify_l8(self, tile_id, l8_sr=False, eodag_config_filepath=None):
+    def _identify_l8(self, tile_id, eodag_config_filepath=None):
         l8_prods = eodag_prods( eotile_module.main(tile_id)[0],
                                 self._plan['season_start'], self._plan['season_end'],
                                 'astraea_eod',
                                 'landsat8_c2l1t1',
                                 eodag_config_filepath,
-                                cloudCover=self._cloudcover)
+                                cloud_cover=self._cloudcover)
         # filter the prods: keep only T1 products
         l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
         logger.debug(l8_prods)
@@ -162,7 +163,7 @@ class WorkPlan:
                 elif len(l8_id) > 0:
                     dic[key] = [l8_id]
             else:
-                logger.warning(f"Missing product {l8_prod.properties['id']}")
+                logger.warning("Missing product %s", l8_prod.properties['id'])
 
         return list(dic.values())
 
@@ -206,7 +207,7 @@ class WorkPlan:
     @classmethod
     def load(cls, wp_filepath):
         wp = cls.__new__(cls)
-        with open(wp_filepath) as raw_workplan:
+        with open(wp_filepath, encoding='utf-8') as raw_workplan:
             wp._plan = json.load(raw_workplan)
         return wp
 
@@ -220,23 +221,25 @@ class WorkPlan:
                 season_type="cropland",
                 eodag_config_filepath=None, cloudcover=90):
         tile_ids=list()
-        with open(csv_filepath) as csvfile:
+        with open(csv_filepath,encoding="latin-1") as csvfile:
             reader = csv.reader(csvfile)
             for line in reader:
                 for tile_id in line:
                     tile_ids.append(tile_id)
-        return WorkPlan(tile_ids, data_provider, start_date, end_date,
+
+        return cls(tile_ids, start_date, end_date,
                 data_provider,
-                l8_sr,
-                aez_id,
-                user,
-                visibility,
-                season_type,
-                eodag_config_filepath , cloudcover)
+                l8_sr=l8_sr,
+                aez_id=aez_id,
+                user=user,
+                visibility=visibility,
+                season_type=season_type,
+                eodag_config_filepath=eodag_config_filepath,
+                cloudcover=cloudcover)
 
     def to_json(self, out_filepath):
-        with open(out_filepath, "w") as fp:
-            json.dump(self._plan, fp, indent=4)
+        with open(out_filepath, "w", encoding='utf-8') as json_file:
+            json.dump(self._plan, json_file, indent=4)
 
     def to_ewoc_db(self):
         temporary_json_file = tempfile.NamedTemporaryFile(suffix='.json')

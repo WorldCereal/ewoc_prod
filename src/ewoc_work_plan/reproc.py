@@ -93,7 +93,8 @@ def search_json_and_dump(bucket_prods, plan, path):
                 logger.info(prods)
                 out["s2_ids"].append(prod)
                 if len(is_present) != S2_band_count:
-                    logger.info("There is", len(is_present), "S2 products and there should be ",S2_band_count)
+                    logger.info("There is %s S2 products and there should be %s", len(is_present),
+                                                                                  S2_band_count)
 
         # L8 TIRS
         prod_list = tile_plan["l8_ids"]
