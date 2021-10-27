@@ -10,7 +10,7 @@ from eotile import eotile_module
 from ewoc_db.fill.fill_db import main as main_ewoc_db
 
 from ewoc_work_plan import __version__
-from ewoc_work_plan.utils import eodag_prods, is_descending, get_path_row
+from ewoc_work_plan.utils import eodag_prods, is_descending, get_path_row, greatest_timedelta
 from ewoc_work_plan.reproc import reproc_wp
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 
@@ -100,11 +100,17 @@ class WorkPlan:
         logger.info('Number of descending products: %s', len(s1_prods_desc))
         logger.info('Number of ascending products: %s', len(s1_prods_asc))
 
+        td_asc = greatest_timedelta(s1_prods_asc, self._plan['season_start'], self._plan['season_end'])
+        td_desc = greatest_timedelta(s1_prods_desc, self._plan['season_start'], self._plan['season_end'])
+
         # Filtering by orbit type
-        if len(s1_prods_desc) >= len(s1_prods_asc):
+        # Selecting the least time_delta
+        if td_asc >= td_desc:
+            logger.info("Descending products where selected due to their repartition")
             s1_prods = s1_prods_desc
             orbit_dir = "DES"
         else:
+            logger.info("Ascending products where selected due to their repartition")
             s1_prods = s1_prods_asc
             orbit_dir = "ASC"
 
@@ -146,7 +152,6 @@ class WorkPlan:
         # filter the prods: keep only T1 products
         l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
         logger.debug(l8_prods)
-
 
         # Group by same path & date
         dic = {}
