@@ -5,7 +5,7 @@ import click
 
 from ewoc_work_plan import __version__
 from ewoc_work_plan.workplan import WorkPlan
-from ewoc_work_plan.plan.reproc import reproc_wp
+
 
 __author__ = "Mathis Germa"
 __copyright__ = "CS Group France"
