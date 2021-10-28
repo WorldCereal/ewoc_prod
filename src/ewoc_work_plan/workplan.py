@@ -68,8 +68,10 @@ class WorkPlan:
             tile_plan['s2_nb'] = len(s2_prd_ids)
             tile_plan['l8_ids'] = l8_prd_ids
             tile_plan['l8_nb'] = len(l8_prd_ids)
+            tile_plan["geometry"] = s2_tile.iloc[0]["geometry"].to_wkt()
+            tile_plan["epsg"] = "epsg:4326"
             if isinstance(l8_sr, list) and len(l8_sr) == len(tile_ids):
-                tile_plan["l8_enable_sr"]= l8_sr[i]
+                tile_plan["l8_enable_sr"] = l8_sr[i]
             elif isinstance(l8_sr, list):
                 logger.error("Input l8_sr should be of size %s", len(tile_ids))
                 raise ValueError
