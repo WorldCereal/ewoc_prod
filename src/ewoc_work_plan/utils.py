@@ -5,8 +5,24 @@ import re
 from datetime import datetime, timedelta
 import boto3
 from eodag.api.core import EODataAccessGateway
+import sys
 
 _logger = logging.getLogger(__name__)
+
+
+def set_logger(verbose_v):
+    """
+    Set the logger level
+    :param loglevel:
+    :return:
+    """
+    v_to_level = {"v": "INFO", "vv": "DEBUG"}
+    loglevel = v_to_level[verbose_v]
+    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+    formatter = logging.Formatter(logformat, datefmt="%Y-%m-%d %H:%M:%S")
+    logging.getLogger().handlers[0].setFormatter(formatter)
+    logging.getLogger().setLevel(loglevel)
+
 
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=None):
     dag = EODataAccessGateway(user_conf_file_path=creds)
