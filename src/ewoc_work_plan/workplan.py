@@ -106,8 +106,8 @@ class WorkPlan:
         logger.debug("DESCENDING:")
         td_desc = greatest_timedelta(s1_prods_desc, self._plan['season_start'], self._plan['season_end'])
 
-        logger.info(f"The greatest time delta for ASCENTING product is {td_asc}")
-        logger.info(f"The greatest time delta for DESCENDING product is {td_desc}")
+        logger.info("The greatest time delta for ASCENTING product is %s", td_asc)
+        logger.info("The greatest time delta for DESCENDING product is %s", td_desc)
 
         # Filtering by orbit type
         # Selecting the least time_delta
@@ -128,7 +128,7 @@ class WorkPlan:
                 dic[date].append(s1_prod.properties["id"])
             elif len(s1_prod.properties["id"]) > 0:
                 dic[date] = [s1_prod.properties["id"]]
-        logger.info(f'{len(s1_prods_asc)} products are grouped in {len(dic)} dates')
+        logger.info('%s products are grouped in %s dates', len(s1_prods_asc), len(dic))
 
         return list(dic.values()), orbit_dir
 
