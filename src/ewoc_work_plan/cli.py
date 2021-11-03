@@ -130,13 +130,7 @@ def reproc(ctx, bucket, path):
 
 @click.group(chain=True)
 @click.version_option(__version__)
-@click.option(
-    "--verbose",
-    type=click.Choice(["v", "vv"]),
-    default="vv",
-    help="Set verbosity level: v for info, vv for debug",
-    required=True,
-)
+@click.option('-v', '--verbose', count=True, help="Verbosity level default is warning, -v for info, -vv for debug")
 def run(verbose):
     set_logger(verbose)
 

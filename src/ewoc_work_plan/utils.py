@@ -16,7 +16,7 @@ def set_logger(verbose_v):
     :param loglevel:
     :return:
     """
-    v_to_level = {"v": "INFO", "vv": "DEBUG"}
+    v_to_level = {0: "WARNING", 1: "INFO", 2: "DEBUG"}
     loglevel = v_to_level[verbose_v]
     logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
     formatter = logging.Formatter(logformat, datefmt="%Y-%m-%d %H:%M:%S")
