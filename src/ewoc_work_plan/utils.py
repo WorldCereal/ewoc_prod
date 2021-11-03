@@ -113,11 +113,16 @@ def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_f
     # Chained comparison
     for current_date in date_list:
         delta_max = max(abs(current_date - previous_date), delta_max)
+        _logger.debug(f"DATE: {previous_date}")
+        # logging (1)
         previous_date = current_date
 
     # Comparing to the end extremity
     end_date_strp = datetime.strptime(end_date, extremity_dateformat)
     delta_max = max(abs(previous_date - end_date_strp), delta_max)
 
+    # logging (2)
+    _logger.debug(f"DATE: {previous_date}")
+    _logger.debug(f"DATE: {end_date_strp}")
     return (delta_max)
 
