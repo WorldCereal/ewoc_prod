@@ -5,7 +5,7 @@ import click
 
 from ewoc_work_plan import __version__
 from ewoc_work_plan.workplan import WorkPlan
-
+from ewoc_work_plan.utils import set_logger
 
 __author__ = "Mathis Germa"
 __copyright__ = "CS Group France"
@@ -129,8 +129,11 @@ def reproc(ctx, bucket, path):
 
 
 @click.group(chain=True)
-def run():
-    pass
+@click.version_option(__version__)
+@click.option('-v', '--verbose', count=True, help="Verbosity level default is warning, -v for info, -vv for debug")
+def run(verbose):
+    set_logger(verbose)
+
 
 run.add_command(generate)
 run.add_command(load)

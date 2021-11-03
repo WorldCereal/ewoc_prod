@@ -5,8 +5,24 @@ import re
 from datetime import datetime, timedelta
 import boto3
 from eodag.api.core import EODataAccessGateway
+import sys
 
 _logger = logging.getLogger(__name__)
+
+
+def set_logger(verbose_v):
+    """
+    Set the logger level
+    :param loglevel:
+    :return:
+    """
+    v_to_level = {0: "WARNING", 1: "INFO", 2: "DEBUG"}
+    loglevel = v_to_level[verbose_v]
+    logformat = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+    formatter = logging.Formatter(logformat, datefmt="%Y-%m-%d %H:%M:%S")
+    logging.getLogger().handlers[0].setFormatter(formatter)
+    logging.getLogger().setLevel(loglevel)
+
 
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=None):
     dag = EODataAccessGateway(user_conf_file_path=creds)
@@ -97,11 +113,16 @@ def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_f
     # Chained comparison
     for current_date in date_list:
         delta_max = max(abs(current_date - previous_date), delta_max)
+        _logger.debug(f"DATE: {previous_date}")
+        # logging (1)
         previous_date = current_date
 
     # Comparing to the end extremity
     end_date_strp = datetime.strptime(end_date, extremity_dateformat)
     delta_max = max(abs(previous_date - end_date_strp), delta_max)
 
+    # logging (2)
+    _logger.debug(f"DATE: {previous_date}")
+    _logger.debug(f"DATE: {end_date_strp}")
     return (delta_max)
 
