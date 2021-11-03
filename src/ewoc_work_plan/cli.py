@@ -1,12 +1,11 @@
-import click
 import logging
-import sys
 from pathlib import Path
 
+import click
 
 from ewoc_work_plan import __version__
 from ewoc_work_plan.workplan import WorkPlan
-from ewoc_work_plan.plan.reproc import reproc_wp
+from ewoc_work_plan.utils import set_logger
 
 __author__ = "Mathis Germa"
 __copyright__ = "CS Group France"
@@ -26,12 +25,12 @@ _logger = logging.getLogger(__name__)
 @click.option('-user', default="EWoC_admin", help="Username")
 @click.option('-visibility', default="public", help="Visibility, public or private")
 @click.option('-season_type', default="cropland", help="Season type")
-@click.option('-eodag_config_filepath', help="Path to the Eodag yml config file")
+@click.option('-eodag_config_filepath', default=None, help="Path to the Eodag yml config file")
 @click.option('-cloudcover', default="90", help="Cloudcover parameter")
-def generate(ctx, input, sd, ed, prov, l8_sr, aez_id,user,visibility,season_type,eodag_config_filepath,cloudcover):
+def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_type, eodag_config_filepath, cloudcover):
     ctx.ensure_object(dict)
 
-    if "." in input :
+    if "." in input:
         if ".csv" in input:
             induced_type = "csv"
         else:
@@ -54,11 +53,30 @@ def generate(ctx, input, sd, ed, prov, l8_sr, aez_id,user,visibility,season_type
         l8_sr = l8_split[0]
 
     if induced_type == "S2_tiles":
-        ctx.obj["wp"] = WorkPlan(tiles_to_generate, sd, ed, prov, l8_sr)
+        ctx.obj["wp"] = WorkPlan(tiles_to_generate, sd, ed, prov, l8_sr=l8_sr,
+                                 aez_id=aez_id,
+                                 user=user,
+                                 visibility=visibility,
+                                 season_type=season_type,
+                                 eodag_config_filepath=eodag_config_filepath,
+                                 cloudcover=cloudcover
+                                 )
     elif induced_type == "csv":
-        ctx.obj["wp"] = WorkPlan.from_csv(input, sd, ed, prov, l8_sr)
+        ctx.obj["wp"] = WorkPlan.from_csv(input, sd, ed, prov, l8_sr=l8_sr,
+                                          aez_id=aez_id,
+                                          user=user,
+                                          visibility=visibility,
+                                          season_type=season_type,
+                                          eodag_config_filepath=eodag_config_filepath,
+                                          cloudcover=cloudcover)
     elif induced_type == "aoi":
-        ctx.obj["wp"] = WorkPlan.from_aoi(input, sd, ed, prov, l8_sr)
+        ctx.obj["wp"] = WorkPlan.from_aoi(input, sd, ed, prov, l8_sr=l8_sr,
+                                          aez_id=aez_id,
+                                          user=user,
+                                          visibility=visibility,
+                                          season_type=season_type,
+                                          eodag_config_filepath=eodag_config_filepath,
+                                          cloudcover=cloudcover)
     else:
         click.echo(f"Unrecognized {input} as input type")
         raise NotImplementedError
@@ -111,8 +129,11 @@ def reproc(ctx, bucket, path):
 
 
 @click.group(chain=True)
-def run():
-    pass
+@click.version_option(__version__)
+@click.option('-v', '--verbose', count=True, help="Verbosity level default is warning, -v for info, -vv for debug")
+def run(verbose):
+    set_logger(verbose)
+
 
 run.add_command(generate)
 run.add_command(load)

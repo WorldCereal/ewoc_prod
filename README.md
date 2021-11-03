@@ -112,14 +112,16 @@ In order to generate a plan you'll need the following:
 2. Activate the venv: `source /path/to/venv-ewoc-wp/bin/activate`
 3. Update pip: `pip install pip --upgrade`
 4. Install with `pip install /path/to/ewoc_workplan-x.y.z.tar.gz`
-5. Run `generate_wp aoi sd ed o creds provider process_l8`
+5. Run `ewoc_workplan aoi sd ed o creds provider process_l8`
 
 Full help
 
 ```bash
-Usage: workplan [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
+Usage: ewoc_workplan [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
 
 Options:
+  --version      Show the version and exit.
+  -v, --verbose  Verbosity level default is warning, -v for info, -vv for debug
   --help  Show this message and exit.
 
 Commands:
@@ -132,9 +134,9 @@ Commands:
 ```
 
 ```bash
-$ workplan generate
+$ ewoc_workplan generate
 EWoC plan generation
-Usage: workplan generate [OPTIONS]
+Usage: ewoc_workplan generate [OPTIONS]
 
 Options:
   -input TEXT                  Input: a list of S2 tiles eg: '31TCJ,30STF', a
@@ -157,7 +159,7 @@ Options:
 You can use as many commands at once as you like, for example:
 
 ```bash
-$ workplan load wp.json reproc -bucket "bucket_name" -path "/SPAIN/" write wp_reproc.json
+$ ewoc_workplan load wp.json reproc -bucket "bucket_name" -path "/SPAIN/" write wp_reproc.json
 ```
 
 ### What's next
