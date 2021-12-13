@@ -28,14 +28,23 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=N
     poly = df.geometry[0].to_wkt()
     max_items = 2000
     if cloud_cover is None:
-        products, __unused = dag.search( productType=product_type,
+        if product_type=="LANDSAT_C2L2_SR":
+            # We use search all for L8 products because we need pagination
+            products = dag.search_all(productType="LANDSAT_C2L2_SR", geom=poly, start=start_date, end=end_date,
+                                     platformSerialIdentifier="LANDSAT_8")
+        else:
+            products, __unused = dag.search( productType=product_type,
                                     start=start_date, end=end_date,
                                     geom=poly, items_per_page=max_items)
     else:
-        products, __unused = dag.search( productType=product_type,
-                                    start=start_date, end=end_date, geom=poly,
-                                     items_per_page=max_items,
-                                     cloudCover=cloud_cover)
+        if product_type=="LANDSAT_C2L2_SR":
+            products = dag.search_all(productType="LANDSAT_C2L2_SR", geom=poly, start=start_date, end=end_date,
+                                     platformSerialIdentifier="LANDSAT_8", cloudCover=cloud_cover)
+        else:
+            products, __unused = dag.search( productType=product_type,
+                                        start=start_date, end=end_date, geom=poly,
+                                         items_per_page=max_items,
+                                         cloudCover=cloud_cover)
     return products
 
 

@@ -151,7 +151,7 @@ class WorkPlan:
         l8_prods = eodag_prods( s2_tile,
                                 self._plan['season_start'], self._plan['season_end'],
                                 'astraea_eod',
-                                'landsat8_c2l1t1',
+                                'LANDSAT_C2L2_SR',
                                 eodag_config_filepath,
                                 cloud_cover=self._cloudcover)
         # filter the prods: keep only T1 products
