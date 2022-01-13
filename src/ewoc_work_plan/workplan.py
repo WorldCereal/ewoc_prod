@@ -30,7 +30,7 @@ class WorkPlan:
 
         self._cloudcover = cloudcover
         if data_provider not in ['creodias', 'peps', 'astraea_eod']:
-            raise ValueError
+            raise ValueError("Incorrect data provider")
 
         ## Filling the plan
         self._plan = dict()
@@ -46,9 +46,9 @@ class WorkPlan:
         self._plan['s1_provider'] = data_provider
         self._plan['s2_provider'] = data_provider
         #  TODO : Fill or change the provider translator system
-        provider_translator_l8_dict = {'creodias': 'usgs_AWS',
-                                       'peps': 'peps',
-                                       'astraea_eod': 'astraea_eod'}
+        provider_translator_l8_dict = {'creodias': 'usgs_satapi_aws',
+                                       'peps': 'usgs_satapi_aws',
+                                       'astraea_eod': 'usgs_satapi_aws'}
         self._plan['l8_provider'] = provider_translator_l8_dict[data_provider]
 
         ## Addind tiles
@@ -150,23 +150,25 @@ class WorkPlan:
     def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
         l8_prods = eodag_prods( s2_tile,
                                 self._plan['season_start'], self._plan['season_end'],
-                                'astraea_eod',
-                                'landsat8_c2l1t1',
+                                self._plan['l8_provider'],
+                                'LANDSAT_C2L2_SR',
                                 eodag_config_filepath,
                                 cloud_cover=self._cloudcover)
         # filter the prods: keep only T1 products
-        l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
+        #l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
         logger.debug(l8_prods)
 
         # Group by same path & date
         dic = {}
         for l8_prod in l8_prods:
             date = (l8_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
-            path, row = get_path_row(l8_prod, 'astraea_eod'.lower()) # TODO change 'astraea_eod' to real l8 provider
+            path, row = get_path_row(l8_prod, self._plan['l8_provider'].lower())
             key = path + date
             l8_mask = Landsat_Cloud_Mask(path, row, date)
             if l8_mask.mask_exists():
                 l8_id = l8_prod.properties['id']
+                if l8_id.endswith("_SR"):
+                    l8_id = l8_id[:-3]
                 #f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
                 if key in dic and len(l8_id) > 0:
                     dic[key].append(l8_id)
