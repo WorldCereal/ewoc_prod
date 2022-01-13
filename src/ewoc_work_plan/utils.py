@@ -2,6 +2,7 @@ import os
 import logging
 import xml.etree.ElementTree as et
 import re
+from shapely.wkt import dumps
 from datetime import datetime, timedelta
 import boto3
 from eodag.api.core import EODataAccessGateway
@@ -25,7 +26,8 @@ def set_logger(verbose_v):
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=None):
     dag = EODataAccessGateway(user_conf_file_path=creds)
     dag.set_preferred_provider(provider)
-    poly = df.geometry[0].to_wkt()
+    #poly = df.geometry[0].to_wkt()
+    poly = dumps(df.geometry[0])
     max_items = 2000
     if cloud_cover is None:
         products, __unused = dag.search( productType=product_type,
