@@ -2,6 +2,7 @@ import os
 import logging
 import xml.etree.ElementTree as et
 import re
+from shapely.wkt import dumps
 from datetime import datetime, timedelta
 import boto3
 from eodag.api.core import EODataAccessGateway
@@ -25,17 +26,29 @@ def set_logger(verbose_v):
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=None):
     dag = EODataAccessGateway(user_conf_file_path=creds)
     dag.set_preferred_provider(provider)
-    poly = df.geometry[0].to_wkt()
+    #poly = df.geometry[0].to_wkt()
+    poly = dumps(df.geometry[0])
     max_items = 2000
     if cloud_cover is None:
-        products, __unused = dag.search( productType=product_type,
+        if product_type=="LANDSAT_C2L2_SR":
+            # We use search all for L8 products because we need pagination
+            products = dag.search_all(productType=product_type, geom=poly, start=start_date, end=end_date,
+                                     platformSerialIdentifier="LANDSAT_8")
+        else:
+            products, __unused = dag.search( productType=product_type,
                                     start=start_date, end=end_date,
                                     geom=poly, items_per_page=max_items)
     else:
-        products, __unused = dag.search( productType=product_type,
-                                    start=start_date, end=end_date, geom=poly,
-                                     items_per_page=max_items,
-                                     cloudCover=cloud_cover)
+        if product_type=="LANDSAT_C2L2_SR":
+            products = dag.search_all(productType=product_type, geom=poly, start=start_date, end=end_date,
+                                     platformSerialIdentifier="LANDSAT_8", cloudCover=cloud_cover)
+
+        else:
+            products, __unused = dag.search(productType=product_type,
+                                        start=start_date, end=end_date, geom=poly,
+                                         items_per_page=max_items,
+                                         cloudCover=cloud_cover)
+
     return products
 
 
@@ -77,6 +90,11 @@ def get_path_row(product, provider):
     elif provider.lower() == "astraea_eod":
         path = product.assets['B5']['href'].split('/')[8]
         row = product.assets['B5']['href'].split('/')[9]
+    elif provider.lower() == "usgs_satapi_aws":
+        path = product.assets['blue']['href'].split('/')[8]
+        row = product.assets['blue']['href'].split('/')[9]
+    else:
+        raise NotImplementedError(f"Provider {provider} not implemented yet ")
     return path, row
 
 def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_format:str = "%Y%m%d") -> timedelta:
