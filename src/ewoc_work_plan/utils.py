@@ -78,8 +78,6 @@ def is_descending(s1_product,provider):
 
 
 def get_path_row(product, provider):
-    path = ""
-    row  = ""
     if provider.lower() == "creodias":
         path = str(product.properties['path'])
         row = str(product.properties['row'])
@@ -109,37 +107,38 @@ def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_f
     """
 
     if len(EOProduct_list) < 1:
-        raise ValueError("Input list is empty")
+        _logger.warning("Input list is empty, returning high value 9999")
+        return timedelta(9999)
+    else:
+        split_parameter = "_|T"
+        extremity_dateformat = "%Y-%m-%d"
 
-    split_parameter = "_|T"
-    extremity_dateformat = "%Y-%m-%d"
+        # Building date list (to make sure they are sorted)
+        date_list = []
+        for s1_prod in EOProduct_list:
+            date = re.split(split_parameter, s1_prod.properties["id"])[4]
+            date_list.append(datetime.strptime(date, date_format))
 
-    # Building date list (to make sure they are sorted)
-    date_list = []
-    for s1_prod in EOProduct_list:
-        date = re.split(split_parameter, s1_prod.properties["id"])[4]
-        date_list.append(datetime.strptime(date, date_format))
+        date_list.sort()
 
-    date_list.sort()
+        # Comparing to the start extremity
+        previous_date = datetime.strptime(start_date, extremity_dateformat)
+        delta_max = timedelta(0)
 
-    # Comparing to the start extremity
-    previous_date = datetime.strptime(start_date, extremity_dateformat)
-    delta_max = timedelta(0)
+        # Chained comparison
+        for current_date in date_list:
+            delta_max = max(abs(current_date - previous_date), delta_max)
+            _logger.debug(f"DATE: %s", previous_date)
+            # logging (1)
+            previous_date = current_date
 
-    # Chained comparison
-    for current_date in date_list:
-        delta_max = max(abs(current_date - previous_date), delta_max)
+        # Comparing to the end extremity
+        end_date_strp = datetime.strptime(end_date, extremity_dateformat)
+        delta_max = max(abs(previous_date - end_date_strp), delta_max)
+
+        # logging (2)
         _logger.debug(f"DATE: %s", previous_date)
-        # logging (1)
-        previous_date = current_date
+        _logger.debug(f"DATE: %s", end_date_strp)
 
-    # Comparing to the end extremity
-    end_date_strp = datetime.strptime(end_date, extremity_dateformat)
-    delta_max = max(abs(previous_date - end_date_strp), delta_max)
-
-    # logging (2)
-    _logger.debug(f"DATE: %s", previous_date)
-    _logger.debug(f"DATE: %s", end_date_strp)
-
-    return (delta_max)
+        return (delta_max)
 
