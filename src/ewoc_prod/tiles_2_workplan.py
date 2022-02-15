@@ -313,6 +313,10 @@ def main(args):
         args.tile_id, args.aez_id, args.user_aoi, args.prod_start_date)
     # logging.info("Tiles = %s", s2tiles_list)
 
+    if not s2tiles_list:
+        logging.info("No tile found")
+        sys.exit(0)
+
     #Check number of AEZ
     aez_list = check_number_of_aez_for_selected_tiles(args.s2tiles_aez_file, s2tiles_list)
 
