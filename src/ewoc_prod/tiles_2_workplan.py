@@ -51,30 +51,32 @@ def get_tiles_from_aoi(s2tiles_layer, aoi_geom):
     s2tiles_layer.SetSpatialFilter(None)
     return tiles_id
 
-def get_tiles_from_date(s2tiles_layer, prod_start_date, crop_type='ww'):
+def get_tiles_from_date(s2tiles_layer, prod_start_date):
     """
     Get s2 tiles list from aoi provided by user
     :param s2tiles_layer: MGRS grid that contains for each included tile
         the associated aez information
     :param prod_start_date: production start date
-    :param crop_type: crop type (e.g. ww, m1, m2)
     """
     end_doy = prod_start_date.strftime("%j")
-    aez_date_key=None
-    if crop_type == "ww":
-        aez_date_key = "wweos_max"
-    elif crop_type == "m1":
-        aez_date_key = "m1eos_max"
-    elif crop_type == "m2":
-        aez_date_key = "m2eos_max"
-    else:
-        raise ValueError
-    #Get s2 tiles list
+    #Get s2 tiles list and corresponding season
     tiles_id = []
+    season = []
     for tile in s2tiles_layer:
-        if int(tile.GetField(aez_date_key)) == int(end_doy):
+        if int(tile.GetField("wweos_max")) == int(end_doy):
             tiles_id.append(tile.GetField('tile'))
-    return tiles_id
+            season.append("winter")
+        elif int(tile.GetField("m1eos_max")) == int(end_doy):
+            tiles_id.append(tile.GetField('tile'))
+            season.append("summer1")
+        elif int(tile.GetField("m2eos_max")) == int(end_doy):
+            tiles_id.append(tile.GetField('tile'))
+            season.append("summer2")
+    season = list(set(season))
+    if len(season) > 1:
+        logging.info('The date provided by user corresponds to several seasons')
+        sys.exit(1)
+    return tiles_id, season
 
 def extract_s2tiles_list(s2tiles_aez_file, tile_id, aez_id, user_aoi, prod_start_date):
     """
@@ -91,6 +93,7 @@ def extract_s2tiles_list(s2tiles_aez_file, tile_id, aez_id, user_aoi, prod_start
     data_source = driver.Open(s2tiles_aez_file, 1)
     s2tiles_layer = data_source.GetLayer()
     #Identify the tiles of interest from the info provided by the user
+    season = None
     if tile_id is not None:
         logging.info('Extract tile : %s', tile_id)
         tiles_id = get_tiles_from_tile(tile_id)
@@ -111,8 +114,8 @@ def extract_s2tiles_list(s2tiles_aez_file, tile_id, aez_id, user_aoi, prod_start
     else:
         logging.info('Extract tiles corresponding to the production \
             date requested: %s', prod_start_date)
-        tiles_id = get_tiles_from_date(s2tiles_layer, prod_start_date)
-    return tiles_id
+        tiles_id, season = get_tiles_from_date(s2tiles_layer, prod_start_date)
+    return tiles_id, season
 
 def check_number_of_aez_for_selected_tiles(s2tiles_aez_file, tiles_id):
     """
@@ -191,13 +194,13 @@ def conversion_doy_to_date(doy):
     date_format = datetime.strptime(year + "-" + str(doy), "%Y-%j").strftime("%Y-%m-%d")
     return date_format
 
-def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season_type):
+def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season):
     """
     Get some tiles informations (dates, l8_sr)
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
         the associated aez information (geojson file)
     :param tiles_id: list of s2 tiles selected
-    :param season_type: season type (winter, summer1, summer2)
+    :param season: season type (winter, summer1, summer2)
     """
     #Open geosjon
     driver = ogr.GetDriverByName('GeoJSON')
@@ -208,7 +211,7 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season_type):
     s2tiles_layer.SetAttributeFilter(f"tile IN {tiles_id_str}")
     tile = s2tiles_layer.GetNextFeature()
     #Get aez dates
-    aez_start_date_key, aez_end_date_key = get_aez_dates_from_season_type(season_type)
+    aez_start_date_key, aez_end_date_key = get_aez_dates_from_season_type(season)
     #Get dates info
     start_date = tile.GetField(aez_start_date_key)
     end_date = tile.GetField(aez_end_date_key)
@@ -274,7 +277,8 @@ def parse_args(args):
                         type=str)
     parser.add_argument('-season', "--season_type",
                         help="Season type",
-                        type=str)
+                        type=str,
+                        default=None)
     parser.add_argument(
         "-v",
         "--verbose",
@@ -309,7 +313,7 @@ def main(args):
     setup_logging(args.loglevel)
 
     #Extract list of s2 tiles
-    s2tiles_list = extract_s2tiles_list(args.s2tiles_aez_file, \
+    s2tiles_list, season = extract_s2tiles_list(args.s2tiles_aez_file, \
         args.tile_id, args.aez_id, args.user_aoi, args.prod_start_date)
     # logging.info("Tiles = %s", s2tiles_list)
 
@@ -321,12 +325,16 @@ def main(args):
     aez_list = check_number_of_aez_for_selected_tiles(args.s2tiles_aez_file, s2tiles_list)
 
     #Get tiles info for each AEZ
+    if not season:
+        season = args.season_type
+    else:
+        season = season[0]
     if len(aez_list) > 1:
         for aez_id in aez_list:
             s2tiles_list_subset = extract_s2tiles_list_per_aez(args.s2tiles_aez_file, \
                 s2tiles_list, aez_id)
             start_date, end_date, l8_sr = get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
-                s2tiles_list_subset, args.season_type)
+                s2tiles_list_subset, season)
             logging.info("AEZ = %s", int(aez_id))
             logging.info("Start date = %s", start_date)
             logging.info("End date = %s", end_date)
@@ -341,7 +349,7 @@ def main(args):
     else:
         aez_id = aez_list[0]
         start_date, end_date, l8_sr = get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
-            s2tiles_list, args.season_type)
+            s2tiles_list, season)
         logging.info("AEZ = %s", int(aez_id))
         logging.info("Start date = %s", start_date)
         logging.info("End date = %s", end_date)
