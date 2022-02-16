@@ -11,6 +11,7 @@ import argparse
 import logging
 import sys
 from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
 from osgeo import ogr
 
 from ewoc_work_plan.workplan import WorkPlan
@@ -188,35 +189,60 @@ def get_aez_dates_from_season_type(season_type):
     aez_start_date_key=None
     aez_end_date_key=None
     if season_type == "winter":
-        aez_start_date_key = "wweos_min"
+        aez_start_date_key = "wwsos_min"
         aez_end_date_key = "wweos_max"
     elif season_type == "summer1":
-        aez_start_date_key = "m1eos_min"
+        aez_start_date_key = "m1sos_min"
         aez_end_date_key = "m1eos_max"
     elif season_type == "summer2":
-        aez_start_date_key = "m2eos_min"
+        aez_start_date_key = "m2sos_min"
         aez_end_date_key = "m2eos_max"
     else:
         raise ValueError
     return aez_start_date_key, aez_end_date_key
 
-def conversion_doy_to_date(doy):
+def add_buffer_to_dates(season_type, start_doy, year=date.today().year):
+    """
+    Add buffer before crop season
+    :param season_type: season type (winter, summer1, summer2)
+    :param start_doy: day of year corresponding to the crop emergence
+    :param year: year of the crop emergence
+    """
+    season_buffer = {
+    'winter': 15,
+    'summer1': 15,
+    'summer2': 15,
+    }
+    start_processing_doy = start_doy - season_buffer.get(season_type)
+    year_processing_date = year
+    #Manage specific case (e.g. : wwsos = 15 for AEZ 46172)
+    if start_processing_doy == 0:
+        start_date = conversion_doy_to_date(start_doy, year) - \
+            relativedelta(days=season_buffer.get(season_type))
+        start_processing_doy = start_date.strftime("%j")
+        year_processing_date = year-1
+    return start_processing_doy, year_processing_date
+
+def conversion_doy_to_date(doy, year=date.today().year):
     """
     Convert day of year to date YYYY-mm-dd
     :param doy: day of year
+    :param year: year
     """
-    year = str(date.today().year)
+    year = str(year)
     str(doy).rjust(3 + len(str(doy)), '0')
-    date_format = datetime.strptime(year + "-" + str(doy), "%Y-%j").strftime("%Y-%m-%d")
+    date_string = datetime.strptime(year + "-" + str(doy), "%Y-%j").strftime("%Y-%m-%d")
+    date_format = datetime.strptime(date_string, "%Y-%m-%d").date()
     return date_format
 
-def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season_type):
+def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season_type, prod_start_date):
     """
     Get some tiles informations (dates, l8_sr)
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
         the associated aez information (geojson file)
     :param tiles_id: list of s2 tiles selected
     :param season_type: season type (winter, summer1, summer2)
+    :param prod_start_date: production start date
     """
     #Open geosjon
     driver = ogr.GetDriverByName('GeoJSON')
@@ -226,28 +252,50 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season_type):
     tiles_id_str = '(' + ','.join(f"'{tile_id}'" for tile_id in tiles_id) + ')'
     s2tiles_layer.SetAttributeFilter(f"tile IN {tiles_id_str}")
     tile = s2tiles_layer.GetNextFeature()
-    #Get aez dates
+    #Get dates
     aez_start_date_key, aez_end_date_key = get_aez_dates_from_season_type(season_type)
-    #Get dates info
-    start_doy = int(tile.GetField(aez_start_date_key))
-    end_doy = int(tile.GetField(aez_end_date_key))
-    #Conversion start_date/end_date
-    if start_doy == end_doy == 0:
-        start_date = None
-        end_date = None
+    season_start_doy = int(tile.GetField(aez_start_date_key))
+    season_end_doy = int(tile.GetField(aez_end_date_key))
+    if season_start_doy == season_end_doy == 0:
+        season_start = None
+        season_end = None
+        season_processing_start = None
+        season_processing_end = None
+        annual_processing_start = None
+        annual_processing_end = None
     else:
-        start_date = conversion_doy_to_date(start_doy)
-        end_date = conversion_doy_to_date(end_doy)
+        if season_start_doy > season_end_doy:
+            year_start_date = prod_start_date.year - 1
+        else:
+            year_start_date = prod_start_date.year
+
+        season_start = conversion_doy_to_date(season_start_doy, year_start_date)
+        season_end = conversion_doy_to_date(season_end_doy, prod_start_date.year)
+        season_processing_start_doy, year_processing_start_date = \
+            add_buffer_to_dates(season_type, season_start_doy, year_start_date)
+        season_processing_start = conversion_doy_to_date(season_processing_start_doy, \
+            year_processing_start_date)
+        season_processing_end = season_end
+        annual_processing_start = season_end - relativedelta(years=1)
+        annual_processing_end = season_end
     #Get L8 info
     if tile.GetField('L8')==0:
-        l8_sr = False
+        l8_enable_sr = False
     elif tile.GetField('L8')==1:
-        l8_sr = True
+        l8_enable_sr = True
+    else:
+        raise ValueError
+    #Get spring wheat info
+    if tile.GetField('trigger_sw')==0:
+        enable_sw = False
+    elif tile.GetField('trigger_sw')==1:
+        enable_sw = True
     else:
         raise ValueError
     #Remove filter
     s2tiles_layer.SetAttributeFilter(None)
-    return start_date, end_date, l8_sr
+    return season_start, season_end, season_processing_start, season_processing_end, \
+        annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw
 
 # ---- CLI ----
 # The functions defined in this section are wrappers around the main Python
@@ -351,8 +399,9 @@ def main(args):
                 s2tiles_list, aez_id)
 
             if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi)):
-                logging.info('Argument season_type is not used,\
-                    value retrieved from the date provided')
+                if args.season_type:
+                    logging.info('Argument season_type is not used, \
+                        value retrieved from the date provided')
                 season_type = get_aez_season_type_from_date(args.s2tiles_aez_file, \
                  aez_id, args.prod_start_date)
             elif not args.season_type:
@@ -360,28 +409,38 @@ def main(args):
             else:
                 season_type = args.season_type
 
-            start_date, end_date, l8_sr = get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
-                s2tiles_list_subset, season_type)
+            season_start, season_end, season_processing_start, season_processing_end, \
+                annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw = \
+                    get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
+                        s2tiles_list_subset, season_type, args.prod_start_date)
 
             logging.info("AEZ = %s", int(aez_id))
-            if all(arg is None for arg in (start_date, end_date)):
+            if all(arg is None for arg in (season_start, season_end)):
                 logging.info("No %s season", season_type)
             else:
-                logging.info("Start date = %s", start_date)
-                logging.info("End date = %s", end_date)
-                logging.info("L8 = %s", l8_sr)
+                logging.info("Season start date = %s", season_start)
+                logging.info("Season end date = %s", season_end)
+                logging.info("Season processing start date = %s", season_processing_start)
+                logging.info("Season processing end date = %s", season_processing_end)
+                logging.info("Annual processing start date= %s", annual_processing_start)
+                logging.info("Annual processiang end date = %s", annual_processing_end)
+                logging.info("L8 = %s", l8_enable_sr)
+                logging.info("SW = %s", enable_sw)
                 logging.info("Tiles = %s", s2tiles_list_subset)
 
                 #Create the associated workplan
                 #todo : write the work plan in json file with a file name containing aez_id
-                WorkPlan(s2tiles_list, start_date, end_date, 'creodias', l8_sr, int(aez_id), \
-                    eodag_config_filepath="../../../eodag_config.yml")
+                #todo : add 6 dates + enable_sw args in WorkPlan
+                WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+                    l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
     else:
         aez_id = aez_list[0]
 
         if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi)):
-            logging.info('Argument season_type is not used, value retrieved from the date provided')
+            if args.season_type:
+                logging.info('Argument season_type is not used, \
+                    value retrieved from the date provided')
             season_type = get_aez_season_type_from_date(args.s2tiles_aez_file, \
                 aez_id, args.prod_start_date)
         elif not args.season_type:
@@ -389,22 +448,30 @@ def main(args):
         else:
             season_type = args.season_type
 
-        start_date, end_date, l8_sr = get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
-            s2tiles_list, season_type)
+        season_start, season_end, season_processing_start, season_processing_end, \
+            annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw = \
+                get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
+                    s2tiles_list, season_type, args.prod_start_date)
 
         logging.info("AEZ = %s", int(aez_id))
-        if all(arg is None for arg in (start_date, end_date)):
+        if all(arg is None for arg in (season_start, season_end)):
             logging.info("No %s season", season_type)
         else:
-            logging.info("Start date = %s", start_date)
-            logging.info("End date = %s", end_date)
-            logging.info("L8 = %s", l8_sr)
+            logging.info("Season start date = %s", season_start)
+            logging.info("Season end date = %s", season_end)
+            logging.info("Season processing start date = %s", season_processing_start)
+            logging.info("Season processing end date = %s", season_processing_end)
+            logging.info("Annual processing start date= %s", annual_processing_start)
+            logging.info("Annual processiang end date = %s", annual_processing_end)
+            logging.info("L8 = %s", l8_enable_sr)
+            logging.info("SW = %s", enable_sw)
             logging.info("Tiles = %s", s2tiles_list)
 
             #Create the associated workplan
             #todo : write the work plan in json file with a file name containing aez_id
-            WorkPlan(s2tiles_list, start_date, end_date, 'creodias', l8_sr, int(aez_id), \
-                eodag_config_filepath="../../../eodag_config.yml")
+            #todo : add 6 dates + enable_sw args in WorkPlan
+            WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+                l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
 def run():
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
