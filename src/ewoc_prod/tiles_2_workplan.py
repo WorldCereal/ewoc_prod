@@ -329,22 +329,23 @@ def parse_args(args):
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-in',
                         '--s2tiles_aez_file',
-                        help="s2tiles_aez.geojson file")
+                        help="MGRS grid that contains for each included tile \
+                            the associated aez information (geojson file)"),
     parser.add_argument("-pd", "--prod_start_date",
                         help="Production start date - format YYYY-MM-DD",
                         type=parse_date,
                         default=date.today())
     parser.add_argument("-t","--tile_id",
-                        help="Tile id for production",
+                        help="Tile id for production (e.g. '31TCJ')",
                         type=str)
     parser.add_argument('-aid', "--aez_id",
-                        help="AEZ region id for production",
+                        help="AEZ region id for production (e.g. '46172')",
                         type=int)
     parser.add_argument('-aoi', "--user_aoi",
-                        help="User AOI for production",
+                        help="User AOI for production (geojson file)",
                         type=str)
     parser.add_argument('-season', "--season_type",
-                        help="Season type",
+                        help="Season type (winter, summer1, summer2)",
                         type=str,
                         default=None)
     parser.add_argument(
