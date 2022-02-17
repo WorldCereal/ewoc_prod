@@ -12,9 +12,9 @@ import logging
 import sys
 from osgeo import ogr
 from osgeo import osr
+from typing import List
 
-
-def main(arguments):
+def main(arguments: List[str])->None:
     '''Entrypoint'''
 
     parser = argparse.ArgumentParser(
@@ -150,7 +150,6 @@ def main(arguments):
         out_layer.CreateFeature(feature)
         feature = None
         aez_layer.SetAttributeFilter(None)
-
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
