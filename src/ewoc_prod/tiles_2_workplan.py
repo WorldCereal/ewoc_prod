@@ -11,12 +11,13 @@ import argparse
 import logging
 import sys
 from datetime import date, datetime
+from typing import List, Tuple
 from dateutil.relativedelta import relativedelta
 from osgeo import ogr
 
 from ewoc_work_plan.workplan import WorkPlan
 
-def get_tiles_from_tile(tile_id):
+def get_tiles_from_tile(tile_id: str)->List[str]:
     """
     Get s2 tiles list from tile chosen by user
     :param tile_id: tile id (e.g. '31TCJ' Toulouse)
@@ -25,7 +26,7 @@ def get_tiles_from_tile(tile_id):
     tiles_id.append(tile_id)
     return tiles_id
 
-def get_tiles_from_aez(s2tiles_layer, aez_id):
+def get_tiles_from_aez(s2tiles_layer: str, aez_id: str)->List[str]:
     """
     Get s2 tiles list from aez chosen by user
     :param s2tiles_layer: MGRS grid that contains for each included tile
@@ -38,7 +39,7 @@ def get_tiles_from_aez(s2tiles_layer, aez_id):
             tiles_id.append(tile.GetField('tile'))
     return tiles_id
 
-def get_tiles_from_aoi(s2tiles_layer, aoi_geom):
+def get_tiles_from_aoi(s2tiles_layer: str, aoi_geom: str)->List[str]:
     """
     Get s2 tiles list from aoi provided by user
     :param s2tiles_layer: MGRS grid that contains for each included tile
@@ -52,7 +53,7 @@ def get_tiles_from_aoi(s2tiles_layer, aoi_geom):
     s2tiles_layer.SetSpatialFilter(None)
     return tiles_id
 
-def get_tiles_from_date(s2tiles_layer, prod_start_date):
+def get_tiles_from_date(s2tiles_layer: str, prod_start_date: date)->List[str]:
     """
     Get s2 tiles list from date provided by user
     :param s2tiles_layer: MGRS grid that contains for each included tile
@@ -70,7 +71,11 @@ def get_tiles_from_date(s2tiles_layer, prod_start_date):
             tiles_id.append(tile.GetField('tile'))
     return tiles_id
 
-def extract_s2tiles_list(s2tiles_aez_file, tile_id, aez_id, user_aoi, prod_start_date):
+def extract_s2tiles_list(s2tiles_aez_file: str,
+                        tile_id: str,
+                        aez_id: str,
+                        user_aoi: str,
+                        prod_start_date: date)->List[str]:
     """
     Extraction of s2 tiles list from different input provided by user
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
@@ -108,7 +113,7 @@ def extract_s2tiles_list(s2tiles_aez_file, tile_id, aez_id, user_aoi, prod_start
         tiles_id = get_tiles_from_date(s2tiles_layer, prod_start_date)
     return tiles_id
 
-def check_number_of_aez_for_selected_tiles(s2tiles_aez_file, tiles_id):
+def check_number_of_aez_for_selected_tiles(s2tiles_aez_file: str, tiles_id: str)->List[str]:
     """
     Check the number of aez corresponding to the s2 tiles selected
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
@@ -131,7 +136,7 @@ def check_number_of_aez_for_selected_tiles(s2tiles_aez_file, tiles_id):
     s2tiles_layer.SetAttributeFilter(None)
     return aez_list
 
-def extract_s2tiles_list_per_aez(s2tiles_aez_file, tiles_id, aez_id):
+def extract_s2tiles_list_per_aez(s2tiles_aez_file: str, tiles_id: str, aez_id: str)->List[str]:
     """
     Extraction of s2 tiles list for each aez
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
@@ -155,7 +160,7 @@ def extract_s2tiles_list_per_aez(s2tiles_aez_file, tiles_id, aez_id):
     s2tiles_layer.SetAttributeFilter(None)
     return tiles_id_subset
 
-def get_aez_season_type_from_date(s2tiles_aez_file, aez_id, prod_start_date):
+def get_aez_season_type_from_date(s2tiles_aez_file: str, aez_id: str, prod_start_date: date)->str:
     """
     Get the season type from date provided by user
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
@@ -181,7 +186,7 @@ def get_aez_season_type_from_date(s2tiles_aez_file, aez_id, prod_start_date):
     s2tiles_layer.SetAttributeFilter(None)
     return season_type
 
-def get_aez_dates_from_season_type(season_type):
+def get_aez_dates_from_season_type(season_type: str)->Tuple[str,str]:
     """
     Get the start/end dates for the aez
     :param season_type: season type (winter, summer1, summer2)
@@ -201,7 +206,9 @@ def get_aez_dates_from_season_type(season_type):
         raise ValueError
     return aez_start_date_key, aez_end_date_key
 
-def add_buffer_to_dates(season_type, start_doy, year=date.today().year):
+def add_buffer_to_dates(season_type: str,
+                        start_doy: int,
+                        year: date = date.today().year)->Tuple[int,date]:
     """
     Add buffer before crop season
     :param season_type: season type (winter, summer1, summer2)
@@ -223,7 +230,7 @@ def add_buffer_to_dates(season_type, start_doy, year=date.today().year):
         year_processing_date = year-1
     return start_processing_doy, year_processing_date
 
-def conversion_doy_to_date(doy, year=date.today().year):
+def conversion_doy_to_date(doy: int, year: date = date.today().year)->date:
     """
     Convert day of year to date YYYY-mm-dd
     :param doy: day of year
@@ -235,7 +242,11 @@ def conversion_doy_to_date(doy, year=date.today().year):
     date_format = datetime.strptime(date_string, "%Y-%m-%d").date()
     return date_format
 
-def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season_type, prod_start_date):
+def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
+                                tiles_id: str,
+                                season_type: str,
+                                prod_start_date: date)-> \
+                                    Tuple[date,date,date,date,date,date,bool,bool]:
     """
     Get some tiles informations (dates, l8_sr)
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
@@ -302,7 +313,7 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file, tiles_id, season_type, prod_sta
 # API allowing them to be called directly from the terminal as a CLI
 # executable/script.
 
-def parse_date(date_str):
+def parse_date(date_str: str)->date:
     """
     Parse date string to datetime object
     """
@@ -314,7 +325,7 @@ def parse_date(date_str):
         msg = f"Not a valid date: '{date_str}'"
         raise argparse.ArgumentTypeError(msg)
 
-def parse_args(args):
+def parse_args(args: List[str])->argparse.Namespace:
     """Parse command line parameters
 
     Args:
@@ -328,14 +339,14 @@ def parse_args(args):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-in',
-                        '--s2tiles_aez_file',
+                        "--s2tiles_aez_file",
                         help="MGRS grid that contains for each included tile \
-                            the associated aez information (geojson file)"),
-    parser.add_argument("-pd", "--prod_start_date",
+                            the associated aez information (geojson file)")
+    parser.add_argument('-pd', "--prod_start_date",
                         help="Production start date - format YYYY-MM-DD",
                         type=parse_date,
                         default=date.today())
-    parser.add_argument("-t","--tile_id",
+    parser.add_argument('-t',"--tile_id",
                         help="Tile id for production (e.g. '31TCJ')",
                         type=str)
     parser.add_argument('-aid', "--aez_id",
@@ -366,7 +377,7 @@ def parse_args(args):
     )
     return parser.parse_args(args)
 
-def setup_logging(loglevel):
+def setup_logging(loglevel: int)->None:
     """Setup basic logging
     Args:
       loglevel (int): minimum loglevel for emitting messages
@@ -376,7 +387,7 @@ def setup_logging(loglevel):
         level=loglevel, stream=sys.stdout, format=logformat, datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-def main(args):
+def main(args: List[str])->None:
     '''Main script'''
     args = parse_args(args)
     setup_logging(args.loglevel)
@@ -474,7 +485,7 @@ def main(args):
             WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
                 l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
-def run():
+def run()->None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
 
     This function can be used as entry point to create console scripts with setuptools.
