@@ -135,7 +135,7 @@ def main(args: List[str])->None:
                 season_type = args.season_type
 
             season_start, season_end, season_processing_start, season_processing_end, \
-                annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw = \
+                annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw, detector_set = \
                     get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
                         s2tiles_list_subset, season_type, args.prod_start_date)
 
@@ -148,16 +148,17 @@ def main(args: List[str])->None:
                 logging.info("Season processing start date = %s", season_processing_start)
                 logging.info("Season processing end date = %s", season_processing_end)
                 logging.info("Annual processing start date= %s", annual_processing_start)
-                logging.info("Annual processiang end date = %s", annual_processing_end)
+                logging.info("Annual processing end date = %s", annual_processing_end)
                 logging.info("L8 = %s", l8_enable_sr)
                 logging.info("SW = %s", enable_sw)
+		logging.info("Detectors = %s", detector_set)
                 logging.info("Tiles = %s", s2tiles_list_subset)
 
                 #Create the associated workplan
                 #todo : write the work plan in json file with a file name containing aez_id
-                #todo : add 6 dates + enable_sw args in WorkPlan
-                WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
-                    l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
+                #todo : add new args in WorkPlan
+                # WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+                #     l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
     else:
         aez_id = aez_list[0]
@@ -174,7 +175,7 @@ def main(args: List[str])->None:
             season_type = args.season_type
 
         season_start, season_end, season_processing_start, season_processing_end, \
-            annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw = \
+            annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw, detector_set = \
                 get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
                     s2tiles_list, season_type, args.prod_start_date)
 
@@ -187,16 +188,17 @@ def main(args: List[str])->None:
             logging.info("Season processing start date = %s", season_processing_start)
             logging.info("Season processing end date = %s", season_processing_end)
             logging.info("Annual processing start date= %s", annual_processing_start)
-            logging.info("Annual processiang end date = %s", annual_processing_end)
+            logging.info("Annual processing end date = %s", annual_processing_end)
             logging.info("L8 = %s", l8_enable_sr)
             logging.info("SW = %s", enable_sw)
+            logging.info("Detectors = %s", detector_set)
             logging.info("Tiles = %s", s2tiles_list)
 
             #Create the associated workplan
             #todo : write the work plan in json file with a file name containing aez_id
-            #todo : add 6 dates + enable_sw args in WorkPlan
-            WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
-                l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
+            #todo : add new args in WorkPlan
+            # WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+            #     l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
 def run()->None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`

@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+'''
+:author: Marjorie Battude <marjorie.battude@csgroup.eu>
+:organization: CS Group
+:copyright: 2022 CS Group. All rights reserved.
+:license: see LICENSE file
+:created: 2022
+'''
+
 from datetime import date, datetime
 import logging
 

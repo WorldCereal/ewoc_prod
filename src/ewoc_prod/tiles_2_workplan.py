@@ -10,7 +10,7 @@
 import logging
 from datetime import date
 from dateutil.relativedelta import relativedelta
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 from osgeo import ogr
 
 from ewoc_prod.utils import conversion_doy_to_date
@@ -228,6 +228,29 @@ def add_buffer_to_dates(season_type: str,
         year_processing_date = year-1
     return start_processing_doy, year_processing_date
 
+def get_detector_set_from_season_type(season_type: str,
+                                    enable_sw: bool,
+                                    tile: str)->Optional[List[str]]:
+    """
+    Get detector_set according to season_type
+    :param season_type: season type (winter, summer1, summer2)
+    :param enable_sw: if True, spring wheat map will be produced
+    :param tile: first tile of the AEZ (all tiles have similar information)
+    """
+    if season_type == "winter":
+        detector_set = ['winterwheat', 'irrigation']
+    elif season_type == "summer1":
+        detector_set = ['maize', 'irrigation']
+        if int(tile.GetField("m2sos_min")) == int(tile.GetField("m2eos_max")) == 0:
+            detector_set.extend(['cropland'])
+        if enable_sw:
+            detector_set.extend(['springwheat'])
+    elif season_type == "summer2":
+        detector_set = ['cropland', 'maize', 'irrigation']
+    else:
+        raise ValueError
+    return detector_set
+
 def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
                                 tiles_id: str,
                                 season_type: str,
@@ -289,7 +312,9 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
         enable_sw = True
     else:
         raise ValueError
+    #Get detector_set
+    detector_set = get_detector_set_from_season_type(season_type, enable_sw, tile)
     #Remove filter
     s2tiles_layer.SetAttributeFilter(None)
     return season_start, season_end, season_processing_start, season_processing_end, \
-        annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw
+        annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw, detector_set
