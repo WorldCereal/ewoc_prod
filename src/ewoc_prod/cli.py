@@ -135,30 +135,32 @@ def main(args: List[str])->None:
                 season_type = args.season_type
 
             season_start, season_end, season_processing_start, season_processing_end, \
-                annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw, detector_set = \
+                annual_processing_start, annual_processing_end, \
+                    l8_enable_sr, enable_sw, detector_set = \
                     get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
                         s2tiles_list_subset, season_type, args.prod_start_date)
 
-            logging.info("AEZ = %s", int(aez_id))
+            logging.info("aez_id = %s", int(aez_id))
             if all(arg is None for arg in (season_start, season_end)):
                 logging.info("No %s season", season_type)
             else:
-                logging.info("Season start date = %s", season_start)
-                logging.info("Season end date = %s", season_end)
-                logging.info("Season processing start date = %s", season_processing_start)
-                logging.info("Season processing end date = %s", season_processing_end)
-                logging.info("Annual processing start date= %s", annual_processing_start)
-                logging.info("Annual processing end date = %s", annual_processing_end)
-                logging.info("L8 = %s", l8_enable_sr)
-                logging.info("SW = %s", enable_sw)
-		logging.info("Detectors = %s", detector_set)
-                logging.info("Tiles = %s", s2tiles_list_subset)
+                logging.info("season_type = %s", season_type)
+                logging.info("season_start = %s", season_start)
+                logging.info("season_end = %s", season_end)
+                logging.info("season_processing_start = %s", season_processing_start)
+                logging.info("season_processing_end = %s", season_processing_end)
+                logging.info("annual_processing_start = %s", annual_processing_start)
+                logging.info("annual_processing_end = %s", annual_processing_end)
+                logging.info("l8_enable_sr = %s", l8_enable_sr)
+                logging.info("enable_sw = %s", enable_sw)
+                logging.info("detector_set = %s", detector_set)
+                logging.info("tiles = %s", s2tiles_list_subset)
 
                 #Create the associated workplan
                 #todo : write the work plan in json file with a file name containing aez_id
                 #todo : add new args in WorkPlan
-                # WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
-                #     l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
+                WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+                    l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
     else:
         aez_id = aez_list[0]
@@ -175,30 +177,32 @@ def main(args: List[str])->None:
             season_type = args.season_type
 
         season_start, season_end, season_processing_start, season_processing_end, \
-            annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw, detector_set = \
+            annual_processing_start, annual_processing_end, \
+                l8_enable_sr, enable_sw, detector_set = \
                 get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
                     s2tiles_list, season_type, args.prod_start_date)
 
-        logging.info("AEZ = %s", int(aez_id))
+        logging.info("aez_id = %s", int(aez_id))
         if all(arg is None for arg in (season_start, season_end)):
             logging.info("No %s season", season_type)
         else:
-            logging.info("Season start date = %s", season_start)
-            logging.info("Season end date = %s", season_end)
-            logging.info("Season processing start date = %s", season_processing_start)
-            logging.info("Season processing end date = %s", season_processing_end)
-            logging.info("Annual processing start date= %s", annual_processing_start)
-            logging.info("Annual processing end date = %s", annual_processing_end)
-            logging.info("L8 = %s", l8_enable_sr)
-            logging.info("SW = %s", enable_sw)
-            logging.info("Detectors = %s", detector_set)
-            logging.info("Tiles = %s", s2tiles_list)
+            logging.info("season_type = %s", season_type)
+            logging.info("season_start = %s", season_start)
+            logging.info("season_end = %s", season_end)
+            logging.info("season_processing_start = %s", season_processing_start)
+            logging.info("season_processing_end = %s", season_processing_end)
+            logging.info("annual_processing_start = %s", annual_processing_start)
+            logging.info("annual_processing_end = %s", annual_processing_end)
+            logging.info("l8_enable_sr = %s", l8_enable_sr)
+            logging.info("enable_sw = %s", enable_sw)
+            logging.info("detector_set = %s", detector_set)
+            logging.info("tiles = %s", s2tiles_list)
 
             #Create the associated workplan
             #todo : write the work plan in json file with a file name containing aez_id
             #todo : add new args in WorkPlan
-            # WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
-            #     l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
+            WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+                l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
 def run()->None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
