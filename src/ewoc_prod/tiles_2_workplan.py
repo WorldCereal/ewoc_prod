@@ -249,6 +249,7 @@ def get_detector_set_from_season_type(season_type: str,
         detector_set = ['cropland', 'maize', 'irrigation']
     else:
         raise ValueError
+    detector_set = ', '.join(detector_set)
     return detector_set
 
 def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
