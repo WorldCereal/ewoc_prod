@@ -22,7 +22,6 @@ def set_logger(verbose_v):
     logging.getLogger().handlers[0].setFormatter(formatter)
     logging.getLogger().setLevel(loglevel)
 
-
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=None):
     dag = EODataAccessGateway(user_conf_file_path=creds)
     dag.set_preferred_provider(provider)
@@ -32,7 +31,8 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=N
     if cloud_cover is None:
         if product_type=="LANDSAT_C2L2_SR":
             # We use search all for L8 products because we need pagination
-            products = dag.search_all(productType=product_type, geom=poly, start=start_date, end=end_date,
+            products = dag.search_all(productType=product_type, geom=poly,
+                                     start=start_date, end=end_date,
                                      platformSerialIdentifier="LANDSAT_8")
         else:
             products, __unused = dag.search( productType=product_type,
@@ -40,7 +40,8 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=N
                                     geom=poly, items_per_page=max_items)
     else:
         if product_type=="LANDSAT_C2L2_SR":
-            products = dag.search_all(productType=product_type, geom=poly, start=start_date, end=end_date,
+            products = dag.search_all(productType=product_type, geom=poly,
+                                     start=start_date, end=end_date,
                                      platformSerialIdentifier="LANDSAT_8", cloudCover=cloud_cover)
 
         else:
@@ -50,7 +51,6 @@ def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=N
                                          cloudCover=cloud_cover)
 
     return products
-
 
 def is_descending(s1_product,provider):
     if provider.lower() == 'creodias':
@@ -76,7 +76,6 @@ def is_descending(s1_product,provider):
         except RuntimeError:
             _logger.error('Could not determine orbit direction')
 
-
 def get_path_row(product, provider):
     if provider.lower() == "creodias":
         path = str(product.properties['path'])
@@ -95,7 +94,10 @@ def get_path_row(product, provider):
         raise NotImplementedError(f"Provider {provider} not implemented yet ")
     return path, row
 
-def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_format:str = "%Y%m%d") -> timedelta:
+def greatest_timedelta(EOProduct_list:list,
+                        start_date:str,
+                        end_date:str,
+                        date_format:str = "%Y%m%d") -> timedelta:
     """
     Computes the greatest time delta from a list of EOdag products
 
@@ -128,7 +130,7 @@ def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_f
         # Chained comparison
         for current_date in date_list:
             delta_max = max(abs(current_date - previous_date), delta_max)
-            _logger.debug(f"DATE: %s", previous_date)
+            _logger.debug("DATE: %s", previous_date)
             # logging (1)
             previous_date = current_date
 
@@ -137,8 +139,7 @@ def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_f
         delta_max = max(abs(previous_date - end_date_strp), delta_max)
 
         # logging (2)
-        _logger.debug(f"DATE: %s", previous_date)
-        _logger.debug(f"DATE: %s", end_date_strp)
+        _logger.debug("DATE: %s", previous_date)
+        _logger.debug("DATE: %s", end_date_strp)
 
-        return (delta_max)
-
+        return delta_max
