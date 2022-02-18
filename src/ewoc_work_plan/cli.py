@@ -13,21 +13,28 @@ __license__ = "TBD"
 
 _logger = logging.getLogger(__name__)
 
-
 @click.command()
 @click.pass_context
 @click.option('-input', help="Input: a list of S2 tiles eg: '31TCJ,30STF', a csv file, a vector AOI file")
-@click.option('-sd', help="Start date, format YYYY-mm-dd")
-@click.option('-ed', help="End date, format YYYY-mm-dd")
+@click.option('-season_start', help="Season start date of the AEZ, format YYYY-mm-dd")
+@click.option('-season_end', help="Season end date of the AEZ, format YYYY-mm-dd")
+@click.option('-season_processing_start', help="Season processing start date, format YYYY-mm-dd")
+@click.option('-season_processing_end', help="Season processing end date, format YYYY-mm-dd")
+@click.option('-annual_processing_start', help="Annual processing start date for cropland detector, format YYYY-mm-dd")
+@click.option('-annual_processing_end', help="Annual processing end date for cropland detector, format YYYY-mm-dd")
 @click.option('-prov', help="Provider (peps/creodias/astraea_eod)")
-@click.option('-l8_sr', help="Process L8 OLI bands or not", default="False")
+@click.option('-l8_sr', default="False", help="Process L8 OLI bands or not")
 @click.option('-aez_id', default=0, type=int, help="ID of the AED")
 @click.option('-user', default="EWoC_admin", help="Username")
 @click.option('-visibility', default="public", help="Visibility, public or private")
-@click.option('-season_type', default="cropland", help="Season type")
+@click.option('-season_type', default="winter", help="Season type")
+@click.option('-detector_set', default="winterwheat, irrigation", help="Detector set linked to season type")
+@click.option('-enable_sw', default="False", help="Process spring wheat or not")
 @click.option('-eodag_config_filepath', default=None, help="Path to the Eodag yml config file")
 @click.option('-cloudcover', default="90", help="Cloudcover parameter")
-def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_type, eodag_config_filepath, cloudcover):
+def generate(ctx, input, season_start, season_end, season_processing_start, season_processing_end, \
+    annual_processing_start, annual_processing_end, prov, l8_sr, aez_id, \
+        user, visibility, season_type, detector_set, enable_sw, eodag_config_filepath, cloudcover):
     ctx.ensure_object(dict)
 
     if "." in input:
@@ -53,24 +60,37 @@ def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_t
         l8_sr = l8_split[0]
 
     if induced_type == "S2_tiles":
-        ctx.obj["wp"] = WorkPlan(tiles_to_generate, sd, ed, prov, l8_sr=l8_sr,
+        ctx.obj["wp"] = WorkPlan(tiles_to_generate,
+                                 season_start, season_end,
+                                 season_processing_start, season_processing_end,
+                                 annual_processing_start, annual_processing_end,
+                                 prov,
+                                 l8_sr=l8_sr,
                                  aez_id=aez_id,
                                  user=user,
                                  visibility=visibility,
                                  season_type=season_type,
+                                 detector_set=detector_set,
+                                 enable_sw=enable_sw,
                                  eodag_config_filepath=eodag_config_filepath,
                                  cloudcover=cloudcover
                                  )
-    elif induced_type == "csv":
-        ctx.obj["wp"] = WorkPlan.from_csv(input, sd, ed, prov, l8_sr=l8_sr,
+    elif induced_type == "csv": #To remove ?
+        ctx.obj["wp"] = WorkPlan.from_csv(input,
+                                          season_processing_start, season_processing_end,
+                                          prov,
+                                          l8_sr=l8_sr,
                                           aez_id=aez_id,
                                           user=user,
                                           visibility=visibility,
                                           season_type=season_type,
                                           eodag_config_filepath=eodag_config_filepath,
                                           cloudcover=cloudcover)
-    elif induced_type == "aoi":
-        ctx.obj["wp"] = WorkPlan.from_aoi(input, sd, ed, prov, l8_sr=l8_sr,
+    elif induced_type == "aoi": #To remove ?
+        ctx.obj["wp"] = WorkPlan.from_aoi(input,
+                                          season_processing_start, season_processing_end,
+                                          prov,
+                                          l8_sr=l8_sr,
                                           aez_id=aez_id,
                                           user=user,
                                           visibility=visibility,

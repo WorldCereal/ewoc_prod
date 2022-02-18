@@ -20,14 +20,19 @@ logger = logging.getLogger(__name__)
 class WorkPlan:
     #  TODO : passer les valeurs par défaut dans la cli (ou les supprimer ?)
     def __init__(self, tile_ids,
-                start_date, end_date,
+                season_start, season_end,
+                season_processing_start, season_processing_end,
+                annual_processing_start, annual_processing_end,
                 data_provider,
-                l8_sr=False, aez_id=0,
+                l8_sr=False, 
+                aez_id=0,
                 user="EWoC_admin",
                 visibility="public",
-                season_type="cropland",
-                eodag_config_filepath=None, cloudcover=90) -> None:
-
+                season_type="winter",
+                detector_set="winterwheat, irrigation",
+                enable_sw=False,
+                eodag_config_filepath=None, 
+                cloudcover=90) -> None:
 
         self._cloudcover = cloudcover
         if data_provider not in ['creodias', 'peps', 'astraea_eod']:
@@ -41,9 +46,15 @@ class WorkPlan:
         self._plan['visibility'] = visibility
         self._plan['generated'] = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
         self._plan['aez_id'] = aez_id
-        self._plan['season_start'] = start_date
-        self._plan['season_end'] = end_date
         self._plan['season_type'] = season_type
+        self._plan['enable_sw'] = enable_sw
+        self._plan['detector_set'] = detector_set
+        self._plan['season_start'] = season_start
+        self._plan['season_end'] = season_end
+        self._plan['season_processing_start'] = season_processing_start
+        self._plan['season_processing_end'] = season_processing_end
+        self._plan['annual_processing_start'] = annual_processing_start
+        self._plan['annual_processing_end'] = annual_processing_end
         self._plan['s1_provider'] = data_provider
         self._plan['s2_provider'] = data_provider
         #  TODO : Fill or change the provider translator system
@@ -93,7 +104,7 @@ class WorkPlan:
                           "astraea_eod": "sentinel1_l1c_grd",
                           "creodias":"S1_SAR_GRD"}
         s1_prods_full = eodag_prods( s2_tile,
-                                self._plan['season_start'], self._plan['season_end'],
+                                self._plan['season_processing_start'], self._plan['season_processing_end'],
                                 self._plan['s1_provider'],
                                 s1_prods_types[self._plan['s1_provider']],
                                 eodag_config_filepath)
@@ -103,9 +114,9 @@ class WorkPlan:
         logger.info('Number of ascending products: %s', len(s1_prods_asc))
 
         logger.debug("ASCENDING:")
-        td_asc = greatest_timedelta(s1_prods_asc, self._plan['season_start'], self._plan['season_end'])
+        td_asc = greatest_timedelta(s1_prods_asc, self._plan['season_processing_start'], self._plan['season_processing_end'])
         logger.debug("DESCENDING:")
-        td_desc = greatest_timedelta(s1_prods_desc, self._plan['season_start'], self._plan['season_end'])
+        td_desc = greatest_timedelta(s1_prods_desc, self._plan['season_processing_start'], self._plan['season_processing_end'])
 
         logger.info("The greatest time delta for ASCENTING product is %s", td_asc)
         logger.info("The greatest time delta for DESCENDING product is %s", td_desc)
@@ -137,7 +148,7 @@ class WorkPlan:
         s2_prods_types = {"peps": "S2_MSI_L1C",
                           "astraea_eod": "sentinel2_l1c",
                           "creodias": "S2_MSI_L1C"}
-        s2_prods = eodag_prods( s2_tile, self._plan['season_start'], self._plan['season_end'],
+        s2_prods = eodag_prods( s2_tile, self._plan['season_processing_start'], self._plan['season_processing_end'],
                                 self._plan['s1_provider'],
                                 s2_prods_types[self._plan['s1_provider'].lower()],
                                 eodag_config_filepath,
@@ -150,7 +161,7 @@ class WorkPlan:
 
     def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
         l8_prods = eodag_prods( s2_tile,
-                                self._plan['season_start'], self._plan['season_end'],
+                                self._plan['season_processing_start'], self._plan['season_processing_end'],
                                 self._plan['l8_provider'],
                                 'LANDSAT_C2L2_SR',
                                 eodag_config_filepath,
