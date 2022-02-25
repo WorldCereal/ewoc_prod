@@ -20,14 +20,19 @@ logger = logging.getLogger(__name__)
 class WorkPlan:
     #  TODO : passer les valeurs par défaut dans la cli (ou les supprimer ?)
     def __init__(self, tile_ids,
-                start_date, end_date,
+                season_start, season_end,
+                season_processing_start, season_processing_end,
+                annual_processing_start, annual_processing_end,
                 data_provider,
-                l8_sr=False, aez_id=0,
+                l8_sr=False,
+                aez_id=0,
                 user="EWoC_admin",
                 visibility="public",
-                season_type="cropland",
-                eodag_config_filepath=None, cloudcover=90) -> None:
-
+                season_type="winter",
+                detector_set="winterwheat, irrigation",
+                enable_sw=False,
+                eodag_config_filepath=None,
+                cloudcover=90) -> None:
 
         self._cloudcover = cloudcover
         if data_provider not in ['creodias', 'peps', 'astraea_eod']:
@@ -41,9 +46,15 @@ class WorkPlan:
         self._plan['visibility'] = visibility
         self._plan['generated'] = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
         self._plan['aez_id'] = aez_id
-        self._plan['season_start'] = start_date
-        self._plan['season_end'] = end_date
         self._plan['season_type'] = season_type
+        self._plan['enable_sw'] = enable_sw
+        self._plan['detector_set'] = detector_set
+        self._plan['season_start'] = season_start
+        self._plan['season_end'] = season_end
+        self._plan['season_processing_start'] = season_processing_start
+        self._plan['season_processing_end'] = season_processing_end
+        self._plan['annual_processing_start'] = annual_processing_start
+        self._plan['annual_processing_end'] = annual_processing_end
         self._plan['s1_provider'] = data_provider
         self._plan['s2_provider'] = data_provider
         #  TODO : Fill or change the provider translator system
@@ -59,9 +70,12 @@ class WorkPlan:
             tile_plan = dict()
             tile_plan['tile_id'] = tile_id
             s2_tile = eotile_module.main(tile_id)[0]
-            s1_prd_ids, orbit_dir = self._identify_s1(s2_tile, eodag_config_filepath=eodag_config_filepath)
-            s2_prd_ids = self._identify_s2(tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath)
-            l8_prd_ids = self._identify_l8(s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath)
+            s1_prd_ids, orbit_dir = self._identify_s1(s2_tile, \
+                eodag_config_filepath=eodag_config_filepath)
+            s2_prd_ids = self._identify_s2(tile_id, s2_tile, \
+                eodag_config_filepath=eodag_config_filepath)
+            l8_prd_ids = self._identify_l8(s2_tile, l8_sr=l8_sr, \
+                eodag_config_filepath=eodag_config_filepath)
             tile_plan['s1_ids'] = s1_prd_ids
             tile_plan['s1_orbit_dir'] = orbit_dir
             tile_plan['s1_nb'] = len(s1_prd_ids)
@@ -92,20 +106,25 @@ class WorkPlan:
         s1_prods_types = {"peps": "S1_SAR_GRD",
                           "astraea_eod": "sentinel1_l1c_grd",
                           "creodias":"S1_SAR_GRD"}
-        s1_prods_full = eodag_prods( s2_tile,
-                                self._plan['season_start'], self._plan['season_end'],
+        s1_prods_full = eodag_prods(s2_tile,
+                                self._plan['season_processing_start'],
+                                self._plan['season_processing_end'],
                                 self._plan['s1_provider'],
                                 s1_prods_types[self._plan['s1_provider']],
                                 eodag_config_filepath)
-        s1_prods_desc = [s1_prod for s1_prod in s1_prods_full if is_descending(s1_prod, self._plan['s1_provider'])]
-        s1_prods_asc = [s1_prod for s1_prod in s1_prods_full if not is_descending(s1_prod, self._plan['s1_provider'])]
+        s1_prods_desc = [s1_prod for s1_prod in s1_prods_full \
+            if is_descending(s1_prod, self._plan['s1_provider'])]
+        s1_prods_asc = [s1_prod for s1_prod in s1_prods_full \
+            if not is_descending(s1_prod, self._plan['s1_provider'])]
         logger.info('Number of descending products: %s', len(s1_prods_desc))
         logger.info('Number of ascending products: %s', len(s1_prods_asc))
 
         logger.debug("ASCENDING:")
-        td_asc = greatest_timedelta(s1_prods_asc, self._plan['season_start'], self._plan['season_end'])
+        td_asc = greatest_timedelta(s1_prods_asc, \
+            self._plan['season_processing_start'], self._plan['season_processing_end'])
         logger.debug("DESCENDING:")
-        td_desc = greatest_timedelta(s1_prods_desc, self._plan['season_start'], self._plan['season_end'])
+        td_desc = greatest_timedelta(s1_prods_desc, \
+            self._plan['season_processing_start'], self._plan['season_processing_end'])
 
         logger.info("The greatest time delta for ASCENTING product is %s", td_asc)
         logger.info("The greatest time delta for DESCENDING product is %s", td_desc)
@@ -137,7 +156,8 @@ class WorkPlan:
         s2_prods_types = {"peps": "S2_MSI_L1C",
                           "astraea_eod": "sentinel2_l1c",
                           "creodias": "S2_MSI_L1C"}
-        s2_prods = eodag_prods( s2_tile, self._plan['season_start'], self._plan['season_end'],
+        s2_prods = eodag_prods(s2_tile, self._plan['season_processing_start'],
+                                self._plan['season_processing_end'],
                                 self._plan['s1_provider'],
                                 s2_prods_types[self._plan['s1_provider'].lower()],
                                 eodag_config_filepath,
@@ -149,8 +169,9 @@ class WorkPlan:
         return s2_prod_ids
 
     def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
-        l8_prods = eodag_prods( s2_tile,
-                                self._plan['season_start'], self._plan['season_end'],
+        l8_prods = eodag_prods(s2_tile,
+                                self._plan['season_processing_start'],
+                                self._plan['season_processing_end'],
                                 self._plan['l8_provider'],
                                 'LANDSAT_C2L2_SR',
                                 eodag_config_filepath,
@@ -182,13 +203,19 @@ class WorkPlan:
 
     @classmethod
     def from_aoi(cls, aoi_filepath,
-                 start_date, end_date,
+                 season_start, season_end,
+                 season_processing_start, season_processing_end,
+                 annual_processing_start, annual_processing_end,
                  data_provider,
-                 l8_sr=False, aez_id=0,
+                 l8_sr=False,
+                 aez_id=0,
                  user="EWoC_admin",
                  visibility="public",
-                 season_type="cropland",
-                 eodag_config_filepath=None, cloudcover=90):
+                 season_type="winter",
+                 detector_set="winterwheat, irrigation",
+                 enable_sw=False,
+                 eodag_config_filepath=None,
+                 cloudcover=90):
         supported_format=['.shp', '.geojson', '.gpkg']
         if aoi_filepath.suffix in supported_format:
             # Vector file to get bbox
@@ -203,14 +230,22 @@ class WorkPlan:
                     if s2_tile not in s2_tiles:
                         s2_tiles.append(s2_tile)
             return WorkPlan(s2_tiles,
-                            start_date, end_date,
+                            season_start,
+                            season_end,
+                            season_processing_start,
+                            season_processing_end,
+                            annual_processing_start,
+                            annual_processing_end,
                             data_provider,
                             l8_sr,
                             aez_id,
                             user,
                             visibility,
                             season_type,
-                            eodag_config_filepath , cloudcover)
+                            detector_set,
+                            enable_sw,
+                            eodag_config_filepath,
+                            cloudcover)
         else:
             logging.critical('%s is not supported (%s)', aoi_filepath.name,
                                                          supported_format)
@@ -226,13 +261,20 @@ class WorkPlan:
 
 
     @classmethod
-    def from_csv(cls, csv_filepath, start_date, end_date,
+    def from_csv(cls, csv_filepath,
+                season_start, season_end,
+                season_processing_start, season_processing_end,
+                annual_processing_start, annual_processing_end,
                 data_provider,
-                l8_sr=False, aez_id=0,
+                l8_sr=False,
+                aez_id=0,
                 user="EWoC_admin",
                 visibility="public",
-                season_type="cropland",
-                eodag_config_filepath=None, cloudcover=90):
+                season_type="winter",
+                detector_set="winterwheat, irrigation",
+                enable_sw=False,
+                eodag_config_filepath=None,
+                cloudcover=90):
         tile_ids=list()
         with open(csv_filepath,encoding="latin-1") as csvfile:
             reader = csv.reader(csvfile)
@@ -240,13 +282,21 @@ class WorkPlan:
                 for tile_id in line:
                     tile_ids.append(tile_id)
 
-        return cls(tile_ids, start_date, end_date,
+        return cls(tile_ids,
+                season_start,
+                season_end,
+                season_processing_start,
+                season_processing_end,
+                annual_processing_start,
+                annual_processing_end,
                 data_provider,
                 l8_sr=l8_sr,
                 aez_id=aez_id,
                 user=user,
                 visibility=visibility,
                 season_type=season_type,
+                detector_set=detector_set,
+                enable_sw=enable_sw,
                 eodag_config_filepath=eodag_config_filepath,
                 cloudcover=cloudcover)
 
