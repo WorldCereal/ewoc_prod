@@ -37,9 +37,9 @@ _logger = logging.getLogger(__name__)
 @click.option('-season_type', default="winter", help="Season type")
 @click.option('-detector_set', default="winterwheat, irrigation",
     help="Detector set linked to season type")
-@click.option('-enable_sw', default="False", help="Process spring wheat or not")
+@click.option('-enable_sw', default=False, help="Process spring wheat or not")
 @click.option('-eodag_config_filepath', default=None, help="Path to the Eodag yml config file")
-@click.option('-cloudcover', default="90", help="Cloudcover parameter")
+@click.option('-cloudcover', default=90, help="Cloudcover parameter")
 def generate(ctx, input_data, season_start, season_end, season_processing_start, \
     season_processing_end, annual_processing_start, annual_processing_end, \
         wp_processing_start, wp_processing_end, prov, l8_sr, aez_id, user, visibility, \
