@@ -315,7 +315,15 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
         raise ValueError
     #Get detector_set
     detector_set = get_detector_set_from_season_type(season_type, enable_sw, tile)
+    #Get wp_processing_dates
+    if 'cropland' in detector_set:
+        wp_processing_start = annual_processing_start
+        wp_processing_end = annual_processing_end
+    else:
+        wp_processing_start = season_processing_start
+        wp_processing_end = season_processing_end
     #Remove filter
     s2tiles_layer.SetAttributeFilter(None)
     return season_start, season_end, season_processing_start, season_processing_end, \
-        annual_processing_start, annual_processing_end, l8_enable_sr, enable_sw, detector_set
+        annual_processing_start, annual_processing_end, wp_processing_start, wp_processing_end,\
+            l8_enable_sr, enable_sw, detector_set

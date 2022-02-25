@@ -135,10 +135,10 @@ def main(args: List[str])->None:
                 season_type = args.season_type
 
             season_start, season_end, season_processing_start, season_processing_end, \
-                annual_processing_start, annual_processing_end, \
-                    l8_enable_sr, enable_sw, detector_set = \
-                    get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
-                        s2tiles_list_subset, season_type, args.prod_start_date)
+                annual_processing_start, annual_processing_end, wp_processing_start, \
+                    wp_processing_end, l8_enable_sr, enable_sw, detector_set = \
+                        get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
+                            s2tiles_list_subset, season_type, args.prod_start_date)
 
             logging.info("aez_id = %s", int(aez_id))
             if all(arg is None for arg in (season_start, season_end)):
@@ -151,6 +151,8 @@ def main(args: List[str])->None:
                 logging.info("season_processing_end = %s", season_processing_end)
                 logging.info("annual_processing_start = %s", annual_processing_start)
                 logging.info("annual_processing_end = %s", annual_processing_end)
+                logging.info("wp_processing_start = %s", wp_processing_start)
+                logging.info("wp_processing_end = %s", wp_processing_end)
                 logging.info("l8_enable_sr = %s", l8_enable_sr)
                 logging.info("enable_sw = %s", enable_sw)
                 logging.info("detector_set = %s", detector_set)
@@ -159,7 +161,7 @@ def main(args: List[str])->None:
                 #Create the associated workplan
                 #todo : write the work plan in json file with a file name containing aez_id
                 #todo : add new args in WorkPlan
-                WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+                WorkPlan(s2tiles_list, wp_processing_start, wp_processing_end, 'creodias',\
                     l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
     else:
@@ -177,10 +179,10 @@ def main(args: List[str])->None:
             season_type = args.season_type
 
         season_start, season_end, season_processing_start, season_processing_end, \
-            annual_processing_start, annual_processing_end, \
-                l8_enable_sr, enable_sw, detector_set = \
-                get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
-                    s2tiles_list, season_type, args.prod_start_date)
+            annual_processing_start, annual_processing_end, wp_processing_start, \
+                wp_processing_end, l8_enable_sr, enable_sw, detector_set = \
+                    get_tiles_infos_from_tiles(args.s2tiles_aez_file, \
+                        s2tiles_list, season_type, args.prod_start_date)
 
         logging.info("aez_id = %s", int(aez_id))
         if all(arg is None for arg in (season_start, season_end)):
@@ -193,6 +195,8 @@ def main(args: List[str])->None:
             logging.info("season_processing_end = %s", season_processing_end)
             logging.info("annual_processing_start = %s", annual_processing_start)
             logging.info("annual_processing_end = %s", annual_processing_end)
+            logging.info("wp_processing_start = %s", wp_processing_start)
+            logging.info("wp_processing_end = %s", wp_processing_end)
             logging.info("l8_enable_sr = %s", l8_enable_sr)
             logging.info("enable_sw = %s", enable_sw)
             logging.info("detector_set = %s", detector_set)
@@ -201,7 +205,7 @@ def main(args: List[str])->None:
             #Create the associated workplan
             #todo : write the work plan in json file with a file name containing aez_id
             #todo : add new args in WorkPlan
-            WorkPlan(s2tiles_list, season_processing_start, season_processing_end, 'creodias',\
+            WorkPlan(s2tiles_list, wp_processing_start, wp_processing_end, 'creodias',\
                 l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
 
 def run()->None:
