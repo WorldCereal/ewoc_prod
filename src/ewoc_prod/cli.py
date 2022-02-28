@@ -10,6 +10,7 @@
 import argparse
 import logging
 import sys
+import time
 from datetime import date, datetime
 from typing import List
 
@@ -102,6 +103,7 @@ def setup_logging(loglevel: int)->None:
 
 def main(args: List[str])->None:
     '''Main script'''
+    start_time = time.time()
     args = parse_args(args)
     setup_logging(args.loglevel)
 
@@ -159,11 +161,15 @@ def main(args: List[str])->None:
                 logging.info("tiles = %s", s2tiles_list_subset)
 
                 #Create the associated workplan
-                #todo : write the work plan in json file with a file name containing aez_id
-                #todo : add new args in WorkPlan
-                WorkPlan(s2tiles_list, wp_processing_start, wp_processing_end, 'creodias',\
-                    l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
-
+                wp_for_aez = WorkPlan(s2tiles_list, str(season_start), str(season_end), \
+                    str(season_processing_start), str(season_processing_end), \
+                        str(annual_processing_start), str(annual_processing_end), \
+                        str(wp_processing_start), str(wp_processing_end), \
+                            data_provider='creodias', l8_sr=l8_enable_sr, aez_id=int(aez_id), \
+                                user="EWoC_admin", visibility="public", season_type=season_type,\
+                                    detector_set=detector_set, enable_sw=enable_sw, \
+                                        eodag_config_filepath="../../../eodag_config.yml")
+                wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_creodias.json')
     else:
         aez_id = aez_list[0]
 
@@ -202,11 +208,18 @@ def main(args: List[str])->None:
             logging.info("detector_set = %s", detector_set)
             logging.info("tiles = %s", s2tiles_list)
 
-            #Create the associated workplan
-            #todo : write the work plan in json file with a file name containing aez_id
-            #todo : add new args in WorkPlan
-            WorkPlan(s2tiles_list, wp_processing_start, wp_processing_end, 'creodias',\
-                l8_enable_sr, int(aez_id), eodag_config_filepath="../../../eodag_config.yml")
+            # Create the associated workplan
+            wp_for_aez = WorkPlan(s2tiles_list, str(season_start), str(season_end), \
+                str(season_processing_start), str(season_processing_end), \
+                    str(annual_processing_start), str(annual_processing_end), \
+                    str(wp_processing_start), str(wp_processing_end), \
+                        data_provider='creodias', l8_sr=l8_enable_sr, aez_id=int(aez_id), \
+                            user="EWoC_admin", visibility="public", season_type=season_type,\
+                                detector_set=detector_set, enable_sw=enable_sw, \
+                                    eodag_config_filepath="../../../eodag_config.yml")
+            wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_creodias.json')
+
+    logging.info("--- %s seconds ---", (time.time() - start_time))
 
 def run()->None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
