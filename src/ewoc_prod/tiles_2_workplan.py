@@ -327,3 +327,80 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
     return season_start, season_end, season_processing_start, season_processing_end, \
         annual_processing_start, annual_processing_end, wp_processing_start, wp_processing_end,\
             l8_enable_sr, enable_sw, detector_set
+
+def retrieve_custom_dates(s2tiles_aez_file: str, tile_id: str, year: int)->List[str]:
+    """
+    Get custom dates for a tile that will encompass all the seasons
+    :param s2tiles_aez_file: MGRS grid that contains for each included tile
+        the associated aez information (geojson file)
+    :param tile_id: s2 tile id
+    :param year: season to process (e.g. 2021 to process 2020/2021)
+    """
+    #Open geosjon
+    driver = ogr.GetDriverByName('GeoJSON')
+    data_source = driver.Open(s2tiles_aez_file, 1)
+    s2tiles_layer = data_source.GetLayer()
+    #Add filter
+    s2tiles_layer.SetAttributeFilter(f"tile = '{tile_id}'")
+    tile = s2tiles_layer.GetNextFeature()
+    #Get field names
+    ww_start_date_key = "wwsos_min"
+    ww_end_date_key = "wweos_max"
+    m1_start_date_key = "m1sos_min"
+    m1_end_date_key = "m1eos_max"
+    m2_start_date_key = "m2sos_min"
+    m2_end_date_key = "m2eos_max"
+    #Get dates
+    ww_start_doy = int(tile.GetField(ww_start_date_key))
+    ww_end_doy = int(tile.GetField(ww_end_date_key))
+    m1_start_doy = int(tile.GetField(m1_start_date_key))
+    m1_end_doy = int(tile.GetField(m1_end_date_key))
+    m2_start_doy = int(tile.GetField(m2_start_date_key))
+    m2_end_doy = int(tile.GetField(m2_end_date_key))
+    m2_exists = 1
+    if m2_start_doy == m2_end_doy == 0:
+        m2_exists = 0
+    #Get crops end dates
+    ww_end = conversion_doy_to_date(ww_end_doy, year)
+    m1_end = conversion_doy_to_date(m1_end_doy, year)
+    if m2_exists!=0:
+        m2_end = conversion_doy_to_date(m2_end_doy, year)
+    #Get custom dates
+    if m2_exists!=0:
+        wp_processing_end = max(ww_end, m1_end, m2_end)
+        wp_processing_start = m2_end - relativedelta(years=1)
+    else:
+        wp_processing_end = max(ww_end, m1_end)
+        wp_processing_start = m1_end - relativedelta(years=1)
+    #Modify custom start date if it does not include all seasons
+    if ww_start_doy > ww_end_doy:
+        ww_year_start_date = year - 1
+    else:
+        ww_year_start_date = year
+    ww_start_doy, ww_year_start_date = \
+        add_buffer_to_dates('winter', ww_start_doy, ww_year_start_date)
+    ww_start = conversion_doy_to_date(ww_start_doy, ww_year_start_date)
+    if ww_start < wp_processing_start:
+        wp_processing_start = ww_start
+    if m1_start_doy > m1_end_doy:
+        m1_year_start_date = year - 1
+    else:
+        m1_year_start_date = year
+    m1_start_doy, m1_year_start_date = \
+        add_buffer_to_dates('summer1', m1_start_doy, m1_year_start_date)
+    m1_start = conversion_doy_to_date(m1_start_doy, m1_year_start_date)
+    if m1_start < wp_processing_start:
+        wp_processing_start = m1_start
+    if m2_exists!=0:
+        if m2_start_doy > m2_end_doy:
+            m2_year_start_date = year - 1
+        else:
+            m2_year_start_date = year
+        m2_start_doy, m2_year_start_date = \
+            add_buffer_to_dates('summer2', m2_start_doy, m2_year_start_date)
+        m2_start = conversion_doy_to_date(m2_start_doy, m2_year_start_date)
+        if m2_start < wp_processing_start:
+            wp_processing_start = m2_start
+    #Remove filter
+    s2tiles_layer.SetAttributeFilter(None)
+    return wp_processing_start, wp_processing_end
