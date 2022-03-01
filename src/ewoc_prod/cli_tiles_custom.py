@@ -141,9 +141,9 @@ def main(args: List[str])->None:
                 data_provider='creodias', l8_sr=l8_enable_sr, aez_id=int(aez_id), \
                     user="EWoC_admin", visibility="public", season_type=season_type,\
                         detector_set=detector_set, enable_sw=enable_sw, \
-                            eodag_config_filepath="../../../eodag_config.yml")
+                            eodag_config_filepath="../../../eodag_config.yml", cloudcover=90)
     # print(wp_for_aez.__dict__)
-    wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_tile_{args.tile_id}_creodias_v2.json')
+    wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_tile_{args.tile_id}_creodias.json')
 
     logging.info("--- %s seconds ---", (time.time() - start_time))
 
