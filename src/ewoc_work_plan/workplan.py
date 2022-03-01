@@ -18,7 +18,6 @@ from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 logger = logging.getLogger(__name__)
 
 class WorkPlan:
-    #  TODO : passer les valeurs par défaut dans la cli (ou les supprimer ?)
     def __init__(self, tile_ids,
                 start_date, end_date,
                 data_provider,
@@ -46,11 +45,8 @@ class WorkPlan:
         self._plan['season_type'] = season_type
         self._plan['s1_provider'] = data_provider
         self._plan['s2_provider'] = data_provider
-        #  TODO : Fill or change the provider translator system
-        provider_translator_l8_dict = {'creodias': 'usgs_satapi_aws',
-                                       'peps': 'usgs_satapi_aws',
-                                       'astraea_eod': 'usgs_satapi_aws'}
-        self._plan['l8_provider'] = provider_translator_l8_dict[data_provider]
+        # Only L8 C2L2 provider supported for now is aws usgs
+        self._plan['l8_provider'] = 'usgs_satapi_aws'
 
         ## Addind tiles
         tiles_plan=list()
@@ -138,8 +134,8 @@ class WorkPlan:
                           "astraea_eod": "sentinel2_l1c",
                           "creodias": "S2_MSI_L1C"}
         s2_prods = eodag_prods( s2_tile, self._plan['season_start'], self._plan['season_end'],
-                                self._plan['s1_provider'],
-                                s2_prods_types[self._plan['s1_provider'].lower()],
+                                self._plan['s2_provider'],
+                                s2_prods_types[self._plan['s2_provider'].lower()],
                                 eodag_config_filepath,
                                 cloud_cover=self._cloudcover)
         s2_prod_ids = list()

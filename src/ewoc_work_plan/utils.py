@@ -6,7 +6,8 @@ from shapely.wkt import dumps
 from datetime import datetime, timedelta
 import boto3
 from eodag.api.core import EODataAccessGateway
-
+from eotile import eotile_module
+from typing import List
 _logger = logging.getLogger(__name__)
 
 def set_logger(verbose_v):
@@ -26,7 +27,6 @@ def set_logger(verbose_v):
 def eodag_prods(df,start_date,end_date,provider,product_type,creds,cloud_cover=None):
     dag = EODataAccessGateway(user_conf_file_path=creds)
     dag.set_preferred_provider(provider)
-    #poly = df.geometry[0].to_wkt()
     poly = dumps(df.geometry[0])
     max_items = 2000
     if cloud_cover is None:
@@ -142,3 +142,33 @@ def greatest_timedelta(EOProduct_list:list, start_date:str, end_date:str, date_f
 
         return (delta_max)
 
+def cross_prodvider_ids(s2_tile, start,end,cloudcover, min_nb_prd):
+    poly = eotile_module.main(s2_tile)[0]
+    # Start search with element84 API
+    s2_prods_e84 = eodag_prods(poly, start, end,
+                           "earth_search",
+                           "sentinel-s2-l2a-cogs",
+                           None,
+                           cloud_cover=100)
+    # Filter and Clean
+    e84 = {}
+    for el in s2_prods_e84:
+        pid  = el.properties["sentinel:product_id"]
+        cc = el.properties["cloudCover"]
+        if s2_tile in pid:
+            e84[pid]=cc
+    return get_best_prds(e84, cloudcover, min_nb_prd)
+
+def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prd: int)-> List:
+    cc_filter = [prd for prd in s2_prds if s2_prds[prd] <= cloudcover]
+    _logger.info(f"Found {len(cc_filter)} products with cloudcover below {cloudcover}")
+    if len(cc_filter)>= min_nb_prd:
+        _logger.info(f"Found enough products below {cloudcover} ({len(cc_filter)}, min nb prods: {min_nb_prd}")
+        return cc_filter
+    else:
+        _logger.warning(f"Not enough products below {cloudcover}, full list of products (cloudcover 100%) will be used")
+        return list(s2_prds.keys())
+
+if __name__ == "__main__":
+    aws = cross_prodvider_ids("31TCJ","2018-07-02", "2018-08-03", 80,10)
+    print("\n".join(aws))
