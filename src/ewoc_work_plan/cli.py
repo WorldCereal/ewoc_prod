@@ -36,10 +36,8 @@ _logger = logging.getLogger(__name__)
 @click.option('-enable_sw', default="False", help="Process spring wheat or not")
 @click.option('-eodag_config_filepath', default=None, help="Path to the Eodag yml config file")
 @click.option('-cloudcover', default="90", help="Cloudcover parameter")
-def generate(ctx, input_data, season_start, season_end, season_processing_start, \
-    season_processing_end, annual_processing_start, annual_processing_end, \
-        prov, l8_sr, aez_id, user, visibility, season_type, detector_set, \
-            enable_sw, eodag_config_filepath, cloudcover):
+@click.option('-min_nb_prods', default="40", help="Yearly minimum number of products")
+def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_type, eodag_config_filepath, cloudcover, min_nb_prods):
     """
     Generate the workplan
     :param ctx:
@@ -60,6 +58,7 @@ def generate(ctx, input_data, season_start, season_end, season_processing_start,
     :param enable_sw: process spring wheat or not
     :param eodag_config_filepath: path to the eodag yml config file
     :param cloudcover: cloud cover parameter
+    :param min_nb_prods: Yearly minimum number of products
     """
     ctx.ensure_object(dict)
 
@@ -99,6 +98,7 @@ def generate(ctx, input_data, season_start, season_end, season_processing_start,
                                  detector_set=detector_set,
                                  enable_sw=enable_sw,
                                  eodag_config_filepath=eodag_config_filepath,
+                                 min_nb_prd= min_nb_prods,
                                  cloudcover=cloudcover
                                  )
     elif induced_type == "csv": #To remove ?
@@ -115,6 +115,7 @@ def generate(ctx, input_data, season_start, season_end, season_processing_start,
                                           detector_set=detector_set,
                                           enable_sw=enable_sw,
                                           eodag_config_filepath=eodag_config_filepath,
+                                          min_nb_prd=min_nb_prods,
                                           cloudcover=cloudcover)
     elif induced_type == "aoi": #To remove ?
         ctx.obj["wp"] = WorkPlan.from_aoi(input_data,
@@ -130,6 +131,7 @@ def generate(ctx, input_data, season_start, season_end, season_processing_start,
                                           detector_set=detector_set,
                                           enable_sw=enable_sw,
                                           eodag_config_filepath=eodag_config_filepath,
+                                          min_nb_prd=min_nb_prods,
                                           cloudcover=cloudcover)
     else:
         click.echo(f"Unrecognized {input_data} as input type")
