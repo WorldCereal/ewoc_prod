@@ -275,6 +275,7 @@ class WorkPlan:
         detector_set="winterwheat, irrigation",
         enable_sw=False,
         eodag_config_filepath=None,
+        min_nb_prd=40,
         cloudcover=90,
     ):
         supported_format = [".shp", ".geojson", ".gpkg"]
@@ -307,6 +308,7 @@ class WorkPlan:
                 detector_set,
                 enable_sw,
                 eodag_config_filepath,
+                min_nb_prd,
                 cloudcover,
             )
         else:
@@ -341,6 +343,7 @@ class WorkPlan:
         detector_set="winterwheat, irrigation",
         enable_sw=False,
         eodag_config_filepath=None,
+        min_nb_prd=40,
         cloudcover=90,
     ):
         tile_ids = list()
@@ -367,6 +370,7 @@ class WorkPlan:
             detector_set=detector_set,
             enable_sw=enable_sw,
             eodag_config_filepath=eodag_config_filepath,
+            min_nb_prd,
             cloudcover=cloudcover,
         )
 
