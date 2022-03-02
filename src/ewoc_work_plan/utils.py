@@ -211,5 +211,5 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prd: int) -> List:
         return list(s2_prds.keys())
 
 if __name__ == "__main__":
-    aws = cross_prodvider_ids("31TCJ","2018-01-01","2019-01-01",80,40,creds="/home/fahd/Documents/Perso/eodag_config.yml")
+    aws = cross_prodvider_ids("31TCJ","2018-01-01","2019-01-01",80,40,creds="/eodag_config.yml")
     print("\n".join(aws))
