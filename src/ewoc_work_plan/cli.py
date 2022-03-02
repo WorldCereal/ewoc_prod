@@ -27,7 +27,8 @@ _logger = logging.getLogger(__name__)
 @click.option('-season_type', default="cropland", help="Season type")
 @click.option('-eodag_config_filepath', default=None, help="Path to the Eodag yml config file")
 @click.option('-cloudcover', default="90", help="Cloudcover parameter")
-def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_type, eodag_config_filepath, cloudcover):
+@click.option('-min_nb_prods', default="40", help="Yearly minimum number of products")
+def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_type, eodag_config_filepath, cloudcover, min_nb_prods):
     ctx.ensure_object(dict)
 
     if "." in input:
@@ -59,6 +60,7 @@ def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_t
                                  visibility=visibility,
                                  season_type=season_type,
                                  eodag_config_filepath=eodag_config_filepath,
+                                 min_nb_prd= min_nb_prods,
                                  cloudcover=cloudcover
                                  )
     elif induced_type == "csv":
@@ -68,6 +70,7 @@ def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_t
                                           visibility=visibility,
                                           season_type=season_type,
                                           eodag_config_filepath=eodag_config_filepath,
+                                          min_nb_prd=min_nb_prods,
                                           cloudcover=cloudcover)
     elif induced_type == "aoi":
         ctx.obj["wp"] = WorkPlan.from_aoi(input, sd, ed, prov, l8_sr=l8_sr,
@@ -76,6 +79,7 @@ def generate(ctx, input, sd, ed, prov, l8_sr, aez_id, user, visibility, season_t
                                           visibility=visibility,
                                           season_type=season_type,
                                           eodag_config_filepath=eodag_config_filepath,
+                                          min_nb_prd=min_nb_prods,
                                           cloudcover=cloudcover)
     else:
         click.echo(f"Unrecognized {input} as input type")

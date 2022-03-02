@@ -11,7 +11,7 @@ from shapely.wkt import dumps
 from ewoc_db.fill.fill_db import main as main_ewoc_db
 
 from ewoc_work_plan import __version__
-from ewoc_work_plan.utils import eodag_prods, is_descending, get_path_row, greatest_timedelta
+from ewoc_work_plan.utils import eodag_prods, is_descending, get_path_row, greatest_timedelta, cross_prodvider_ids
 from ewoc_work_plan.reproc import reproc_wp
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 
@@ -25,13 +25,12 @@ class WorkPlan:
                 user="EWoC_admin",
                 visibility="public",
                 season_type="cropland",
-                eodag_config_filepath=None, cloudcover=90) -> None:
+                eodag_config_filepath=None,min_nb_prd=40, cloudcover=90) -> None:
 
 
         self._cloudcover = cloudcover
-        if data_provider not in ['creodias', 'peps', 'astraea_eod']:
+        if data_provider not in ['creodias', 'peps', 'astraea_eod','aws']:
             raise ValueError("Incorrect data provider")
-
         ## Filling the plan
         self._plan = dict()
         ## Common MetaData
@@ -43,11 +42,11 @@ class WorkPlan:
         self._plan['season_start'] = start_date
         self._plan['season_end'] = end_date
         self._plan['season_type'] = season_type
-        self._plan['s1_provider'] = data_provider
+        self._plan['s1_provider'] = 'creodias'
         self._plan['s2_provider'] = data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan['l8_provider'] = 'usgs_satapi_aws'
-
+        self._plan['yearly_prd_threshold'] = min_nb_prd
         ## Addind tiles
         tiles_plan=list()
 
@@ -132,17 +131,23 @@ class WorkPlan:
     def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None):
         s2_prods_types = {"peps": "S2_MSI_L1C",
                           "astraea_eod": "sentinel2_l1c",
-                          "creodias": "S2_MSI_L1C"}
-        s2_prods = eodag_prods( s2_tile, self._plan['season_start'], self._plan['season_end'],
+                          "creodias": "S2_MSI_L1C",
+                          "aws":"sentinel-s2-l2a-cogs"}
+        if self._plan['s2_provider'] == "aws":
+            s2_prods = cross_prodvider_ids(tile_id,self._plan['season_start'],self._plan['season_end'],self._cloudcover,self._plan['yearly_prd_threshold'],eodag_config_filepath)
+            s2_prod_ids = [[self._plan['s2_provider'],id] for id in s2_prods]
+            return s2_prod_ids
+        else:
+            s2_prods = eodag_prods( s2_tile, self._plan['season_start'], self._plan['season_end'],
                                 self._plan['s2_provider'],
                                 s2_prods_types[self._plan['s2_provider'].lower()],
                                 eodag_config_filepath,
                                 cloud_cover=self._cloudcover)
-        s2_prod_ids = list()
-        for s2_prod in s2_prods:
-            if tile_id in s2_prod.properties["id"]:
-                s2_prod_ids.append([s2_prod.properties["id"]])
-        return s2_prod_ids
+            s2_prod_ids = list()
+            for s2_prod in s2_prods:
+                if tile_id in s2_prod.properties["id"]:
+                    s2_prod_ids.append([self._plan['s2_provider'],s2_prod.properties["id"]])
+            return s2_prod_ids
 
     def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
         l8_prods = eodag_prods( s2_tile,
