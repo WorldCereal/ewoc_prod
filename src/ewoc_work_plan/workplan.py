@@ -11,73 +11,92 @@ from shapely.wkt import dumps
 from ewoc_db.fill.fill_db import main as main_ewoc_db
 
 from ewoc_work_plan import __version__
-from ewoc_work_plan.utils import eodag_prods, is_descending, get_path_row, greatest_timedelta, cross_prodvider_ids
+from ewoc_work_plan.utils import (
+    eodag_prods,
+    is_descending,
+    get_path_row,
+    greatest_timedelta,
+    cross_prodvider_ids,
+)
 from ewoc_work_plan.reproc import reproc_wp
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 
 logger = logging.getLogger(__name__)
 
+
 class WorkPlan:
-    def __init__(self, tile_ids,
-                season_start, season_end,
-                season_processing_start, season_processing_end,
-                annual_processing_start, annual_processing_end,
-                data_provider,
-                l8_sr=False,
-                aez_id=0,
-                user="EWoC_admin",
-                visibility="public",
-                season_type="winter",
-                detector_set="winterwheat, irrigation",
-                enable_sw=False,
-                eodag_config_filepath=None,
-                cloudcover=90) -> None:
+    def __init__(
+        self,
+        tile_ids,
+        season_start,
+        season_end,
+        season_processing_start,
+        season_processing_end,
+        annual_processing_start,
+        annual_processing_end,
+        data_provider,
+        l8_sr=False,
+        aez_id=0,
+        user="EWoC_admin",
+        visibility="public",
+        season_type="winter",
+        detector_set="winterwheat, irrigation",
+        enable_sw=False,
+        eodag_config_filepath=None,
+        min_nb_prd=40,
+        cloudcover=90,
+    ) -> None:
 
         self._cloudcover = cloudcover
-        if data_provider not in ['creodias', 'peps', 'astraea_eod','aws']:
+        if data_provider not in ["creodias", "peps", "astraea_eod", "aws"]:
             raise ValueError("Incorrect data provider")
-        ## Filling the plan
+        # Filling the plan
         self._plan = dict()
-        ## Common MetaData
-        self._plan['version'] = str(__version__)
-        self._plan['user'] = user
-        self._plan['visibility'] = visibility
-        self._plan['generated'] = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
-        self._plan['aez_id'] = aez_id
-        self._plan['season_type'] = season_type
-        self._plan['s1_provider'] = 'creodias'
-        self._plan['enable_sw'] = enable_sw
-        self._plan['detector_set'] = detector_set
-        self._plan['season_start'] = season_start
-        self._plan['season_end'] = season_end
-        self._plan['season_processing_start'] = season_processing_start
-        self._plan['season_processing_end'] = season_processing_end
-        self._plan['annual_processing_start'] = annual_processing_start
-        self._plan['annual_processing_end'] = annual_processing_end
-        self._plan['s2_provider'] = data_provider
+        #  Common MetaData
+        self._plan["version"] = str(__version__)
+        self._plan["user"] = user
+        self._plan["visibility"] = visibility
+        self._plan["generated"] = (
+            datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+        )
+        self._plan["aez_id"] = aez_id
+        self._plan["season_type"] = season_type
+        self._plan["s1_provider"] = "creodias"
+        self._plan["enable_sw"] = enable_sw
+        self._plan["detector_set"] = detector_set
+        self._plan["season_start"] = season_start
+        self._plan["season_end"] = season_end
+        self._plan["season_processing_start"] = season_processing_start
+        self._plan["season_processing_end"] = season_processing_end
+        self._plan["annual_processing_start"] = annual_processing_start
+        self._plan["annual_processing_end"] = annual_processing_end
+        self._plan["s2_provider"] = data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
-        self._plan['l8_provider'] = 'usgs_satapi_aws'
-        self._plan['yearly_prd_threshold'] = min_nb_prd
-        ## Addind tiles
-        tiles_plan=list()
+        self._plan["l8_provider"] = "usgs_satapi_aws"
+        self._plan["yearly_prd_threshold"] = min_nb_prd
+        # Addind tiles
+        tiles_plan = list()
 
         for i, tile_id in enumerate(tile_ids):
             tile_plan = dict()
-            tile_plan['tile_id'] = tile_id
+            tile_plan["tile_id"] = tile_id
             s2_tile = eotile_module.main(tile_id)[0]
-            s1_prd_ids, orbit_dir = self._identify_s1(s2_tile, \
-                eodag_config_filepath=eodag_config_filepath)
-            s2_prd_ids = self._identify_s2(tile_id, s2_tile, \
-                eodag_config_filepath=eodag_config_filepath)
-            l8_prd_ids = self._identify_l8(s2_tile, l8_sr=l8_sr, \
-                eodag_config_filepath=eodag_config_filepath)
-            tile_plan['s1_ids'] = s1_prd_ids
-            tile_plan['s1_orbit_dir'] = orbit_dir
-            tile_plan['s1_nb'] = len(s1_prd_ids)
-            tile_plan['s2_ids'] = s2_prd_ids
-            tile_plan['s2_nb'] = len(s2_prd_ids)
-            tile_plan['l8_ids'] = l8_prd_ids
-            tile_plan['l8_nb'] = len(l8_prd_ids)
+            s1_prd_ids, orbit_dir = self._identify_s1(
+                s2_tile, eodag_config_filepath=eodag_config_filepath
+            )
+            s2_prd_ids = self._identify_s2(
+                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath
+            )
+            l8_prd_ids = self._identify_l8(
+                s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath
+            )
+            tile_plan["s1_ids"] = s1_prd_ids
+            tile_plan["s1_orbit_dir"] = orbit_dir
+            tile_plan["s1_nb"] = len(s1_prd_ids)
+            tile_plan["s2_ids"] = s2_prd_ids
+            tile_plan["s2_nb"] = len(s2_prd_ids)
+            tile_plan["l8_ids"] = l8_prd_ids
+            tile_plan["l8_nb"] = len(l8_prd_ids)
             tile_plan["geometry"] = dumps(s2_tile.iloc[0]["geometry"])
             tile_plan["epsg"] = "epsg:4326"
             if isinstance(l8_sr, list) and len(l8_sr) == len(tile_ids):
@@ -90,36 +109,50 @@ class WorkPlan:
 
             tiles_plan.append(tile_plan)
 
-        self._plan['tiles']= tiles_plan
-
+        self._plan["tiles"] = tiles_plan
 
     def __str__(self):
         return json.dumps(self._plan, indent=4, sort_keys=False)
 
-
     def _identify_s1(self, s2_tile, eodag_config_filepath=None):
-        s1_prods_types = {"peps": "S1_SAR_GRD",
-                          "astraea_eod": "sentinel1_l1c_grd",
-                          "creodias":"S1_SAR_GRD"}
-        s1_prods_full = eodag_prods(s2_tile,
-                                self._plan['season_processing_start'],
-                                self._plan['season_processing_end'],
-                                self._plan['s1_provider'],
-                                s1_prods_types[self._plan['s1_provider']],
-                                eodag_config_filepath)
-        s1_prods_desc = [s1_prod for s1_prod in s1_prods_full \
-            if is_descending(s1_prod, self._plan['s1_provider'])]
-        s1_prods_asc = [s1_prod for s1_prod in s1_prods_full \
-            if not is_descending(s1_prod, self._plan['s1_provider'])]
-        logger.info('Number of descending products: %s', len(s1_prods_desc))
-        logger.info('Number of ascending products: %s', len(s1_prods_asc))
+        s1_prods_types = {
+            "peps": "S1_SAR_GRD",
+            "astraea_eod": "sentinel1_l1c_grd",
+            "creodias": "S1_SAR_GRD",
+        }
+        s1_prods_full = eodag_prods(
+            s2_tile,
+            self._plan["season_processing_start"],
+            self._plan["season_processing_end"],
+            self._plan["s1_provider"],
+            s1_prods_types[self._plan["s1_provider"]],
+            eodag_config_filepath,
+        )
+        s1_prods_desc = [
+            s1_prod
+            for s1_prod in s1_prods_full
+            if is_descending(s1_prod, self._plan["s1_provider"])
+        ]
+        s1_prods_asc = [
+            s1_prod
+            for s1_prod in s1_prods_full
+            if not is_descending(s1_prod, self._plan["s1_provider"])
+        ]
+        logger.info("Number of descending products: %s", len(s1_prods_desc))
+        logger.info("Number of ascending products: %s", len(s1_prods_asc))
 
         logger.debug("ASCENDING:")
-        td_asc = greatest_timedelta(s1_prods_asc, \
-            self._plan['season_processing_start'], self._plan['season_processing_end'])
+        td_asc = greatest_timedelta(
+            s1_prods_asc,
+            self._plan["season_processing_start"],
+            self._plan["season_processing_end"],
+        )
         logger.debug("DESCENDING:")
-        td_desc = greatest_timedelta(s1_prods_desc, \
-            self._plan['season_processing_start'], self._plan['season_processing_end'])
+        td_desc = greatest_timedelta(
+            s1_prods_desc,
+            self._plan["season_processing_start"],
+            self._plan["season_processing_end"],
+        )
 
         logger.info("The greatest time delta for ASCENTING product is %s", td_asc)
         logger.info("The greatest time delta for DESCENDING product is %s", td_desc)
@@ -143,146 +176,122 @@ class WorkPlan:
                 dic[date].append(s1_prod.properties["id"])
             elif len(s1_prod.properties["id"]) > 0:
                 dic[date] = [s1_prod.properties["id"]]
-        logger.info('%s products are grouped in %s dates', len(s1_prods_asc), len(dic))
+        logger.info("%s products are grouped in %s dates", len(s1_prods_asc), len(dic))
 
         return list(dic.values()), orbit_dir
 
     def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None):
-        s2_prods_types = {"peps": "S2_MSI_L1C",
-                          "astraea_eod": "sentinel2_l1c",
-                          "creodias": "S2_MSI_L1C",
-                          "aws":"sentinel-s2-l2a-cogs"}
-        if self._plan['s2_provider'] == "aws":
-            s2_prods = cross_prodvider_ids(tile_id,self._plan['season_start'],self._plan['season_end'],self._cloudcover,self._plan['yearly_prd_threshold'],eodag_config_filepath)
-            s2_prod_ids = [[self._plan['s2_provider'],id] for id in s2_prods]
+        s2_prods_types = {
+            "peps": "S2_MSI_L1C",
+            "astraea_eod": "sentinel2_l1c",
+            "creodias": "S2_MSI_L1C",
+            "aws": "sentinel-s2-l2a-cogs",
+        }
+        if self._plan["s2_provider"] == "aws":
+            s2_prods = cross_prodvider_ids(
+                tile_id,
+                self._plan["season_processing_start"],
+                self._plan["season_processing_end"],
+                self._cloudcover,
+                self._plan["yearly_prd_threshold"],
+                eodag_config_filepath,
+            )
+            s2_prod_ids = [[self._plan["s2_provider"], id] for id in s2_prods]
             return s2_prod_ids
         else:
-            s2_prods = eodag_prods( s2_tile, self._plan['season_start'], self._plan['season_end'],
-                                self._plan['s2_provider'],
-                                s2_prods_types[self._plan['s2_provider'].lower()],
-                                eodag_config_filepath,
-                                cloud_cover=self._cloudcover)
+            s2_prods = eodag_prods(
+                s2_tile,
+                self._plan["season_processing_start"],
+                self._plan["season_processing_end"],
+                self._plan["s2_provider"],
+                s2_prods_types[self._plan["s2_provider"].lower()],
+                eodag_config_filepath,
+                cloud_cover=self._cloudcover,
+            )
             s2_prod_ids = list()
             for s2_prod in s2_prods:
                 if tile_id in s2_prod.properties["id"]:
-                    s2_prod_ids.append([self._plan['s2_provider'],s2_prod.properties["id"]])
+                    s2_prod_ids.append(
+                        [self._plan["s2_provider"], s2_prod.properties["id"]]
+                    )
             return s2_prod_ids
 
     def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
-        l8_prods = eodag_prods(s2_tile,
-                                self._plan['season_processing_start'],
-                                self._plan['season_processing_end'],
-                                self._plan['l8_provider'],
-                                'LANDSAT_C2L2_SR',
-                                eodag_config_filepath,
-                                cloud_cover=self._cloudcover)
+        l8_prods = eodag_prods(
+            s2_tile,
+            self._plan["season_processing_start"],
+            self._plan["season_processing_end"],
+            self._plan["l8_provider"],
+            "LANDSAT_C2L2_SR",
+            eodag_config_filepath,
+            cloud_cover=self._cloudcover,
+        )
         # filter the prods: keep only T1 products
-        #l8_prods = [prod for prod in l8_prods if prod.properties['id'].endswith(('T1','T1_L1TP'))]
+        # l8_prods = [prod for prod in l8_prods if
+        # prod.properties['id'].endswith(('T1','T1_L1TP'))]
         logger.debug(l8_prods)
 
         # Group by same path & date
         dic = {}
         for l8_prod in l8_prods:
-            date = (l8_prod.properties["startTimeFromAscendingNode"].split("T")[0].replace("-", ""))
-            path, row = get_path_row(l8_prod, self._plan['l8_provider'].lower())
+            date = (
+                l8_prod.properties["startTimeFromAscendingNode"]
+                .split("T")[0]
+                .replace("-", "")
+            )
+            path, row = get_path_row(l8_prod, self._plan["l8_provider"].lower())
             key = path + date
             l8_mask = Landsat_Cloud_Mask(path, row, date)
             if l8_mask.mask_exists():
-                l8_id = l8_prod.properties['id']
+                l8_id = l8_prod.properties["id"]
                 if l8_id.endswith("_SR"):
                     l8_id = l8_id[:-3]
-                #f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
+                # f"s3://{l8_mask.bucket}/{l8_mask.tirs_10_key}"
                 if key in dic and len(l8_id) > 0:
                     dic[key].append(l8_id)
                 elif len(l8_id) > 0:
                     dic[key] = [l8_id]
             else:
-                logger.warning("Missing product %s", l8_prod.properties['id'])
+                logger.warning("Missing product %s", l8_prod.properties["id"])
 
         return list(dic.values())
 
     @classmethod
-    def from_aoi(cls, aoi_filepath,
-                 season_start, season_end,
-                 season_processing_start, season_processing_end,
-                 annual_processing_start, annual_processing_end,
-                 data_provider,
-                 l8_sr=False,
-                 aez_id=0,
-                 user="EWoC_admin",
-                 visibility="public",
-                 season_type="winter",
-                 detector_set="winterwheat, irrigation",
-                 enable_sw=False,
-                 eodag_config_filepath=None,
-                 cloudcover=90):
-        supported_format=['.shp', '.geojson', '.gpkg']
+    def from_aoi(
+        cls,
+        aoi_filepath,
+        season_start,
+        season_end,
+        season_processing_start,
+        season_processing_end,
+        annual_processing_start,
+        annual_processing_end,
+        data_provider,
+        l8_sr=False,
+        aez_id=0,
+        user="EWoC_admin",
+        visibility="public",
+        season_type="winter",
+        detector_set="winterwheat, irrigation",
+        enable_sw=False,
+        eodag_config_filepath=None,
+        cloudcover=90,
+    ):
+        supported_format = [".shp", ".geojson", ".gpkg"]
         if aoi_filepath.suffix in supported_format:
             # Vector file to get bbox
             geometries = gpd.read_file(aoi_filepath)
             # Re-project geometry if needed
             if geometries.crs.to_epsg() != 4326:
-                geometries = vec.to_crs(4326)
+                geometries = geometries.to_crs(4326)
             s2_tiles = []
             for geometry in geometries.geometry:
                 current_s2_tiles = eotile_module.main(str(geometry))[0]
                 for s2_tile in current_s2_tiles["id"]:
                     if s2_tile not in s2_tiles:
                         s2_tiles.append(s2_tile)
-            return WorkPlan(s2_tiles,
-                            season_start,
-                            season_end,
-                            season_processing_start,
-                            season_processing_end,
-                            annual_processing_start,
-                            annual_processing_end,
-                            data_provider,
-                            l8_sr,
-                            aez_id,
-                            user,
-                            visibility,
-                            season_type,
-                            detector_set,
-                            enable_sw,
-                            eodag_config_filepath,
-                            cloudcover)
-        else:
-            logging.critical('%s is not supported (%s)', aoi_filepath.name,
-                                                         supported_format)
-            raise ValueError
-
-
-    @classmethod
-    def load(cls, wp_filepath):
-        wp = cls.__new__(cls)
-        with open(wp_filepath, encoding='utf-8') as raw_workplan:
-            wp._plan = json.load(raw_workplan)
-        return wp
-
-
-    @classmethod
-    def from_csv(cls, csv_filepath,
-                season_start, season_end,
-                season_processing_start, season_processing_end,
-                annual_processing_start, annual_processing_end,
-                data_provider,
-                l8_sr=False,
-                aez_id=0,
-                user="EWoC_admin",
-                visibility="public",
-                season_type="winter",
-                detector_set="winterwheat, irrigation",
-                enable_sw=False,
-                eodag_config_filepath=None,
-                cloudcover=90):
-        tile_ids=list()
-        with open(csv_filepath,encoding="latin-1") as csvfile:
-            reader = csv.reader(csvfile)
-            for line in reader:
-                for tile_id in line:
-                    tile_ids.append(tile_id)
-
-        return cls(tile_ids,
+            return WorkPlan(
+                s2_tiles,
                 season_start,
                 season_end,
                 season_processing_start,
@@ -290,26 +299,86 @@ class WorkPlan:
                 annual_processing_start,
                 annual_processing_end,
                 data_provider,
-                l8_sr=l8_sr,
-                aez_id=aez_id,
-                user=user,
-                visibility=visibility,
-                season_type=season_type,
-                detector_set=detector_set,
-                enable_sw=enable_sw,
-                eodag_config_filepath=eodag_config_filepath,
-                cloudcover=cloudcover)
+                l8_sr,
+                aez_id,
+                user,
+                visibility,
+                season_type,
+                detector_set,
+                enable_sw,
+                eodag_config_filepath,
+                cloudcover,
+            )
+        else:
+            logging.critical(
+                "%s is not supported (%s)", aoi_filepath.name, supported_format
+            )
+            raise ValueError
+
+    @classmethod
+    def load(cls, wp_filepath):
+        wp = cls.__new__(cls)
+        with open(wp_filepath, encoding="utf-8") as raw_workplan:
+            wp._plan = json.load(raw_workplan)
+        return wp
+
+    @classmethod
+    def from_csv(
+        cls,
+        csv_filepath,
+        season_start,
+        season_end,
+        season_processing_start,
+        season_processing_end,
+        annual_processing_start,
+        annual_processing_end,
+        data_provider,
+        l8_sr=False,
+        aez_id=0,
+        user="EWoC_admin",
+        visibility="public",
+        season_type="winter",
+        detector_set="winterwheat, irrigation",
+        enable_sw=False,
+        eodag_config_filepath=None,
+        cloudcover=90,
+    ):
+        tile_ids = list()
+        with open(csv_filepath, encoding="latin-1") as csvfile:
+            reader = csv.reader(csvfile)
+            for line in reader:
+                for tile_id in line:
+                    tile_ids.append(tile_id)
+
+        return cls(
+            tile_ids,
+            season_start,
+            season_end,
+            season_processing_start,
+            season_processing_end,
+            annual_processing_start,
+            annual_processing_end,
+            data_provider,
+            l8_sr=l8_sr,
+            aez_id=aez_id,
+            user=user,
+            visibility=visibility,
+            season_type=season_type,
+            detector_set=detector_set,
+            enable_sw=enable_sw,
+            eodag_config_filepath=eodag_config_filepath,
+            cloudcover=cloudcover,
+        )
 
     def to_json(self, out_filepath):
-        with open(out_filepath, "w", encoding='utf-8') as json_file:
+        with open(out_filepath, "w", encoding="utf-8") as json_file:
             json.dump(self._plan, json_file, indent=4)
 
     def to_ewoc_db(self):
-        temporary_json_file = tempfile.NamedTemporaryFile(suffix='.json')
+        temporary_json_file = tempfile.NamedTemporaryFile(suffix=".json")
         self.to_json(temporary_json_file.name)
         main_ewoc_db(temporary_json_file.name)
         temporary_json_file.close()
-
 
     def reproc(self, bucket, path):
         new_wp = WorkPlan.__new__(WorkPlan)

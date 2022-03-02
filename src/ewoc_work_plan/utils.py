@@ -144,7 +144,7 @@ def greatest_timedelta(
         # Chained comparison
         for current_date in date_list:
             delta_max = max(abs(current_date - previous_date), delta_max)
-            _logger.debug(f"DATE: %s", previous_date)
+            _logger.debug("DATE: %s", previous_date)
             # logging (1)
             previous_date = current_date
 
@@ -153,8 +153,8 @@ def greatest_timedelta(
         delta_max = max(abs(previous_date - end_date_strp), delta_max)
 
         # logging (2)
-        _logger.debug(f"DATE: %s", previous_date)
-        _logger.debug(f"DATE: %s", end_date_strp)
+        _logger.debug("DATE: %s", previous_date)
+        _logger.debug("DATE: %s", end_date_strp)
 
         return delta_max
 
@@ -176,9 +176,9 @@ def cross_prodvider_ids(s2_tile, start, end, cloudcover, min_nb_prd, creds):
     for el in s2_prods_e84:
         pid = el.properties["sentinel:product_id"]
         cc = el.properties["cloudCover"]
-        date = datetime.strptime(pid.split('_')[2],"%Y%m%dT%H%M%S")
+        date = datetime.strptime(pid.split("_")[2], "%Y%m%dT%H%M%S")
         if s2_tile in pid:
-            e84[pid]={"cc":float(cc),"date":date}
+            e84[pid] = {"cc": float(cc), "date": date}
     # Sort by date ascending
     e84 = {el: v for el, v in sorted(e84.items(), key=lambda item: item[1]["date"])}
     # Return list of best products for a given cloud cover and yearly threshold
@@ -190,26 +190,33 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prd: int) -> List:
     # Get number of months from sorted dict
     last_date = s2_prds[list(s2_prds.keys())[-1]]["date"]
     first_date = s2_prds[list((s2_prds.keys()))[0]]["date"]
-    n_months = (last_date.year - first_date.year) * 12 + last_date.month - first_date.month
-    min_nb_prd = round((n_months * min_nb_prd)/12)
+    n_months = (
+        (last_date.year - first_date.year) * 12 + last_date.month - first_date.month
+    )
+    min_nb_prd = round((n_months * min_nb_prd) / 12)
     # Filter produtcs by cloud cover
     cc_filter = [prd for prd in s2_prds if s2_prds[prd]["cc"] <= float(cloudcover)]
     _logger.info(f"Found {len(cc_filter)} products with cloudcover below {cloudcover}%")
 
     if len(cc_filter) >= min_nb_prd:
         _logger.info(
-            f"Found enough products below {cloudcover}% ({len(cc_filter)}, min nb prods: {min_nb_prd})"
+            f"Found enough products below {cloudcover}% ({len(cc_filter)},"
+            f" min nb prods: {min_nb_prd})"
         )
         return cc_filter
     elif s2_prds:
         _logger.warning(
-            f"Not enough products below {cloudcover}%, full list of products (cloudcover 100%) will be used"
+            f"Not enough products below {cloudcover}%, "
+            f"full list of products (cloudcover 100%) will be used"
         )
         return list(s2_prds.keys())
     else:
         _logger.error("Product list is empty!")
         return list(s2_prds.keys())
 
+
 if __name__ == "__main__":
-    aws = cross_prodvider_ids("31TCJ","2018-01-01","2019-01-01",80,40,creds="/eodag_config.yml")
+    aws = cross_prodvider_ids(
+        "31TCJ", "2018-01-01", "2019-01-01", 80, 40, creds="/eodag_config.yml"
+    )
     print("\n".join(aws))
