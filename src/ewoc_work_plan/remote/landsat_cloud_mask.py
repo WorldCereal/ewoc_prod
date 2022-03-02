@@ -61,17 +61,23 @@ class Landsat_Cloud_Mask:
                 Prefix=self.prefix + prod_dir,
                 MaxKeys=1000,
                 RequestPayer=self.payer,
-                Delimiter='/',
+                Delimiter="/",
             )
             resp = response["CommonPrefixes"]
             for prefix in resp:
                 file_keys.append(prefix["Prefix"])
             cloud_mask = [
-                file for file in file_keys if self.date in file.split('/')[7].split('_')[3]
+                file
+                for file in file_keys
+                if self.date in file.split("/")[7].split("_")[3]
             ]
             if len(cloud_mask) > 0:
-                self.cloud_key = cloud_mask[0]+cloud_mask[0].split('/')[7]+'_SR_QA_AEROSOL.TIF'
-                self.tirs_10_key = cloud_mask[0]+cloud_mask[0].split('/')[7]+'_ST_B10.TIF'
+                self.cloud_key = (
+                    cloud_mask[0] + cloud_mask[0].split("/")[7] + "_SR_QA_AEROSOL.TIF"
+                )
+                self.tirs_10_key = (
+                    cloud_mask[0] + cloud_mask[0].split("/")[7] + "_ST_B10.TIF"
+                )
                 self.exists = True
                 return True
             else:
