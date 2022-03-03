@@ -1,25 +1,21 @@
 import csv
-from datetime import datetime
 import json
 import logging
 import re
 import tempfile
+from datetime import datetime
 
 import geopandas as gpd
 from eotile import eotile_module
-from shapely.wkt import dumps
 from ewoc_db.fill.fill_db import main as main_ewoc_db
+from shapely.wkt import dumps
 
 from ewoc_work_plan import __version__
-from ewoc_work_plan.utils import (
-    eodag_prods,
-    is_descending,
-    get_path_row,
-    greatest_timedelta,
-    cross_prodvider_ids,
-)
-from ewoc_work_plan.reproc import reproc_wp
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
+from ewoc_work_plan.reproc import reproc_wp
+from ewoc_work_plan.utils import (cross_prodvider_ids, eodag_prods,
+                                  get_path_row, greatest_timedelta,
+                                  is_descending)
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +30,7 @@ class WorkPlan:
         season_processing_end,
         annual_processing_start,
         annual_processing_end,
-        wp_processing_start, 
+        wp_processing_start,
         wp_processing_end,
         data_provider,
         l8_sr=False,
@@ -45,8 +41,8 @@ class WorkPlan:
         detector_set="winterwheat, irrigation",
         enable_sw=False,
         eodag_config_filepath=None,
-        min_nb_prd=40,
         cloudcover=90,
+        min_nb_prods=50,
     ) -> None:
 
         self._cloudcover = cloudcover
@@ -63,7 +59,6 @@ class WorkPlan:
         )
         self._plan["aez_id"] = aez_id
         self._plan["season_type"] = season_type
-        self._plan["s1_provider"] = "creodias"
         self._plan["enable_sw"] = enable_sw
         self._plan["detector_set"] = detector_set
         self._plan["season_start"] = season_start
@@ -73,11 +68,12 @@ class WorkPlan:
         self._plan["annual_processing_start"] = annual_processing_start
         self._plan["annual_processing_end"] = annual_processing_end
         self._plan['wp_processing_start'] = wp_processing_start
-        self._plan['wp_processing_end'] = wp_processing_end  
+        self._plan['wp_processing_end'] = wp_processing_end
+        self._plan["s1_provider"] = "creodias"
         self._plan["s2_provider"] = data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
-        self._plan["yearly_prd_threshold"] = min_nb_prd
+        self._plan["yearly_prd_threshold"] = min_nb_prods
         # Addind tiles
         tiles_plan = list()
 
@@ -270,7 +266,7 @@ class WorkPlan:
         season_processing_end,
         annual_processing_start,
         annual_processing_end,
-        wp_processing_start, 
+        wp_processing_start,
         wp_processing_end,
         data_provider,
         l8_sr=False,
@@ -281,8 +277,8 @@ class WorkPlan:
         detector_set="winterwheat, irrigation",
         enable_sw=False,
         eodag_config_filepath=None,
-        min_nb_prd=40,
         cloudcover=90,
+        min_nb_prods=50,
     ):
         supported_format = [".shp", ".geojson", ".gpkg"]
         if aoi_filepath.suffix in supported_format:
@@ -316,7 +312,7 @@ class WorkPlan:
                 detector_set,
                 enable_sw,
                 eodag_config_filepath,
-                min_nb_prd,
+                min_nb_prods,
                 cloudcover,
             )
         else:
@@ -353,8 +349,8 @@ class WorkPlan:
         detector_set="winterwheat, irrigation",
         enable_sw=False,
         eodag_config_filepath=None,
-        min_nb_prd=40,
         cloudcover=90,
+        min_nb_prods=50,
     ):
         tile_ids = list()
         with open(csv_filepath, encoding="latin-1") as csvfile:
@@ -382,8 +378,8 @@ class WorkPlan:
             detector_set=detector_set,
             enable_sw=enable_sw,
             eodag_config_filepath=eodag_config_filepath,
-            min_nb_prd,
             cloudcover=cloudcover,
+            min_nb_prods=min_nb_prods,
         )
 
     def to_json(self, out_filepath):

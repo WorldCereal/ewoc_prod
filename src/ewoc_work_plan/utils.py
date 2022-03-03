@@ -1,13 +1,14 @@
-import os
 import logging
-import xml.etree.ElementTree as et
+import os
 import re
-from shapely.wkt import dumps
+import xml.etree.ElementTree as et
 from datetime import datetime, timedelta
+from typing import List
+
 import boto3
 from eodag.api.core import EODataAccessGateway
 from eotile import eotile_module
-from typing import List
+from shapely.wkt import dumps
 
 _logger = logging.getLogger(__name__)
 
@@ -159,7 +160,7 @@ def greatest_timedelta(
         return delta_max
 
 
-def cross_prodvider_ids(s2_tile, start, end, cloudcover, min_nb_prd, creds):
+def cross_prodvider_ids(s2_tile, start, end, cloudcover, min_nb_prods, creds):
     poly = eotile_module.main(s2_tile)[0]
     # Start search with element84 API
     s2_prods_e84 = eodag_prods(
@@ -182,32 +183,32 @@ def cross_prodvider_ids(s2_tile, start, end, cloudcover, min_nb_prd, creds):
     # Sort by date ascending
     e84 = {el: v for el, v in sorted(e84.items(), key=lambda item: item[1]["date"])}
     # Return list of best products for a given cloud cover and yearly threshold
-    e84 = get_best_prds(e84, cloudcover, min_nb_prd)
+    e84 = get_best_prds(e84, cloudcover, min_nb_prods)
     return e84
 
 
-def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prd: int) -> List:
+def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
     # Get number of months from sorted dict
     last_date = s2_prds[list(s2_prds.keys())[-1]]["date"]
     first_date = s2_prds[list((s2_prds.keys()))[0]]["date"]
     n_months = (
         (last_date.year - first_date.year) * 12 + last_date.month - first_date.month
     )
-    min_nb_prd = round((n_months * min_nb_prd) / 12)
+    min_nb_prods = round((n_months * min_nb_prods) / 12)
     # Filter produtcs by cloud cover
     cc_filter = [prd for prd in s2_prds if s2_prds[prd]["cc"] <= float(cloudcover)]
-    _logger.info(f"Found {len(cc_filter)} products with cloudcover below {cloudcover}%")
+    _logger.info("Found %s products with cloudcover below %s%%", len(cc_filter), cloudcover)
 
-    if len(cc_filter) >= min_nb_prd:
+    if len(cc_filter) >= min_nb_prods:
         _logger.info(
-            f"Found enough products below {cloudcover}% ({len(cc_filter)},"
-            f" min nb prods: {min_nb_prd})"
+            "Found enough products below %s%% (%s, min nb prods: %s)",
+            cloudcover, len(cc_filter), min_nb_prods
         )
         return cc_filter
     elif s2_prds:
         _logger.warning(
-            f"Not enough products below {cloudcover}%, "
-            f"full list of products (cloudcover 100%) will be used"
+            "Not enough products below %s%%, full list of products (cloudcover 100%) \
+            will be used", cloudcover
         )
         return list(s2_prds.keys())
     else:
@@ -217,6 +218,6 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prd: int) -> List:
 
 if __name__ == "__main__":
     aws = cross_prodvider_ids(
-        "31TCJ", "2018-01-01", "2019-01-01", 80, 40, creds="/eodag_config.yml"
+        "31TCJ", "2018-01-01", "2019-01-01", 90, 50, creds="/eodag_config.yml"
     )
     print("\n".join(aws))
