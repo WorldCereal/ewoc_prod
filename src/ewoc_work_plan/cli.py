@@ -36,6 +36,14 @@ _logger = logging.getLogger(__name__)
     "-annual_processing_end",
     help="Annual processing end date for cropland detector, format YYYY-mm-dd",
 )
+@click.option(
+  '-wp_processing_start',
+    help="Workplan processing start date, format YYYY-mm-dd"
+)
+@click.option(
+  '-wp_processing_end',
+    help="Workplan processing end date, format YYYY-mm-dd"
+)
 @click.option("-prov", help="Provider (peps/creodias/astraea_eod)")
 @click.option("-l8_sr", default="False", help="Process L8 OLI bands or not")
 @click.option("-aez_id", default=0, type=int, help="ID of the AED")
@@ -47,11 +55,11 @@ _logger = logging.getLogger(__name__)
     default="winterwheat, irrigation",
     help="Detector set linked to season type",
 )
-@click.option("-enable_sw", default="False", help="Process spring wheat or not")
+@click.option("-enable_sw", default=False, help="Process spring wheat or not")
 @click.option(
     "-eodag_config_filepath", default=None, help="Path to the Eodag yml config file"
 )
-@click.option("-cloudcover", default="90", help="Cloudcover parameter")
+@click.option("-cloudcover", default=90, help="Cloudcover parameter")
 @click.option("-min_nb_prods", default=40, help="Yearly minimum number of products")
 def generate(
     ctx,
@@ -62,6 +70,8 @@ def generate(
     season_processing_end,
     annual_processing_start,
     annual_processing_end,
+    wp_processing_start, 
+    wp_processing_end,
     prov,
     l8_sr,
     aez_id,
@@ -82,8 +92,10 @@ def generate(
     :param season_end: season end date of the AEZ
     :param season_processing_start: season processing start date
     :param season_processing_end: season processing end date
-    :param annual_processing_start: production start date
-    :param annual_processing_end: production start date
+    :param annual_processing_start: annual processing start date
+    :param annual_processing_end: annual processing end date
+    :param wp_processing_start: workplan processing start date
+    :param wp_processing_end: workplan processing end date
     :param prov: provider (peps/creodias/astraea_eod)
     :param l8_sr: process L8 OLI bands or not
     :param aez_id: id of the AED
@@ -128,6 +140,8 @@ def generate(
             season_processing_end,
             annual_processing_start,
             annual_processing_end,
+            wp_processing_start, 
+            wp_processing_end,
             prov,
             l8_sr=l8_sr,
             aez_id=aez_id,
@@ -149,6 +163,8 @@ def generate(
             season_processing_end,
             annual_processing_start,
             annual_processing_end,
+            wp_processing_start, 
+            wp_processing_end,
             prov,
             l8_sr=l8_sr,
             aez_id=aez_id,
@@ -169,7 +185,9 @@ def generate(
             season_processing_start,
             season_processing_end,
             annual_processing_start,
-            annual_processing_end,
+            annual_processing_end,            
+            wp_processing_start, 
+            wp_processing_end,
             prov,
             l8_sr=l8_sr,
             aez_id=aez_id,

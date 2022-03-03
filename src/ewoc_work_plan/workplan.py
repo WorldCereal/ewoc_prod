@@ -34,6 +34,8 @@ class WorkPlan:
         season_processing_end,
         annual_processing_start,
         annual_processing_end,
+        wp_processing_start, 
+        wp_processing_end,
         data_provider,
         l8_sr=False,
         aez_id=0,
@@ -70,6 +72,8 @@ class WorkPlan:
         self._plan["season_processing_end"] = season_processing_end
         self._plan["annual_processing_start"] = annual_processing_start
         self._plan["annual_processing_end"] = annual_processing_end
+        self._plan['wp_processing_start'] = wp_processing_start
+        self._plan['wp_processing_end'] = wp_processing_end  
         self._plan["s2_provider"] = data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
@@ -122,8 +126,8 @@ class WorkPlan:
         }
         s1_prods_full = eodag_prods(
             s2_tile,
-            self._plan["season_processing_start"],
-            self._plan["season_processing_end"],
+            self._plan["wp_processing_start"],
+            self._plan["wp_processing_end"],
             self._plan["s1_provider"],
             s1_prods_types[self._plan["s1_provider"]],
             eodag_config_filepath,
@@ -144,14 +148,14 @@ class WorkPlan:
         logger.debug("ASCENDING:")
         td_asc = greatest_timedelta(
             s1_prods_asc,
-            self._plan["season_processing_start"],
-            self._plan["season_processing_end"],
+            self._plan["wp_processing_start"],
+            self._plan["wp_processing_end"],
         )
         logger.debug("DESCENDING:")
         td_desc = greatest_timedelta(
             s1_prods_desc,
-            self._plan["season_processing_start"],
-            self._plan["season_processing_end"],
+            self._plan["wp_processing_start"],
+            self._plan["wp_processing_end"],
         )
 
         logger.info("The greatest time delta for ASCENTING product is %s", td_asc)
@@ -190,8 +194,8 @@ class WorkPlan:
         if self._plan["s2_provider"] == "aws":
             s2_prods = cross_prodvider_ids(
                 tile_id,
-                self._plan["season_processing_start"],
-                self._plan["season_processing_end"],
+                self._plan["wp_processing_start"],
+                self._plan["wp_processing_end"],
                 self._cloudcover,
                 self._plan["yearly_prd_threshold"],
                 eodag_config_filepath,
@@ -201,8 +205,8 @@ class WorkPlan:
         else:
             s2_prods = eodag_prods(
                 s2_tile,
-                self._plan["season_processing_start"],
-                self._plan["season_processing_end"],
+                self._plan["wp_processing_start"],
+                self._plan["wp_processing_end"],
                 self._plan["s2_provider"],
                 s2_prods_types[self._plan["s2_provider"].lower()],
                 eodag_config_filepath,
@@ -219,8 +223,8 @@ class WorkPlan:
     def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
         l8_prods = eodag_prods(
             s2_tile,
-            self._plan["season_processing_start"],
-            self._plan["season_processing_end"],
+            self._plan["wp_processing_start"],
+            self._plan["wp_processing_end"],
             self._plan["l8_provider"],
             "LANDSAT_C2L2_SR",
             eodag_config_filepath,
@@ -266,6 +270,8 @@ class WorkPlan:
         season_processing_end,
         annual_processing_start,
         annual_processing_end,
+        wp_processing_start, 
+        wp_processing_end,
         data_provider,
         l8_sr=False,
         aez_id=0,
@@ -299,6 +305,8 @@ class WorkPlan:
                 season_processing_end,
                 annual_processing_start,
                 annual_processing_end,
+                wp_processing_start,
+                wp_processing_end,
                 data_provider,
                 l8_sr,
                 aez_id,
@@ -334,6 +342,8 @@ class WorkPlan:
         season_processing_end,
         annual_processing_start,
         annual_processing_end,
+        wp_processing_start,
+        wp_processing_end,
         data_provider,
         l8_sr=False,
         aez_id=0,
@@ -361,6 +371,8 @@ class WorkPlan:
             season_processing_end,
             annual_processing_start,
             annual_processing_end,
+            wp_processing_start,
+            wp_processing_end,
             data_provider,
             l8_sr=l8_sr,
             aez_id=aez_id,
