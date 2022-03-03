@@ -42,7 +42,7 @@ class WorkPlan:
         enable_sw=False,
         eodag_config_filepath=None,
         cloudcover=90,
-        min_nb_prd=50,
+        min_nb_prods=50,
     ) -> None:
 
         self._cloudcover = cloudcover
@@ -73,7 +73,7 @@ class WorkPlan:
         self._plan["s2_provider"] = data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
-        self._plan["yearly_prd_threshold"] = min_nb_prd
+        self._plan["yearly_prd_threshold"] = min_nb_prods
         # Addind tiles
         tiles_plan = list()
 
@@ -278,7 +278,7 @@ class WorkPlan:
         enable_sw=False,
         eodag_config_filepath=None,
         cloudcover=90,
-        min_nb_prd=50,
+        min_nb_prods=50,
     ):
         supported_format = [".shp", ".geojson", ".gpkg"]
         if aoi_filepath.suffix in supported_format:
@@ -312,7 +312,7 @@ class WorkPlan:
                 detector_set,
                 enable_sw,
                 eodag_config_filepath,
-                min_nb_prd,
+                min_nb_prods,
                 cloudcover,
             )
         else:
@@ -350,7 +350,7 @@ class WorkPlan:
         enable_sw=False,
         eodag_config_filepath=None,
         cloudcover=90,
-        min_nb_prd=50,
+        min_nb_prods=50,
     ):
         tile_ids = list()
         with open(csv_filepath, encoding="latin-1") as csvfile:
@@ -379,7 +379,7 @@ class WorkPlan:
             enable_sw=enable_sw,
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
-            min_nb_prd=min_nb_prd,
+            min_nb_prods=min_nb_prods,
         )
 
     def to_json(self, out_filepath):

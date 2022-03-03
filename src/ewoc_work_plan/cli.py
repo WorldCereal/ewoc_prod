@@ -152,7 +152,7 @@ def generate(
             enable_sw=enable_sw,
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
-            min_nb_prd=min_nb_prods,
+            min_nb_prods=min_nb_prods,
         )
     elif induced_type == "csv":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_csv(
@@ -175,7 +175,7 @@ def generate(
             enable_sw=enable_sw,
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
-            min_nb_prd=min_nb_prods,
+            min_nb_prods=min_nb_prods,
         )
     elif induced_type == "aoi":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_aoi(
@@ -198,7 +198,7 @@ def generate(
             enable_sw=enable_sw,
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
-            min_nb_prd=min_nb_prods,
+            min_nb_prods=min_nb_prods,
         )
     else:
         click.echo(f"Unrecognized {input_data} as input type")
