@@ -36,7 +36,7 @@ def fetch_bucket(bucket, path):
     s3c = get_s3_client()
     paginator = s3c.get_paginator("list_objects")
 
-    kwargs = {'Bucket': bucket, "Prefix": path}
+    kwargs = {"Bucket": bucket, "Prefix": path}
 
     count = 0
     bucket_prods = []
@@ -72,9 +72,12 @@ def search_json_and_dump(bucket_prods, plan, path):
         for prods in prod_list:
             product_is_found = False
             for prod in prods:
-                prod_transformed1, prod_transformed2 = to_ewoc_s1_ard(Path(path), prod, tile_id)
-                if (any(str(prod_transformed1) in elt for elt in bucket_prods) and
-                        any(str(prod_transformed2) in elt for elt in bucket_prods)):
+                prod_transformed1, prod_transformed2 = to_ewoc_s1_ard(
+                    Path(path), prod, tile_id
+                )
+                if any(str(prod_transformed1) in elt for elt in bucket_prods) and any(
+                    str(prod_transformed2) in elt for elt in bucket_prods
+                ):
                     product_is_found = True
             if not product_is_found:
                 logger.info("lost")
@@ -85,15 +88,22 @@ def search_json_and_dump(bucket_prods, plan, path):
         out["s2_ids"] = []
         for prod in prods:
             prods_transformed = l2a_to_ard(prod, path)
-            is_present = [any(str(prod_transformed).split("MSI")[0] in elt for elt in bucket_prods)
-                          for prod_transformed in prods_transformed]
-            if not(all(is_present)) or len(is_present) != s2_band_count:
+            is_present = [
+                any(
+                    str(prod_transformed).split("MSI")[0] in elt for elt in bucket_prods
+                )
+                for prod_transformed in prods_transformed
+            ]
+            if not (all(is_present)) or len(is_present) != s2_band_count:
                 logger.info("lost")
                 logger.info(prods)
                 out["s2_ids"].append(prod)
                 if len(is_present) != s2_band_count:
-                    logger.info("There is %s S2 products and there should be %s", len(is_present),
-                                                                                  s2_band_count)
+                    logger.info(
+                        "There is %s S2 products and there should be %s",
+                        len(is_present),
+                        s2_band_count,
+                    )
         # L8 TIRS
         prod_list = tile_plan["l8_ids"]
         out["l8_ids"] = []
@@ -101,8 +111,16 @@ def search_json_and_dump(bucket_prods, plan, path):
             product_is_found = False
             for prod in prods:
                 prod_transformed = l8_to_ard(prod, tile_id, path)
-                if len([prod_path for prod_path in bucket_prods if prod_transformed in prod_path]
-                       ) == l8_tirs_band_count:
+                if (
+                    len(
+                        [
+                            prod_path
+                            for prod_path in bucket_prods
+                            if prod_transformed in prod_path
+                        ]
+                    )
+                    == l8_tirs_band_count
+                ):
                     product_is_found = True
             if not product_is_found:
                 logger.info("lost")
