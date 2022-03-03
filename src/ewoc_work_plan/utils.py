@@ -1,13 +1,14 @@
-import os
 import logging
-import xml.etree.ElementTree as et
+import os
 import re
-from shapely.wkt import dumps
+import xml.etree.ElementTree as et
 from datetime import datetime, timedelta
+from typing import List
+
 import boto3
 from eodag.api.core import EODataAccessGateway
 from eotile import eotile_module
-from typing import List
+from shapely.wkt import dumps
 
 _logger = logging.getLogger(__name__)
 
@@ -196,18 +197,18 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prd: int) -> List:
     min_nb_prd = round((n_months * min_nb_prd) / 12)
     # Filter produtcs by cloud cover
     cc_filter = [prd for prd in s2_prds if s2_prds[prd]["cc"] <= float(cloudcover)]
-    _logger.info(f"Found {len(cc_filter)} products with cloudcover below {cloudcover}%")
+    _logger.info("Found %s products with cloudcover below %s%%", len(cc_filter), cloudcover)
 
     if len(cc_filter) >= min_nb_prd:
         _logger.info(
-            f"Found enough products below {cloudcover}% ({len(cc_filter)},"
-            f" min nb prods: {min_nb_prd})"
+            "Found enough products below %s%% (%s, min nb prods: %s)",
+            cloudcover, len(cc_filter), min_nb_prd
         )
         return cc_filter
     elif s2_prds:
         _logger.warning(
-            f"Not enough products below {cloudcover}%, "
-            f"full list of products (cloudcover 100%) will be used"
+            "Not enough products below %s%%, full list of products (cloudcover 100%) \
+            will be used", cloudcover
         )
         return list(s2_prds.keys())
     else:
@@ -217,6 +218,6 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prd: int) -> List:
 
 if __name__ == "__main__":
     aws = cross_prodvider_ids(
-        "31TCJ", "2018-01-01", "2019-01-01", 80, 40, creds="/eodag_config.yml"
+        "31TCJ", "2018-01-01", "2019-01-01", 90, 50, creds="/eodag_config.yml"
     )
     print("\n".join(aws))
