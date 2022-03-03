@@ -44,6 +44,26 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-t',"--tile_id",
                         help="Tile id for production (e.g. '31TCJ')",
                         type=str)
+    parser.add_argument('-prov', "--data_provider",
+                        help="Provider (peps/creodias/astraea_eod)",
+                        type=str,
+                        default="creodias")
+    parser.add_argument('-u', "--user",
+                        help="Username",
+                        type=str,
+                        default="EWoC_admin")
+    parser.add_argument('-visib', "--visibility",
+                        help="Visibility, public or private",
+                        type=str,
+                        default="public")
+    parser.add_argument('-cc', "--cloudcover",
+                        help="Cloudcover parameter",
+                        type=int,
+                        default=90)
+    parser.add_argument('-min_prods', "--min_nb_prods",
+                        help="Yearly minimum number of products",
+                        type=int,
+                        default=50)
     parser.add_argument(
         "-v",
         "--verbose",
@@ -118,6 +138,11 @@ def main(args: List[str])->None:
         retrieve_custom_dates(args.s2tiles_aez_file, args.tile_id, year=2021)
     detector_set = 'None'
 
+    # logging.info("data_provider = %s", args.data_provider)
+    # logging.info("user = %s", args.user)
+    # logging.info("visibility = %s", args.visibility)
+    # logging.info("cloudcover = %s", args.cloudcover)
+    # logging.info("min_nb_prods = %s", args.min_nb_prods)
     # logging.info("aez_id = %s", int(aez_id))
     # logging.info("season_type = %s", season_type)
     # logging.info("season_start = %s", season_start)
@@ -137,12 +162,15 @@ def main(args: List[str])->None:
     wp_for_aez = WorkPlan(s2tiles_list, str(season_start), str(season_end), \
         str(season_processing_start), str(season_processing_end), \
             str(annual_processing_start), str(annual_processing_end), \
-            str(wp_processing_start), str(wp_processing_end), \
-                data_provider='creodias', l8_sr=l8_enable_sr, aez_id=int(aez_id), \
-                    user="EWoC_admin", visibility="public", season_type=season_type,\
-                        detector_set=detector_set, enable_sw=enable_sw, \
-                            eodag_config_filepath="../../../eodag_config.yml", cloudcover=90)
-    # print(wp_for_aez.__dict__)
+                str(wp_processing_start), str(wp_processing_end), \
+                    data_provider=args.data_provider, l8_sr=l8_enable_sr, \
+                        aez_id=int(aez_id), user=args.user, \
+                            visibility=args.visibility, season_type=season_type,\
+                                detector_set=detector_set, enable_sw=enable_sw, \
+                                    eodag_config_filepath="../../../eodag_config.yml", \
+                                        cloudcover=args.cloudcover, \
+                                            min_nb_prods=args.min_nb_prods)
+        # print(wp_for_aez.__dict__)
     wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_tile_{args.tile_id}_creodias.json')
 
     logging.info("--- %s seconds ---", (time.time() - start_time))
