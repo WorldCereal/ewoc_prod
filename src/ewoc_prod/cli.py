@@ -197,7 +197,7 @@ def main(args: List[str])->None:
                                                 eodag_config_filepath="../../../eodag_config.yml", \
                                                     cloudcover=args.cloudcover, \
                                                         min_nb_prods=args.min_nb_prods)
-                wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_creodias_test.json')
+                wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_creodias.json')
     else:
         aez_id = aez_list[0]
 
@@ -253,7 +253,7 @@ def main(args: List[str])->None:
                                             eodag_config_filepath="../../../eodag_config.yml", \
                                                 cloudcover=args.cloudcover, \
                                                     min_nb_prods=args.min_nb_prods)
-            wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_creodias_test.json')
+            wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_creodias.json')
 
     logging.info("--- %s seconds ---", (time.time() - start_time))
 
