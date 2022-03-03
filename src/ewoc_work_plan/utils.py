@@ -207,7 +207,7 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
         return cc_filter
     elif s2_prds:
         _logger.warning(
-            "Not enough products below %s%%, full list of products (cloudcover 100%) \
+            "Not enough products below %s%%, full list of products (cloudcover 100%%) \
             will be used", cloudcover
         )
         return list(s2_prds.keys())
