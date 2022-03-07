@@ -89,13 +89,13 @@ def extract_s2tiles_list(s2tiles_aez_file: str,
     s2tiles_layer = data_source.GetLayer()
     #Identify the tiles of interest from the info provided by the user
     if tile_id is not None:
-        logging.info('Extract tile : %s', tile_id)
+        logging.info("Extract tile : %s", tile_id)
         tiles_id = get_tiles_from_tile(tile_id)
     elif aez_id is not None:
-        logging.info('Extract tiles corresponding to the aez region id: %s', aez_id)
+        logging.info("Extract tiles corresponding to the aez region id: %s", aez_id)
         tiles_id = get_tiles_from_aez(s2tiles_layer, aez_id)
     elif user_aoi is not None:
-        logging.info('Extract tiles corresponding to the user aoi: %s', user_aoi)
+        logging.info("Extract tiles corresponding to the user aoi: %s", user_aoi)
         tiles_id = []
         driver = ogr.GetDriverByName('GeoJSON')
         data_source2 = driver.Open(user_aoi, 1)
@@ -106,7 +106,7 @@ def extract_s2tiles_list(s2tiles_aez_file: str,
             tiles_id.extend(tiles_id_geom)
         logging.info("Number of tiles selected = %s", len(tiles_id))
     else:
-        logging.info('Extract tiles corresponding to the production date requested: %s',
+        logging.info("Extract tiles corresponding to the production date requested: %s",
              prod_start_date)
         tiles_id = get_tiles_from_date(s2tiles_layer, prod_start_date)
     return tiles_id
@@ -256,7 +256,7 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
                                 tiles_id: str,
                                 season_type: str,
                                 prod_start_date: date)-> \
-                                    Tuple[date,date,date,date,date,date,bool,bool]:
+                                    Tuple[date,date,date,date,date,date,date,date,bool,bool,str]:
     """
     Get some tiles informations (dates, l8_sr)
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
@@ -328,12 +328,15 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
         annual_processing_start, annual_processing_end, wp_processing_start, wp_processing_end,\
             l8_enable_sr, enable_sw, detector_set
 
-def retrieve_custom_dates(s2tiles_aez_file: str, tile_id: str, year: int)->List[str]:
+def get_tiles_metaseason_infos_from_tiles(s2tiles_aez_file: str,
+                                tiles_id: str,
+                                year: int)-> \
+                                    Tuple[str,str,str,str,str,str,str,date,date,bool,bool,str]:
     """
-    Get custom dates for a tile that will encompass all the seasons
+    Get some tiles informations for metaseason (dates, l8_sr)
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
         the associated aez information (geojson file)
-    :param tile_id: s2 tile id
+    :param tiles_id: list of s2 tiles selected
     :param year: season to process (e.g. 2021 to process 2020/2021)
     """
     #Open geosjon
@@ -341,8 +344,51 @@ def retrieve_custom_dates(s2tiles_aez_file: str, tile_id: str, year: int)->List[
     data_source = driver.Open(s2tiles_aez_file, 1)
     s2tiles_layer = data_source.GetLayer()
     #Add filter
-    s2tiles_layer.SetAttributeFilter(f"tile = '{tile_id}'")
+    tiles_id_str = '(' + ','.join(f"'{tile_id}'" for tile_id in tiles_id) + ')'
+    s2tiles_layer.SetAttributeFilter(f"tile IN {tiles_id_str}")
     tile = s2tiles_layer.GetNextFeature()
+    #Season type
+    season_type = 'custom'
+    #Get dates
+    season_start = 'None'
+    season_end = 'None'
+    season_processing_start = 'None'
+    season_processing_end = 'None'
+    annual_processing_start = 'None'
+    annual_processing_end = 'None'
+    #Get L8 info
+    if tile.GetField('L8')==0:
+        l8_enable_sr = False
+    elif tile.GetField('L8')==1:
+        l8_enable_sr = True
+    else:
+        raise ValueError
+    #Get spring wheat info
+    if tile.GetField('trigger_sw')==0:
+        enable_sw = False
+    elif tile.GetField('trigger_sw')==1:
+        enable_sw = True
+    else:
+        raise ValueError
+    #Get detector_set
+    detector_set = 'None'
+    #Get wp_processing_dates
+    wp_processing_start, wp_processing_end = \
+                retrieve_custom_dates(tile, year)
+    # wp_processing_start, wp_processing_end = \
+    #             retrieve_custom_dates(s2tiles_aez_file, tiles_id, year=year)
+    #Remove filter
+    s2tiles_layer.SetAttributeFilter(None)
+    return season_type, season_start, season_end, season_processing_start, season_processing_end, \
+        annual_processing_start, annual_processing_end, wp_processing_start, wp_processing_end,\
+            l8_enable_sr, enable_sw, detector_set
+
+def retrieve_custom_dates(tile: str, year: int)->List[str]:
+    """
+    Get custom dates that will encompass all the seasons
+    :param tile: aez representative tile with the associated aez information
+    :param year: season to process (e.g. 2021 to process 2020/2021)
+    """
     #Get field names
     ww_start_date_key = "wwsos_min"
     ww_end_date_key = "wweos_max"
@@ -401,6 +447,4 @@ def retrieve_custom_dates(s2tiles_aez_file: str, tile_id: str, year: int)->List[
         m2_start = conversion_doy_to_date(m2_start_doy, m2_year_start_date)
         if m2_start < wp_processing_start:
             wp_processing_start = m2_start
-    #Remove filter
-    s2tiles_layer.SetAttributeFilter(None)
     return wp_processing_start, wp_processing_end
