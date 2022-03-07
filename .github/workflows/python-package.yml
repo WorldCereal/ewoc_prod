@@ -22,8 +22,7 @@ jobs:
         python-version: [3.8]
         # python-version: [3.7, 3.8, 3.9]
     env:
-      EWOC_DATASHIP_VERSION: "0.2.2"
-      EWOC_DB_VERSION: "0.2.1"
+      EWOC_WORKPLAN_VERSION: "0.4.0"
 
     steps:
 
@@ -33,27 +32,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Download Dataship
+    - name: Download Workplan
       uses: robinraju/release-downloader@v1.1
       with:
-        repository: "WorldCereal/ewoc_dataship"
-        tag: "${{ env.EWOC_DATASHIP_VERSION }}"
-        fileName: "dataship-${{ env.EWOC_DATASHIP_VERSION }}.tar.gz"
-        token: ${{ secrets.CS_ORG_TOKEN }}
-
-    - name: Download EWoC DB
-      uses: robinraju/release-downloader@v1.1
-      with:
-        repository: "WorldCereal/ewoc_db"
-        tag: "${{ env.EWOC_DB_VERSION }}"
-        fileName: "ewoc_db-${{ env.EWOC_DB_VERSION }}-py2.py3-none-any.whl"
+        repository: "WorldCereal/ewoc_work_plan"
+        tag: "${{ env.EWOC_WORKPLAN_VERSION }}"
+        fileName: "ewoc_work_plan-${{ env.EWOC_WORKPLAN_VERSION }}.tar.gz"
         token: ${{ secrets.CS_ORG_TOKEN }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install dataship-${{ env.EWOC_DATASHIP_VERSION }}.tar.gz
-        python -m pip install ewoc_db-${{ env.EWOC_DB_VERSION }}-py2.py3-none-any.whl
+        python -m pip install ewoc_work_plan-${{ env.EWOC_WORKPLAN_VERSION }}.tar.gz
         pip install build
         pip install pylint
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
