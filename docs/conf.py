@@ -93,7 +93,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "ewoc-prod"
+project = "ewoc_prod"
 copyright = "2021, Mickael Savinaud"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -228,7 +228,7 @@ html_static_path = ["_static"]
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "ewoc-prod-doc"
+htmlhelp_basename = "ewoc_prod-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -245,7 +245,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "user_guide.tex", "ewoc-prod Documentation", "Mickael Savinaud", "manual")
+    ("index", "user_guide.tex", "ewoc_prod Documentation", "Mickael Savinaud", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
