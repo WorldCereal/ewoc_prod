@@ -241,7 +241,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version="ewoc-prod {ver}".format(ver=__version__),
+        version="ewoc_prod {ver}".format(ver=__version__),
     )
     parser.add_argument(
         "-v",

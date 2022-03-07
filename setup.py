@@ -1,5 +1,5 @@
 """
-    Setup file for ewoc-prod.
+    Setup file for ewoc_prod.
     Use setup.cfg to configure your project.
 
     This file was generated with PyScaffold 4.0.2.

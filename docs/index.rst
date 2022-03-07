@@ -1,8 +1,8 @@
 =========
-ewoc-prod
+ewoc_prod
 =========
 
-This is the documentation of **ewoc-prod**.
+This is the documentation of **ewoc_prod**.
 
 .. note::
 
