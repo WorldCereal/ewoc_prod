@@ -135,6 +135,9 @@ def main(args: List[str])->None:
     args = parse_args(args)
     setup_logging(args.loglevel)
 
+    user = args.user.split('_')[0]
+    date_now = datetime.now().strftime('%Y%m%d')
+
     #Extract list of s2 tiles
     s2tiles_list = extract_s2tiles_list(args.s2tiles_aez_file, \
         args.tile_id, args.aez_id, args.user_aoi, args.prod_start_date)
@@ -209,7 +212,7 @@ def main(args: List[str])->None:
                                                 eodag_config_filepath="../../../eodag_config.yml", \
                                                     cloudcover=args.cloudcover, \
                                                         min_nb_prods=args.min_nb_prods)
-                wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_{args.s2_data_provider}.json')
+                wp_for_aez.to_json(f'{int(aez_id)}_{user}_{date_now}.json')
     else:
         aez_id = aez_list[0]
 
@@ -260,9 +263,9 @@ def main(args: List[str])->None:
                                                     min_nb_prods=args.min_nb_prods)
                 # print(wp_for_aez.__dict__)
             if args.tile_id:
-                wp_for_aez.to_json(f"wp_aez_{int(aez_id)}_tile_{args.tile_id}_metaseason_{args.s2_data_provider}.json")
+                wp_for_aez.to_json(f'{int(aez_id)}_{args.tile_id}_{user}_{date_now}.json')
             else:
-                wp_for_aez.to_json(f"wp_aez_{int(aez_id)}_metaseason_{args.s2_data_provider}.json")
+                wp_for_aez.to_json(f'{int(aez_id)}_{user}_{date_now}.json')
 
         else:
 
@@ -319,9 +322,9 @@ def main(args: List[str])->None:
                                                     cloudcover=args.cloudcover, \
                                                         min_nb_prods=args.min_nb_prods)
                 if args.tile_id:
-                    wp_for_aez.to_json(f'wp_aez_{int(aez_id)}_tile_{args.tile_id}_{args.s2_data_provider}.json')
+                    wp_for_aez.to_json(f'{int(aez_id)}_{args.tile_id}_{user}_{date_now}.json')
                 else:
-                    wp_for_aez.to_json(f'wp_aez_{int(aez_id)}.json')
+                    wp_for_aez.to_json(f'{int(aez_id)}_{user}_{date_now}.json')
     logging.info("--- %s seconds ---", (time.time() - start_time))
 
 def run()->None:
