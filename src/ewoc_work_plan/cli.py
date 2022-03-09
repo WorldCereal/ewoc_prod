@@ -44,7 +44,8 @@ _logger = logging.getLogger(__name__)
   '-wp_processing_end',
     help="Workplan processing end date, format YYYY-mm-dd"
 )
-@click.option("-prov", help="Provider (peps/creodias/astraea_eod)")
+@click.option("-prov", help="Provider (peps/creodias/astraea_eod)",type=(str, str))
+@click.option("-strategy", help="Fusion strategy (L2A,L1C)", type=(str, str))
 @click.option("-l8_sr", default="False", help="Process L8 OLI bands or not")
 @click.option("-aez_id", default=0, type=int, help="ID of the AED")
 @click.option("-user", default="EWoC_admin", help="Username")
@@ -73,6 +74,7 @@ def generate(
     wp_processing_start,
     wp_processing_end,
     prov,
+    strategy,
     l8_sr,
     aez_id,
     user,
@@ -143,6 +145,7 @@ def generate(
             wp_processing_start,
             wp_processing_end,
             prov,
+            strategy=strategy,
             l8_sr=l8_sr,
             aez_id=aez_id,
             user=user,
@@ -166,6 +169,7 @@ def generate(
             wp_processing_start,
             wp_processing_end,
             prov,
+            strategy=strategy,
             l8_sr=l8_sr,
             aez_id=aez_id,
             user=user,
@@ -189,6 +193,7 @@ def generate(
             wp_processing_start,
             wp_processing_end,
             prov,
+            strategy=strategy,
             l8_sr=l8_sr,
             aez_id=aez_id,
             user=user,
