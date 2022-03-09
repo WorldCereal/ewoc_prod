@@ -13,9 +13,10 @@ from shapely.wkt import dumps
 from ewoc_work_plan import __version__
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.reproc import reproc_wp
-from ewoc_work_plan.utils import (cross_prodvider_ids, eodag_prods,
+from ewoc_work_plan.utils import (eodag_prods,
                                   get_path_row, greatest_timedelta,
                                   is_descending)
+from ewoc_work_plan.s2prods import cross_prodvider_ids
 
 logger = logging.getLogger(__name__)
 
@@ -192,9 +193,12 @@ class WorkPlan:
                 tile_id,
                 self._plan["wp_processing_start"],
                 self._plan["wp_processing_end"],
+                100,
                 self._cloudcover,
                 self._plan["yearly_prd_threshold"],
                 eodag_config_filepath,
+                providers=self._plan["s2_provider"],
+                strategy=["L2A","L2A"]
             )
             s2_prod_ids = [[self._plan["s2_provider"], id] for id in s2_prods]
             return s2_prod_ids

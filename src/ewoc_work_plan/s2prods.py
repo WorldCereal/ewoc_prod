@@ -1,5 +1,5 @@
 from eotile.eotile_module import main
-from ewoc_work_plan.utils import eodag_prods, get_best_prds
+from ewoc_work_plan.utils import eodag_prods
 from datetime import datetime
 import logging
 from typing import List
@@ -26,7 +26,7 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100):
         cc = el.properties["cloudCover"]
         date = datetime.strptime(pid.split("_")[2], "%Y%m%dT%H%M%S")
         if s2_tile in pid:
-            e84[pid] = {"cc": float(cc), "date": date}
+            e84[pid] = {"cc": float(cc), "date": date,"provider":"aws_cog"}
     return e84
 
 
@@ -55,7 +55,7 @@ def get_creodias_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         status = el.properties["storageStatus"]
         date = datetime.strptime(pid.split("_")[2], "%Y%m%dT%H%M%S")
         if s2_tile in pid:
-            creo[pid] = {"cc": float(cc), "date": date, "status": status}
+            creo[pid] = {"cc": float(cc), "date": date, "status": status,"provider":"creodias"}
     return creo
 
 
@@ -70,19 +70,20 @@ def get_s2_ids(s2_tile, provider, start, end, creds, cloudcover=100, level="L2A"
     else:
         _logger.warning("Cannot continue with provider %s and level %s" % (provider, level))
 
-
-def cross_prodvider_ids(s2_tile, start, end, cloudcover, min_nb_prods, creds, providers,strategy=["L2A","L2A"]):
-    ref_provider = providers[0]
-    sec_provider = providers[1]
-    ref_level = strategy[0]
-    sec_level = strategy[1]
-    ref = get_s2_ids(s2_tile, ref_provider, start, end, creds, cloudcover=cloudcover, level=ref_level)
-    sec = get_s2_ids(s2_tile, sec_provider, start, end, creds, cloudcover=cloudcover, level=sec_level)
-    # Sort by date ascending
-    e84 = {el: v for el, v in sorted(e84.items(), key=lambda item: item[1]["date"])}
-    # Return list of best products for a given cloud cover and yearly threshold
-    e84 = get_best_prds(e84, cloudcover, min_nb_prods)
-    return e84
+def merge_ids(ref,sec):
+    fusion={}
+    for pid_r in ref:
+        found= False
+        for pid_s in sec:
+            if ref[pid_r]["date"]==sec[pid_s]["date"]:
+                found = True
+                sec_id = pid_s
+                _logger.info("Found match between ref and sec %s -- %s"%(pid_r,pid_s))
+        if found:
+            fusion[sec_id]=sec[sec_id]
+        else:
+            fusion[pid_r]=ref[pid_r]
+    return fusion
 
 def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
     # Get number of months from sorted dict
@@ -93,7 +94,7 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
     )
     min_nb_prods = round((n_months * min_nb_prods) / 12)
     # Filter produtcs by cloud cover
-    cc_filter = [prd for prd in s2_prds if s2_prds[prd]["cc"] <= float(cloudcover)]
+    cc_filter = [[s2_prds[prd]["provider"],prd] for prd in s2_prds if s2_prds[prd]["cc"] <= float(cloudcover)]
     _logger.info("Found %s products with cloudcover below %s%%", len(cc_filter), cloudcover)
 
     if len(cc_filter) >= min_nb_prods:
@@ -112,12 +113,27 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
         _logger.error("Product list is empty!")
         return list(s2_prds.keys())
 
+def cross_prodvider_ids(s2_tile, start, end, cloudcover_max, cloudcover_min, min_nb_prods, creds, providers, strategy=None):
+    if strategy is None:
+        strategy = ["L2A", "L2A"]
+    ref_provider = providers[0]
+    sec_provider = providers[1]
+    ref_level = strategy[0]
+    sec_level = strategy[1]
+    ref = get_s2_ids(s2_tile, ref_provider, start, end, creds, cloudcover=cloudcover_max, level=ref_level)
+    sec = get_s2_ids(s2_tile, sec_provider, start, end, creds, cloudcover=cloudcover_max, level=sec_level)
+    # Merge two dictionaries
+    fusion = merge_ids(ref,sec)
+    # Sort by date ascending
+    fusion = {el: v for el, v in sorted(fusion.items(), key=lambda item: item[1]["date"])}
+    # Return list of best products for a given cloud cover and yearly threshold
+    fusion = get_best_prds(fusion, cloudcover_min, min_nb_prods)
+    return fusion
+
 
 if __name__ == "__main__":
-    import warnings
-
-    warnings.filterwarnings("ignore")
-    creo = get_creodias_ids("31TCJ", "2018-01-01", "2021-01-01", creds="/home/fahd/Documents/Perso/eodag_config.yml",
-                            level="L2A")
-    for el in creo:
+    fusion =  cross_prodvider_ids("31TCJ", "2018-01-01", "2021-01-01",cloudcover_max=100, cloudcover_min=95,
+                                  min_nb_prods=50,creds="/eodag_config.yml",
+                                  providers=["aws_cog","creodias"],strategy=["L2A","L1C"])
+    for el in fusion:
         print(el)
