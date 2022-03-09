@@ -37,14 +37,12 @@ _logger = logging.getLogger(__name__)
     help="Annual processing end date for cropland detector, format YYYY-mm-dd",
 )
 @click.option(
-  '-wp_processing_start',
-    help="Workplan processing start date, format YYYY-mm-dd"
+    "-wp_processing_start", help="Workplan processing start date, format YYYY-mm-dd"
 )
 @click.option(
-  '-wp_processing_end',
-    help="Workplan processing end date, format YYYY-mm-dd"
+    "-wp_processing_end", help="Workplan processing end date, format YYYY-mm-dd"
 )
-@click.option("-prov", help="Provider (peps/creodias/astraea_eod)",type=(str, str))
+@click.option("-prov", help="Provider (peps/creodias/astraea_eod)", type=(str, str))
 @click.option("-strategy", help="Fusion strategy (L2A,L1C)", type=(str, str))
 @click.option("-l8_sr", default="False", help="Process L8 OLI bands or not")
 @click.option("-aez_id", default=0, type=int, help="ID of the AED")
