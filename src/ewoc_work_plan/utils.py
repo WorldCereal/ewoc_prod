@@ -159,3 +159,30 @@ def greatest_timedelta(
         return delta_max
 
 
+def remove_duplicates(prd_list_ids: List) -> List:
+    """
+    Remove duplicates in product ids
+    Keep the most recent reprocessing of the Sentinel-2 product
+    :param prd_list_ids: List of Sentinel-2 ids
+    """
+    dates = {}
+    res = []
+    for pid in prd_list_ids:
+        day_time = datetime.strptime(pid.split("_")[2], "%Y%m%dT%H%M%S")
+        if day_time in dates:
+            dates[day_time].append(pid)
+        else:
+            dates[day_time] = []
+            dates[day_time].append(pid)
+    for day in dates:
+        pids_list = dates[day]
+        if len(pids_list) > 1:
+            _logger.warning(
+                "Found %s duplicates, keeping only latest product reproc"
+                % len(pids_list)
+            )
+            pids_list.sort(
+                key=lambda x: datetime.strptime(x.split("_")[6], "%Y%m%dT%H%M%S")
+            )
+        res.append(pids_list[-1])
+    return res

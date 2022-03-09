@@ -13,10 +13,13 @@ from shapely.wkt import dumps
 from ewoc_work_plan import __version__
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.reproc import reproc_wp
-from ewoc_work_plan.utils import (eodag_prods,
-                                  get_path_row, greatest_timedelta,
-                                  is_descending)
 from ewoc_work_plan.s2prods import cross_prodvider_ids
+from ewoc_work_plan.utils import (
+    eodag_prods,
+    get_path_row,
+    greatest_timedelta,
+    is_descending,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +52,9 @@ class WorkPlan:
 
         self._cloudcover = cloudcover
         self.strategy = strategy
-        if not set(data_provider).issubset(["creodias", "peps", "astraea_eod", "aws","aws_cog"]):
+        if not set(data_provider).issubset(
+            ["creodias", "peps", "astraea_eod", "aws", "aws_cog"]
+        ):
             raise ValueError("Incorrect data provider")
         # Filling the plan
         self._plan = dict()
@@ -70,8 +75,8 @@ class WorkPlan:
         self._plan["season_processing_end"] = season_processing_end
         self._plan["annual_processing_start"] = annual_processing_start
         self._plan["annual_processing_end"] = annual_processing_end
-        self._plan['wp_processing_start'] = wp_processing_start
-        self._plan['wp_processing_end'] = wp_processing_end
+        self._plan["wp_processing_start"] = wp_processing_start
+        self._plan["wp_processing_end"] = wp_processing_end
         self._plan["s1_provider"] = "creodias"
         self._plan["s2_provider"] = data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
