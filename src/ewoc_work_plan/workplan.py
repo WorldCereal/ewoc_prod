@@ -28,12 +28,7 @@ class WorkPlan:
     def __init__(
         self,
         tile_ids,
-        season_start,
-        season_end,
-        season_processing_start,
-        season_processing_end,
-        annual_processing_start,
-        annual_processing_end,
+        meta_dict,
         wp_processing_start,
         wp_processing_end,
         data_provider,
@@ -69,12 +64,6 @@ class WorkPlan:
         self._plan["season_type"] = season_type
         self._plan["enable_sw"] = enable_sw
         self._plan["detector_set"] = detector_set
-        self._plan["season_start"] = season_start
-        self._plan["season_end"] = season_end
-        self._plan["season_processing_start"] = season_processing_start
-        self._plan["season_processing_end"] = season_processing_end
-        self._plan["annual_processing_start"] = annual_processing_start
-        self._plan["annual_processing_end"] = annual_processing_end
         self._plan["wp_processing_start"] = wp_processing_start
         self._plan["wp_processing_end"] = wp_processing_end
         self._plan["s1_provider"] = "creodias"
@@ -82,6 +71,8 @@ class WorkPlan:
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
         self._plan["yearly_prd_threshold"] = min_nb_prods
+        if not meta_dict:
+            logger.warning("The meta dictionary is empty!!")
         # Addind tiles
         tiles_plan = list()
 

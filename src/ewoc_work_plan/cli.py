@@ -20,21 +20,10 @@ _logger = logging.getLogger(__name__)
     "-input_data",
     help="Input: a list of S2 tiles eg: '31TCJ,30STF', a csv file, a vector AOI file",
 )
-@click.option("-season_start", help="Season start date of the AEZ, format YYYY-mm-dd")
-@click.option("-season_end", help="Season end date of the AEZ, format YYYY-mm-dd")
 @click.option(
-    "-season_processing_start", help="Season processing start date, format YYYY-mm-dd"
-)
-@click.option(
-    "-season_processing_end", help="Season processing end date, format YYYY-mm-dd"
-)
-@click.option(
-    "-annual_processing_start",
-    help="Annual processing start date for cropland detector, format YYYY-mm-dd",
-)
-@click.option(
-    "-annual_processing_end",
-    help="Annual processing end date for cropland detector, format YYYY-mm-dd",
+    "-meta",
+    help="All the meta data that will be passed on to the DB",
+    default={}
 )
 @click.option(
     "-wp_processing_start", help="Workplan processing start date, format YYYY-mm-dd"
@@ -63,12 +52,7 @@ _logger = logging.getLogger(__name__)
 def generate(
     ctx,
     input_data,
-    season_start,
-    season_end,
-    season_processing_start,
-    season_processing_end,
-    annual_processing_start,
-    annual_processing_end,
+    meta,
     wp_processing_start,
     wp_processing_end,
     prov,
@@ -88,12 +72,7 @@ def generate(
     Generate the workplan
     :param ctx:
     :param input_data: a list of S2 tiles, a csv file, a vector AOI file
-    :param season_start: season start date of the AEZ
-    :param season_end: season end date of the AEZ
-    :param season_processing_start: season processing start date
-    :param season_processing_end: season processing end date
-    :param annual_processing_start: annual processing start date
-    :param annual_processing_end: annual processing end date
+    :param meta: Metadata dictionary
     :param wp_processing_start: workplan processing start date
     :param wp_processing_end: workplan processing end date
     :param prov: provider (peps/creodias/astraea_eod)
@@ -134,12 +113,7 @@ def generate(
     if induced_type == "S2_tiles":
         ctx.obj["wp"] = WorkPlan(
             tiles_to_generate,
-            season_start,
-            season_end,
-            season_processing_start,
-            season_processing_end,
-            annual_processing_start,
-            annual_processing_end,
+            meta,
             wp_processing_start,
             wp_processing_end,
             prov,
@@ -158,12 +132,7 @@ def generate(
     elif induced_type == "csv":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_csv(
             input_data,
-            season_start,
-            season_end,
-            season_processing_start,
-            season_processing_end,
-            annual_processing_start,
-            annual_processing_end,
+            meta,
             wp_processing_start,
             wp_processing_end,
             prov,
@@ -182,12 +151,7 @@ def generate(
     elif induced_type == "aoi":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_aoi(
             input_data,
-            season_start,
-            season_end,
-            season_processing_start,
-            season_processing_end,
-            annual_processing_start,
-            annual_processing_end,
+            meta,
             wp_processing_start,
             wp_processing_end,
             prov,
