@@ -135,7 +135,7 @@ def main(args: List[str])->None:
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    user = args.user.split('_')[0]
+    user = args.user.split('-')[0]
     date_now = datetime.now().strftime('%Y%m%d')
 
     #Extract list of s2 tiles

@@ -347,15 +347,6 @@ def get_tiles_metaseason_infos_from_tiles(s2tiles_aez_file: str,
     tiles_id_str = '(' + ','.join(f"'{tile_id}'" for tile_id in tiles_id) + ')'
     s2tiles_layer.SetAttributeFilter(f"tile IN {tiles_id_str}")
     tile = s2tiles_layer.GetNextFeature()
-    #Season type
-    season_type = 'custom'
-    #Get dates
-    season_start = 'None'
-    season_end = 'None'
-    season_processing_start = 'None'
-    season_processing_end = 'None'
-    annual_processing_start = 'None'
-    annual_processing_end = 'None'
     #Get L8 info
     if tile.GetField('L8')==0:
         l8_enable_sr = False
@@ -364,19 +355,24 @@ def get_tiles_metaseason_infos_from_tiles(s2tiles_aez_file: str,
     else:
         raise ValueError
     #Get spring wheat info
-    if tile.GetField('trigger_sw')==0:
-        enable_sw = False
-    elif tile.GetField('trigger_sw')==1:
-        enable_sw = True
-    else:
-        raise ValueError
+    enable_sw = True
     #Get detector_set
     detector_set = 'None'
     #Get wp_processing_dates
-    wp_processing_start, wp_processing_end = \
+    wp_processing_start, wp_processing_end, m2_exists = \
                 retrieve_custom_dates(tile, year)
-    # wp_processing_start, wp_processing_end = \
-    #             retrieve_custom_dates(s2tiles_aez_file, tiles_id, year=year)
+    #Get dates
+    season_start = wp_processing_start
+    season_end = wp_processing_end
+    season_processing_start = wp_processing_start
+    season_processing_end = wp_processing_end
+    annual_processing_start = wp_processing_start
+    annual_processing_end = wp_processing_end
+    #Season type
+    if m2_exists == 1:
+        season_type = 'metaseason, winter, summer1, summer2'
+    else:
+        season_type = 'metaseason, winter, summer1'
     #Remove filter
     s2tiles_layer.SetAttributeFilter(None)
     return season_type, season_start, season_end, season_processing_start, season_processing_end, \
@@ -447,4 +443,4 @@ def retrieve_custom_dates(tile: str, year: int)->List[str]:
         m2_start = conversion_doy_to_date(m2_start_doy, m2_year_start_date)
         if m2_start < wp_processing_start:
             wp_processing_start = m2_start
-    return wp_processing_start, wp_processing_end
+    return wp_processing_start, wp_processing_end, m2_exists
