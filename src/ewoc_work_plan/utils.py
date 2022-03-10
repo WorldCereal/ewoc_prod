@@ -182,7 +182,7 @@ def remove_duplicates(prd_list_ids: List) -> List:
                 % len(pids_list)
             )
             pids_list.sort(
-                key=lambda x: datetime.strptime(x.split("_")[6], "%Y%m%dT%H%M%S")
+                key=lambda x: datetime.strptime(x.split("_")[6].replace(".SAFE",""), "%Y%m%dT%H%M%S")
             )
         res.append(pids_list[-1])
     return res
