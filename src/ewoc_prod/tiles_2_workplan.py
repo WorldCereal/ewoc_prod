@@ -9,8 +9,11 @@
 
 import logging
 from datetime import date
-from dateutil.relativedelta import relativedelta
+from pathlib import Path
 from typing import List, Optional, Tuple
+import boto3
+from dateutil.relativedelta import relativedelta
+from ewoc_dag.bucket.ewoc import EWOCBucket
 from osgeo import ogr
 
 from ewoc_prod.utils import conversion_doy_to_date
@@ -444,3 +447,16 @@ def retrieve_custom_dates(tile: str, year: int)->List[str]:
         if m2_start < wp_processing_start:
             wp_processing_start = m2_start
     return wp_processing_start, wp_processing_end, m2_exists
+
+def ewoc_s3_upload(filepath: Path, bucket_name: str, key: str)->None:
+    """
+    Upload file to the Cloud (S3 bucket)
+    :param filepath: Path to the file to be uploaded
+    :param bucket_name: Bucket name where store data
+    :param key: Bucket key where store data
+    """
+    try:
+        s3_bucket = EWOCBucket(bucket_name)
+        s3_bucket._upload_file(filepath, key)
+    except boto3.exceptions.S3UploadFailedError:
+        logging.info("Could not upload wp to s3, results saved locally")

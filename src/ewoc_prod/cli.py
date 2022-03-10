@@ -12,12 +12,13 @@ import logging
 import sys
 import time
 from datetime import date, datetime
+from pathlib import Path
 from typing import List
 
 from ewoc_prod.tiles_2_workplan import (extract_s2tiles_list, \
     check_number_of_aez_for_selected_tiles, extract_s2tiles_list_per_aez, \
     get_aez_season_type_from_date, get_tiles_infos_from_tiles, \
-        get_tiles_metaseason_infos_from_tiles)
+        get_tiles_metaseason_infos_from_tiles, ewoc_s3_upload)
 
 from ewoc_work_plan.workplan import WorkPlan
 
@@ -101,6 +102,14 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Yearly minimum number of products",
                         type=int,
                         default=70)
+    parser.add_argument('-s3', "--s3_bucket",
+                        help="Name of s3 bucket to upload wp",
+                        type=str,
+                        default='world-cereal')
+    parser.add_argument('-s3key', "--s3_key",
+                        help="Key of s3 bucket to upload wp",
+                        type=str,
+                        default='_WP_PHASE_II_')
     parser.add_argument(
         "-v",
         "--verbose",
@@ -212,7 +221,12 @@ def main(args: List[str])->None:
                                                 eodag_config_filepath="../../../eodag_config.yml", \
                                                     cloudcover=args.cloudcover, \
                                                         min_nb_prods=args.min_nb_prods)
-                wp_for_aez.to_json(f'{int(aez_id)}_{user}_{date_now}.json')
+
+                #Export wp to json file and export to s3 bucket
+                filepath = f'{int(aez_id)}_{user}_{date_now}.json'
+                wp_for_aez.to_json(filepath)
+                ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
+
     else:
         aez_id = aez_list[0]
 
@@ -261,12 +275,6 @@ def main(args: List[str])->None:
                                             eodag_config_filepath="../../../eodag_config.yml", \
                                                 cloudcover=args.cloudcover, \
                                                     min_nb_prods=args.min_nb_prods)
-                # print(wp_for_aez.__dict__)
-            if args.tile_id:
-                wp_for_aez.to_json(f'{int(aez_id)}_{args.tile_id}_{user}_{date_now}.json')
-            else:
-                wp_for_aez.to_json(f'{int(aez_id)}_{user}_{date_now}.json')
-
         else:
 
             if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi)):
@@ -321,10 +329,17 @@ def main(args: List[str])->None:
                                                 eodag_config_filepath="../../../eodag_config.yml", \
                                                     cloudcover=args.cloudcover, \
                                                         min_nb_prods=args.min_nb_prods)
-                if args.tile_id:
-                    wp_for_aez.to_json(f'{int(aez_id)}_{args.tile_id}_{user}_{date_now}.json')
-                else:
-                    wp_for_aez.to_json(f'{int(aez_id)}_{user}_{date_now}.json')
+
+        #Export wp to json file and export to s3 bucket
+        if args.tile_id:
+            filepath = f'{int(aez_id)}_{args.tile_id}_{user}_{date_now}.json'
+            wp_for_aez.to_json(filepath)
+            ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
+        else:
+            filepath = f'{int(aez_id)}_{user}_{date_now}.json'
+            wp_for_aez.to_json(filepath)
+            ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
+
     logging.info("--- %s seconds ---", (time.time() - start_time))
 
 def run()->None:
