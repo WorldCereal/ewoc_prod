@@ -97,11 +97,11 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-cc', "--cloudcover",
                         help="Cloudcover parameter",
                         type=int,
-                        default=95)
+                        default=90)
     parser.add_argument('-min_prods', "--min_nb_prods",
                         help="Yearly minimum number of products",
                         type=int,
-                        default=70)
+                        default=75)
     parser.add_argument('-s3', "--s3_bucket",
                         help="Name of s3 bucket to upload wp",
                         type=str,
