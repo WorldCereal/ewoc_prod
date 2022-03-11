@@ -3,99 +3,6 @@
 The aim of this tool is to prepare and organize the satellite products that will be processed by the EWoC system.
 The generated json plan is the starting point for the Argo workflows.
 
-## The anatomy of a plan
-
-A plan is a json file with a list of S2 MGRS tiles and the corresponding satellite products to process.
-
-```json
-{
-    "version": "0.1.1",
-    "user": "EWoC_admin",
-    "visibility": "public",
-    "generated": "2021-09-10 17:27:27 CEST",
-    "aez_id": 0,
-    "season_start": "2020-10-20",
-    "season_end": "2020-10-30",
-    "season_type": "cropland",
-    "S1_provider": "creodias",
-    "S2_provider": "creodias",
-    "L8_provider": "usgs_AWS",
-    "tiles": [
-        {
-            "tile_id": "31TCJ",
-            "s1_ids": [
-                [
-                    "S1A_IW_GRDH_1SDV_20201029T060104_20201029T060129_035007_041562_76A1",
-                    "S1A_IW_GRDH_1SDV_20201029T060048_20201029T060113_035007_041562_DAC7",
-                    "S1A_IW_GRDH_1SDV_20201029T060039_20201029T060104_035007_041562_9FE9"
-                ],
-                [
-                    "S1B_IW_GRDH_1SDV_20201028T060826_20201028T060851_024009_02DA2A_C6FC",
-                    "S1B_IW_GRDH_1SDV_20201028T060826_20201028T060851_024009_02DA2A_31F3",
-                    "S1B_IW_GRDH_1SDV_20201028T060801_20201028T060826_024009_02DA2A_CC6C",
-                    "S1B_IW_GRDH_1SDV_20201028T060801_20201028T060826_024009_02DA2A_9E22"
-                ],
-                [
-                    "S1B_IW_GRDH_1SDV_20201023T060008_20201023T060033_023936_02D7EE_771D",
-                    "S1B_IW_GRDH_1SDV_20201023T060006_20201023T060031_023936_02D7EE_7C33"
-                ],
-                [
-                    "S1A_IW_GRDH_1SDV_20201022T060914_20201022T060939_034905_0411DD_1B4A",
-                    "S1A_IW_GRDH_1SDV_20201022T060904_20201022T060929_034905_0411DD_8038",
-                    "S1A_IW_GRDH_1SDV_20201022T060849_20201022T060914_034905_0411DD_5D80"
-                ]
-            ],
-            "S1_orbit_dir": "DES",
-            "s1_nb": 4,
-            "s2_ids": [
-                [
-                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TCJ_20201027T130310"
-                ],
-                [
-                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TDH_20201027T130310"
-                ],
-                [
-                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TCK_20201027T130310"
-                ],
-                [
-                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TDJ_20201027T130310"
-                ],
-                [
-                    "S2A_MSIL1C_20201027T105141_N0209_R051_T31TCH_20201027T130310"
-                ],
-                [
-                    "S2A_MSIL1C_20201027T105141_N0209_R051_T30TYQ_20201027T130310"
-                ],
-                [
-                    "S2A_MSIL1C_20201027T105141_N0209_R051_T30TYP_20201027T130310"
-                ],
-                [
-                    "S2B_MSIL1C_20201025T110039_N0209_R094_T30TYP_20201025T120537"
-                ],
-                [
-                    "S2A_MSIL1C_20201024T104121_N0209_R008_T31TDH_20201024T141709"
-                ],
-                [
-                    "S2A_MSIL1C_20201024T104121_N0209_R008_T31TCJ_20201024T141709"
-                ],
-                [
-                    "S2A_MSIL1C_20201024T104121_N0209_R008_T31TDJ_20201024T141709"
-                ]
-            ],
-            "s2_nb": 11,
-            "l8_ids": [
-                [
-                    "LC08_L1TP_199029_20201026_20201106_02_T1",
-                    "LC08_L1TP_199030_20201026_20201106_02_T1"
-                ]
-            ],
-            "l8_nb": 1,
-            "L8_enable_sr": false
-        }
-    ]
-}
-```
-
 ## How to generate a plan
 
 In order to generate a plan you'll need the following:
@@ -121,16 +28,18 @@ Usage: ewoc_workplan [OPTIONS] COMMAND1 [ARGS]... [COMMAND2 [ARGS]...]...
 
 Options:
   --version      Show the version and exit.
-  -v, --verbose  Verbosity level default is warning, -v for info, -vv for debug
-  --help  Show this message and exit.
+  -v, --verbose  Verbosity level default is warning, -v for info, -vv for
+                 debug
+
+  --help         Show this message and exit.
 
 Commands:
-  generate
-  load
-  print
-  push
-  reproc
-  write
+  display   Print the workplan
+  generate  Generate the workplan :param ctx: :param input_data: a list of...
+  load      Load the workplan
+  push      Push the workplan to EwoC database
+  reproc    Reprocess the workplan for tiles that failed
+  write     Write the workplan
 ```
 
 ```bash
@@ -139,25 +48,37 @@ EWoC plan generation
 Usage: ewoc_workplan generate [OPTIONS]
 
 Options:
-  -input TEXT                  Input: a list of S2 tiles eg: '31TCJ,30STF', a
+  -input_data TEXT             Input: a list of S2 tiles eg: '31TCJ,30STF', a
                                csv file, a vector AOI file
 
-  -sd TEXT                     Start date, format YYYY-mm-dd
-  -ed TEXT                     End date, format YYYY-mm-dd
-  -prov TEXT                   Provider (peps/creodias/astraea_eod)
+  -meta TEXT                   All the meta data that will be passed on to the
+                               DB
+
+  -wp_processing_start TEXT    Workplan processing start date, format YYYY-mm-
+                               dd
+
+  -wp_processing_end TEXT      Workplan processing end date, format YYYY-mm-dd
+  -prov <TEXT TEXT>...         Provider (peps/creodias/astraea_eod)
+  -strategy <TEXT TEXT>...     Fusion strategy (L2A,L1C)
   -l8_sr TEXT                  Process L8 OLI bands or not
   -aez_id INTEGER              ID of the AED
   -user TEXT                   Username
   -visibility TEXT             Visibility, public or private
   -season_type TEXT            Season type
+  -detector_set TEXT           Detector set linked to season type
+  -enable_sw TEXT              Process spring wheat or not
   -eodag_config_filepath TEXT  Path to the Eodag yml config file
-  -cloudcover TEXT             Cloudcover parameter
+  -cloudcover INTEGER          Cloudcover parameter
+  -min_nb_prods INTEGER        Yearly minimum number of products
   --help                       Show this message and exit.
 
 ```
-
+**Generation example**
+```bash
+ewoc_workplan -v generate -input_data 35UMQ -wp_processing_start 2018-07-02 -wp_processing_end 2019-10-26
+  -prov creodias creodias -l8_sr True -eodag_config_filepath ~/eodag_config.yml -strategy L1C L1C write 35UMQ.json
+```
 You can use as many commands at once as you like, for example:
-
 ```bash
 $ ewoc_workplan load wp.json reproc -bucket "bucket_name" -path "/SPAIN/" write wp_reproc.json
 ```
