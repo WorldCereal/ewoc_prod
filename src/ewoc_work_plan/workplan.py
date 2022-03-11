@@ -13,9 +13,13 @@ from shapely.wkt import dumps
 from ewoc_work_plan import __version__
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.reproc import reproc_wp
-from ewoc_work_plan.utils import (cross_prodvider_ids, eodag_prods,
-                                  get_path_row, greatest_timedelta,
-                                  is_descending)
+from ewoc_work_plan.s2prods import cross_prodvider_ids
+from ewoc_work_plan.utils import (
+    eodag_prods,
+    get_path_row,
+    greatest_timedelta,
+    is_descending,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +28,11 @@ class WorkPlan:
     def __init__(
         self,
         tile_ids,
-        season_start,
-        season_end,
-        season_processing_start,
-        season_processing_end,
-        annual_processing_start,
-        annual_processing_end,
+        meta_dict,
         wp_processing_start,
         wp_processing_end,
         data_provider,
+        strategy,
         l8_sr=False,
         aez_id=0,
         user="EWoC_admin",
@@ -46,7 +46,10 @@ class WorkPlan:
     ) -> None:
 
         self._cloudcover = cloudcover
-        if data_provider not in ["creodias", "peps", "astraea_eod", "aws"]:
+        self.strategy = strategy
+        if not set(data_provider).issubset(
+            ["creodias", "peps", "astraea_eod", "aws", "aws_cog"]
+        ):
             raise ValueError("Incorrect data provider")
         # Filling the plan
         self._plan = dict()
@@ -61,19 +64,15 @@ class WorkPlan:
         self._plan["season_type"] = season_type
         self._plan["enable_sw"] = enable_sw
         self._plan["detector_set"] = detector_set
-        self._plan["season_start"] = season_start
-        self._plan["season_end"] = season_end
-        self._plan["season_processing_start"] = season_processing_start
-        self._plan["season_processing_end"] = season_processing_end
-        self._plan["annual_processing_start"] = annual_processing_start
-        self._plan["annual_processing_end"] = annual_processing_end
-        self._plan['wp_processing_start'] = wp_processing_start
-        self._plan['wp_processing_end'] = wp_processing_end
+        self._plan["wp_processing_start"] = wp_processing_start
+        self._plan["wp_processing_end"] = wp_processing_end
         self._plan["s1_provider"] = "creodias"
         self._plan["s2_provider"] = data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
         self._plan["yearly_prd_threshold"] = min_nb_prods
+        if not meta_dict:
+            logger.warning("The meta dictionary is empty!!")
         # Addind tiles
         tiles_plan = list()
 
@@ -181,40 +180,18 @@ class WorkPlan:
         return list(dic.values()), orbit_dir
 
     def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None):
-        s2_prods_types = {
-            "peps": "S2_MSI_L1C",
-            "astraea_eod": "sentinel2_l1c",
-            "creodias": "S2_MSI_L1C",
-            "aws": "sentinel-s2-l2a-cogs",
-        }
-        if self._plan["s2_provider"] == "aws":
-            s2_prods = cross_prodvider_ids(
-                tile_id,
-                self._plan["wp_processing_start"],
-                self._plan["wp_processing_end"],
-                self._cloudcover,
-                self._plan["yearly_prd_threshold"],
-                eodag_config_filepath,
-            )
-            s2_prod_ids = [[self._plan["s2_provider"], id] for id in s2_prods]
-            return s2_prod_ids
-        else:
-            s2_prods = eodag_prods(
-                s2_tile,
-                self._plan["wp_processing_start"],
-                self._plan["wp_processing_end"],
-                self._plan["s2_provider"],
-                s2_prods_types[self._plan["s2_provider"].lower()],
-                eodag_config_filepath,
-                cloud_cover=self._cloudcover,
-            )
-            s2_prod_ids = list()
-            for s2_prod in s2_prods:
-                if tile_id in s2_prod.properties["id"]:
-                    s2_prod_ids.append(
-                        [self._plan["s2_provider"], s2_prod.properties["id"]]
-                    )
-            return s2_prod_ids
+        s2_prods_ids = cross_prodvider_ids(
+            tile_id,
+            self._plan["wp_processing_start"],
+            self._plan["wp_processing_end"],
+            100,
+            self._cloudcover,
+            self._plan["yearly_prd_threshold"],
+            eodag_config_filepath,
+            providers=self._plan["s2_provider"],
+            strategy=self.strategy,
+        )
+        return s2_prods_ids
 
     def _identify_l8(self, s2_tile, l8_sr=False, eodag_config_filepath=None):
         l8_prods = eodag_prods(
@@ -269,6 +246,7 @@ class WorkPlan:
         wp_processing_start,
         wp_processing_end,
         data_provider,
+        strategy,
         l8_sr=False,
         aez_id=0,
         user="EWoC_admin",
@@ -304,6 +282,7 @@ class WorkPlan:
                 wp_processing_start,
                 wp_processing_end,
                 data_provider,
+                strategy,
                 l8_sr,
                 aez_id,
                 user,
@@ -341,6 +320,7 @@ class WorkPlan:
         wp_processing_start,
         wp_processing_end,
         data_provider,
+        strategy,
         l8_sr=False,
         aez_id=0,
         user="EWoC_admin",
@@ -370,6 +350,7 @@ class WorkPlan:
             wp_processing_start,
             wp_processing_end,
             data_provider,
+            strategy,
             l8_sr=l8_sr,
             aez_id=aez_id,
             user=user,
