@@ -19,6 +19,7 @@ from ewoc_work_plan.utils import (
     get_path_row,
     greatest_timedelta,
     is_descending,
+    is_iw_grdh,
 )
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,16 @@ class WorkPlan:
             else:
                 tile_plan["l8_enable_sr"] = l8_sr
 
+            if len(s1_prd_ids) == 0:
+                logger.error("No relevant S1 product found for %s", tile_id)
+                raise ValueError
+            if len(s2_prd_ids) == 0:
+                logger.error("No relevant S2 product found for %s", tile_id)
+                raise ValueError
+            if len(l8_prd_ids) == 0:
+                logger.error("No relevant L8 product found for %s", tile_id)
+                raise ValueError
+
             tiles_plan.append(tile_plan)
 
         self._plan["tiles"] = tiles_plan
@@ -119,7 +130,7 @@ class WorkPlan:
             "astraea_eod": "sentinel1_l1c_grd",
             "creodias": "S1_SAR_GRD",
         }
-        s1_prods_full = eodag_prods(
+        s1_prods_request = eodag_prods(
             s2_tile,
             self._plan["wp_processing_start"],
             self._plan["wp_processing_end"],
@@ -127,6 +138,12 @@ class WorkPlan:
             s1_prods_types[self._plan["s1_provider"]],
             eodag_config_filepath,
         )
+        # filter out undesirable _EW_GRDM_ products
+        s1_prods_full = [
+            s1_prod
+            for s1_prod in s1_prods_request
+            if is_iw_grdh(s1_prod)
+        ]
         s1_prods_desc = [
             s1_prod
             for s1_prod in s1_prods_full
@@ -175,7 +192,7 @@ class WorkPlan:
                 dic[date].append(s1_prod.properties["id"])
             elif len(s1_prod.properties["id"]) > 0:
                 dic[date] = [s1_prod.properties["id"]]
-        logger.info("%s products are grouped in %s dates", len(s1_prods_asc), len(dic))
+        logger.info("%s products are grouped in %s dates", len(s1_prods), len(dic))
 
         return list(dic.values()), orbit_dir
 

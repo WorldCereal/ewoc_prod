@@ -63,6 +63,11 @@ def eodag_prods(
 
     return products
 
+def is_iw_grdh(s1_product):
+    if s1_product.properties["id"][3:12] != "_IW_GRDH_":
+        return False
+    else:
+        return True
 
 def is_descending(s1_product, provider):
     if provider.lower() == "creodias":
