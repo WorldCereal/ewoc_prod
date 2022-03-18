@@ -228,6 +228,10 @@ class WorkPlan:
         # Group by same path & date
         dic = {}
         for l8_prod in l8_prods:
+            # Prevent LE07 and LC09 to be randomly included
+            if l8_prod.properties["id"][:4] != 'LC08':
+                continue
+
             date = (
                 l8_prod.properties["startTimeFromAscendingNode"]
                 .split("T")[0]
