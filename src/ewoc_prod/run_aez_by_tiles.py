@@ -11,6 +11,7 @@ import argparse
 import glob
 import json
 import logging
+from multiprocessing.pool import ThreadPool as Pool
 import os
 import os.path as pa
 import sys
@@ -18,6 +19,7 @@ import time
 
 from collections import defaultdict
 from datetime import datetime
+from itertools import repeat
 from osgeo import ogr
 from pathlib import Path
 from typing import List
@@ -133,24 +135,21 @@ def main(args: List[str])->None:
     #     os.makedirs(log_directory)
 
     # Processing tiles
-    tile_num = 1
-    for tile in tiles_id:
-        logging.info('%s:%s/%s', tile, tile_num, len(tiles_id))
-
-        if glob.glob(pa.join(args.output_path, str(args.aez_id),\
-            'json', f'{args.aez_id}_{tile}_*.json')):
+    def process_tile(tile, aez_id, input_file, output_path):
+        if glob.glob(pa.join(output_path, str(aez_id),\
+            'json', f'{aez_id}_{tile}_*.json')):
             pass
         else:
-            # os.system(f"nohup ewoc_prod -v -in {args.input_file} -t '{tile}' --metaseason \
-            #      -s2prov aws -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} -no_upload \
-            #      2>&1 > {log_directory}/log_tile_{tile}.txt &")
             try:
-                os.system(f"ewoc_prod -v -in {args.input_file} -t '{tile}'\
+                os.system(f"ewoc_prod -v -in {input_file} -t '{tile}'\
                     --metaseason -s2prov aws -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd \
-                    -o {args.output_path} -no_upload")
+                    -o {output_path} -no_upload")
             except Exception:
                 logging.info('ERROR FOR THIS TILE')
-        tile_num += 1
+
+    with Pool() as pool:
+        pool.starmap(process_tile, \
+            zip(tiles_id, repeat(args.aez_id), repeat(args.input_file), repeat(args.output_path)))
 
     # Merge all tiles to AEZ
     nb_tiles_processed = len(glob.glob(pa.join(args.output_path,\
@@ -182,7 +181,8 @@ def main(args: List[str])->None:
             json.dump(json_merged, outfile, indent=4, separators=(',', ': '))
 
         # Export json to s3 bucket
-        # ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{args.country}/{Path(filepath).name}')
+        ewoc_s3_upload(Path(filepath), args.s3_bucket, \
+            f'{args.s3_key}/{args.country}/{Path(filepath).name}')
 
     else:
         logging.info('Need to process %s missing tiles before merging to AEZ', \
