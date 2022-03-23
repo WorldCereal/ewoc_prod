@@ -9,6 +9,8 @@
 
 import argparse
 import logging
+import os
+import os.path as pa
 import sys
 import time
 from datetime import date, datetime
@@ -102,6 +104,10 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Yearly minimum number of products",
                         type=int,
                         default=75)
+    parser.add_argument('-o', "--output_path",
+                        help="Output path with json files",
+                        type=str,
+                        default='/home/mbattude/Documents/WorldCereal/EwoC_Data/WorkPlan/WP_AEZ_prod/')
     parser.add_argument('-s3', "--s3_bucket",
                         help="Name of s3 bucket to upload wp",
                         type=str,
@@ -110,6 +116,9 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Key of s3 bucket to upload wp",
                         type=str,
                         default='_WP_PHASE_II_')
+    parser.add_argument('-no_upload', "--no_upload_s3",
+                        help="Skip the upload of json files to s3 bucket",
+                        action='store_true')
     parser.add_argument(
         "-v",
         "--verbose",
@@ -223,9 +232,15 @@ def main(args: List[str])->None:
                                                         min_nb_prods=args.min_nb_prods)
 
                 #Export wp to json file and export to s3 bucket
-                filepath = f'{int(aez_id)}_{user}_{date_now}.json'
+                directory = pa.join(args.output_path, str(int(aez_id)), 'json')
+                if not pa.exists(directory):
+                    os.makedirs(directory)
+
+                filepath = pa.join(directory, f'{int(aez_id)}_{user}_{date_now}.json')
                 wp_for_aez.to_json(filepath)
-                ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
+                if not args.no_upload_s3:
+                    ewoc_s3_upload(Path(filepath), args.s3_bucket, \
+                        f'{args.s3_key}/{Path(filepath)}')
 
     else:
         aez_id = aez_list[0]
@@ -331,14 +346,20 @@ def main(args: List[str])->None:
                                                         min_nb_prods=args.min_nb_prods)
 
         #Export wp to json file and export to s3 bucket
+        directory = pa.join(args.output_path, str(int(aez_id)), 'json')
+        if not pa.exists(directory):
+            os.makedirs(directory)
+
         if args.tile_id:
-            filepath = f'{int(aez_id)}_{args.tile_id}_{user}_{date_now}.json'
+            filepath = pa.join(directory, f'{int(aez_id)}_{args.tile_id}_{user}_{date_now}.json')
             wp_for_aez.to_json(filepath)
-            ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
+            if not args.no_upload_s3:
+                ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
         else:
-            filepath = f'{int(aez_id)}_{user}_{date_now}.json'
+            filepath = pa.join(directory, f'{int(aez_id)}_{user}_{date_now}.json')
             wp_for_aez.to_json(filepath)
-            ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
+            if not args.no_upload_s3:
+                ewoc_s3_upload(Path(filepath), args.s3_bucket, f'{args.s3_key}/{Path(filepath)}')
 
     logging.info("--- %s seconds ---", (time.time() - start_time))
 
