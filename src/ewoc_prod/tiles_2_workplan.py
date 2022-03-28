@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 import boto3
 from dateutil.relativedelta import relativedelta
+from ewoc_dag.bucket.ewoc import EWOCBucket
 from osgeo import ogr
 
-from ewoc_dag.bucket.ewoc import EWOCBucket
 from ewoc_prod.utils import conversion_doy_to_date
 
 def get_tiles_from_tile(tile_id: str)->List[str]:
