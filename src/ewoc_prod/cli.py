@@ -124,9 +124,6 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Key of s3 bucket to upload wp",
                         type=str,
                         default='_WP_PHASE_II_')
-    parser.add_argument('-c', "--country",
-                        help="Country of the AEZ (eg. 'Canada', 'Tanzania', 'Brazil', 'Ukraine')",
-                        type=str)
     parser.add_argument('-no_s3', "--no_upload_s3",
                         help="Skip the upload of json files to s3 bucket",
                         action='store_true')
@@ -198,8 +195,6 @@ def main(args: List[str])->None:
         logging.info("The metaseason mode is activated")
         if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles)):
             raise ValueError("The metaseason mode requires -t, -aid, -aoi or -ut inputs and is not compatible with -pd input")
-        if not args.country:
-            raise ValueError("The metaseason mode requires country information for s3 bucket")
 
     #Extract list of s2 tiles
     s2tiles_list = extract_s2tiles_list(args.s2tiles_aez_file,
@@ -396,12 +391,8 @@ def main(args: List[str])->None:
 
                 #Export json to s3 bucket
                 if not args.no_upload_s3:
-                    if args.metaseason :
-                        ewoc_s3_upload(Path(wp_for_aez), args.s3_bucket, \
-                            f'{args.s3_key}/{args.country}/{Path(wp_for_aez).name}')
-                    else:
-                        ewoc_s3_upload(Path(wp_for_aez), args.s3_bucket, \
-                            f'{args.s3_key}/{Path(wp_for_aez).name}')
+                    ewoc_s3_upload(Path(wp_for_aez), args.s3_bucket, \
+                        f'{args.s3_key}/{Path(wp_for_aez).name}')
 
         else:
             logging.info('Need to process %s missing tiles before merging to AEZ', \
