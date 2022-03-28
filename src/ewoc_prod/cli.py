@@ -13,7 +13,6 @@ import json
 import logging
 import os
 import os.path as pa
-import shutil
 import sys
 import time
 
@@ -24,12 +23,12 @@ from multiprocessing.pool import ThreadPool as Pool
 from pathlib import Path
 from typing import List
 
+from ewoc_work_plan.workplan import WorkPlan
+
 from ewoc_prod.tiles_2_workplan import (extract_s2tiles_list,
     check_number_of_aez_for_selected_tiles, extract_s2tiles_list_per_aez,
     get_aez_season_type_from_date, get_tiles_infos_from_tiles,
         get_tiles_metaseason_infos_from_tiles, ewoc_s3_upload)
-
-from ewoc_work_plan.workplan import WorkPlan
 
 _logger = logging.getLogger(__name__)
 
@@ -371,15 +370,6 @@ def main(args: List[str])->None:
                 if not args.no_upload_s3:
                     ewoc_s3_upload(Path(list_files_aez[0]), args.s3_bucket, \
                         f'{args.s3_key}/{Path(list_files_aez[0]).name}')
-
-                # #Copy json
-                # shutil.copy(list_files_aez[0], wp_for_aez)
-
-                # #Export json to s3 bucket
-                # if not args.no_upload_s3:
-                #     ewoc_s3_upload(Path(wp_for_aez), args.s3_bucket, \
-                #         f'{args.s3_key}/{Path(wp_for_aez).name}')
-
             else:
                 #Merge wp
                 i = 0

@@ -20,10 +20,10 @@ from eodag.utils.logging import setup_logging
 from eodag.api.core import EODataAccessGateway
 
 
-def filter_tiles(S2_Tiles, s2_exclusion_json):
+def filter_tiles(s2_tiles, s2_exclusion_json):
     out_s2tiles = []
-        
-    for tile in S2_Tiles.iterrows():
+
+    for tile in s2_tiles.iterrows():
         for feature in s2_exclusion_json['features']:
             if feature['properties']['tile'] == tile[1].id:
                 if feature['properties']['include']:
@@ -31,7 +31,7 @@ def filter_tiles(S2_Tiles, s2_exclusion_json):
                 break
 
     logging.debug("Before filtering : %s S2 tiles / After filtering : %s S2 tiles",
-                 str(len(S2_Tiles)),
+                 str(len(s2_tiles)),
                  str(len(out_s2tiles)))
 
     return out_s2tiles
@@ -101,9 +101,9 @@ def main(arguments):
 
 
     for feat in aez_layer:
-        
-        [S2_Tiles, L8_Tiles, SRTM_Tiles, Copernicus_Tiles] = eotile_module.main(feat.GetGeometryRef().ExportToWkt())
-        filtered_s2_tiles = filter_tiles(S2_Tiles, s2_exclusion_json)
+
+        [s2_tiles, l8_tiles, srtm_tiles, copernicus_tiles] = eotile_module.main(feat.GetGeometryRef().ExportToWkt())
+        filtered_s2_tiles = filter_tiles(s2_tiles, s2_exclusion_json)
 
         if len(filtered_s2_tiles):
             logging.info("Adding AEZ %s, %s S2 tiles within the AEZ",
