@@ -188,7 +188,8 @@ def main(args: List[str])->None:
         logging.info('Need to process %s missing tiles before merging to AEZ', \
             (len(tiles_id) - nb_tiles_processed))
 
-    logging.info("--- %s seconds ---", (time.time() - start_time))
+    logging.info("END of the Process")
+    logging.info("--- Total time : %s seconds ---", (time.time() - start_time))
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
