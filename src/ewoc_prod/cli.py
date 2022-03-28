@@ -291,6 +291,13 @@ def main(args: List[str])->None:
                     get_tiles_infos_from_tiles(s2tiles_aez_file, \
                     tile_lst, season_type, prod_start_date)
 
+                meta_dict = {"season_start": str(season_start),
+                            "season_end": str(season_end),
+                            "season_processing_start": str(season_processing_start),
+                            "season_processing_end": str(season_processing_end),
+                            "annual_processing_start": str(annual_processing_start),
+                            "annual_processing_end": str(annual_processing_end)}
+
                 #Print tile info
                 logging.info("aez_id = %s", aez_id)
                 if all(arg is None for arg in (season_start, season_end)) and not metaseason:
@@ -303,12 +310,7 @@ def main(args: List[str])->None:
                     logging.info("cloudcover = %s", cloudcover)
                     logging.info("min_nb_prods = %s", min_nb_prods)
                     logging.info("season_type = %s", season_type)
-                    logging.info("season_start = %s", season_start)
-                    logging.info("season_end = %s", season_end)
-                    logging.info("season_processing_start = %s", season_processing_start)
-                    logging.info("season_processing_end = %s", season_processing_end)
-                    logging.info("annual_processing_start = %s", annual_processing_start)
-                    logging.info("annual_processing_end = %s", annual_processing_end)
+                    logging.info("meta_dict = %s", meta_dict)
                     logging.info("wp_processing_start = %s", wp_processing_start)
                     logging.info("wp_processing_end = %s", wp_processing_end)
                     logging.info("l8_enable_sr = %s", l8_enable_sr)
@@ -318,12 +320,7 @@ def main(args: List[str])->None:
 
                 #Create the associated workplan
                 wp_for_tile = WorkPlan(tile_lst,
-                                        str(season_start),
-                                        str(season_end),
-                                        str(season_processing_start),
-                                        str(season_processing_end),
-                                        str(annual_processing_start),
-                                        str(annual_processing_end),
+                                        meta_dict,
                                         str(wp_processing_start),
                                         str(wp_processing_end),
                                         data_provider=s2_data_provider,
