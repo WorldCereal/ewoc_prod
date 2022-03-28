@@ -82,10 +82,10 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-ut',"--user_tiles",
                         help="User tiles id for production (geojson file)",
                         type=str)
-    parser.add_argument('-meta', "--metaseason",
+    parser.add_argument('-m', "--metaseason",
                         help="Active the metaseason mode that cover all seasons",
                         action='store_true')
-    parser.add_argument('-meta_yr', "--metaseason_year",
+    parser.add_argument('-m_yr', "--metaseason_year",
                         help="Year of the season to process in the metaseason mode (e.g. 2021 to process 2020/2021)",
                         type=int,
                         default=2021)
