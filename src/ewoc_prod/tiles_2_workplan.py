@@ -7,12 +7,12 @@
 :created: 2022
 '''
 
-import boto3
 import logging
 from datetime import date
-from dateutil.relativedelta import relativedelta
 from pathlib import Path
 from typing import List, Optional, Tuple
+import boto3
+from dateutil.relativedelta import relativedelta
 from osgeo import ogr
 
 from ewoc_dag.bucket.ewoc import EWOCBucket
