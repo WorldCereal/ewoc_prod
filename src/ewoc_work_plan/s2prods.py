@@ -1,6 +1,9 @@
 import logging
 from datetime import datetime
 from typing import List
+import re
+import boto3
+from botocore.handlers import disable_signing
 
 from eotile.eotile_module import main
 
@@ -8,11 +11,49 @@ from ewoc_work_plan.utils import eodag_prods, remove_duplicates
 
 _logger = logging.getLogger(__name__)
 
+def test_pattern(pattern, mylist):
+    # if re.search(r'%s' % pattern, "".join(mylist)) is not None:
+    if re.search(pattern, "".join(mylist)) is not None:
+        return True
+    else:
+        return False
+
+def check_bucket_e84(pid):
+    s3 = boto3.resource('s3')
+    s3.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
+    my_bucket = s3.Bucket('sentinel-cogs')
+
+    _logger.debug('Search for product %s', pid)
+    path1 = pid.split('_')[-2][1:3]
+    path2 = pid.split('_')[-2][3]
+    path3 = pid.split('_')[-2][4:]
+    path4 = pid.split('_')[-1][:4]
+    path5 = pid.split('_')[-1][4:6].strip("0")
+    path6 = pid.split('_')[0]
+    path7 = pid.split('_')[5][1:]
+    path8 = pid.split('_')[-1][:8]
+    prd_prefix = f'sentinel-s2-l2a-cogs/{path1}/{path2}/{path3}/{path4}/{path5}/'
+    prd_pattern = f'{path6}_{path7}_{path8}'
+
+    result = my_bucket.meta.client.list_objects(Bucket='sentinel-cogs',
+                                                Prefix=prd_prefix,
+                                                Delimiter='/')
+    s2_prods_e84_list = []
+    for res in result.get('CommonPrefixes'):
+        _logger.debug(res.get('Prefix'))
+        s2_prods_e84_list.append(res.get('Prefix'))
+
+    if test_pattern(prd_pattern, s2_prods_e84_list):
+        _logger.debug('Product %s exists in the bucket \n', prd_pattern)
+        return True
+    else:
+        _logger.debug('Product %s is missing \n', prd_pattern)
+        return False
 
 def get_e84_ids(s2_tile, start, end, creds, cloudcover=100):
     poly = main(s2_tile)[0]
     # Start search with element84 API
-    s2_prods_e84 = eodag_prods(
+    s2_prods_e84_all = eodag_prods(
         poly,
         start,
         end,
@@ -21,6 +62,12 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100):
         creds=creds,
         cloud_cover=cloudcover,
     )
+    # Check bucket
+    s2_prods_e84 = []
+    for el in s2_prods_e84_all:
+        pid = el.properties["sentinel:product_id"]
+        if check_bucket_e84(pid):
+            s2_prods_e84.append(el)
     # Filter and Clean
     e84 = {}
     for el in s2_prods_e84:
@@ -77,8 +124,7 @@ def get_s2_ids(s2_tile, provider, start, end, creds, cloudcover=100, level="L2A"
             s2_tile, start, end, creds, cloudcover=cloudcover, level=level
         )
     else:
-        _logger.warning(
-            "Cannot continue with provider %s and level %s" % (provider, level)
+        _logger.warning("Cannot continue with provider %s and level %s", provider, level
         )
 
 
@@ -90,9 +136,7 @@ def merge_ids(ref, sec):
             if ref[pid_r]["date"] == sec[pid_s]["date"]:
                 found = True
                 sec_id = pid_s
-                _logger.info(
-                    "Found match between ref and sec %s -- %s" % (pid_r, pid_s)
-                )
+                _logger.info("Found match between ref and sec %s -- %s", pid_r, pid_s)
         if found:
             fusion[sec_id] = sec[sec_id]
         else:
@@ -158,8 +202,8 @@ def cross_prodvider_ids(
     # If the two providers are the same with same product level, only one provider is used
     if len(set(providers)) == 1 and len(set(strategy)) == 1:
         _logger.info(
-            "One provider: %s will be used to get level: %s data"
-            % (ref_provider, ref_level)
+            "One provider: %s will be used to get level: %s data",
+            ref_provider, ref_level
         )
         ref = get_s2_ids(
             s2_tile,
@@ -176,8 +220,8 @@ def cross_prodvider_ids(
         sec_provider = providers[1]
         sec_level = strategy[1]
         _logger.info(
-            "Refrence provider: %s, level %s with secondary provider: %s, level %s"
-            % (ref_provider, ref_level, sec_provider, sec_level)
+            "Refrence provider: %s, level %s with secondary provider: %s, level %s",
+            ref_provider, ref_level, sec_provider, sec_level
         )
         ref = get_s2_ids(
             s2_tile,
