@@ -183,8 +183,7 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
         _logger.error("Product list is empty!")
         return list(s2_prds.keys())
 
-
-def cross_prodvider_ids(
+def run_multiple_cross_provider(
     s2_tile,
     start,
     end,
@@ -195,74 +194,112 @@ def cross_prodvider_ids(
     providers,
     strategy=None,
 ):
+    if len(providers) != len(strategy):
+        _logger.error("Number of providers must match number of strategies")
     if strategy is None:
-        strategy = ["L2A", "L2A"]
-    ref_provider = providers[0]
-    ref_level = strategy[0]
-    # If the two providers are the same with same product level, only one provider is used
-    if len(set(providers)) == 1 and len(set(strategy)) == 1:
-        _logger.info(
-            "One provider: %s will be used to get level: %s data",
-            ref_provider, ref_level
-        )
-        ref = get_s2_ids(
-            s2_tile,
-            ref_provider,
-            start,
-            end,
-            creds,
-            cloudcover=cloudcover_max,
-            level=ref_level,
-        )
-        ref = {el: v for el, v in sorted(ref.items(), key=lambda item: item[1]["date"])}
-        return get_best_prds(ref, cloudcover_min, min_nb_prods)
-    else:
-        sec_provider = providers[1]
-        sec_level = strategy[1]
-        _logger.info(
-            "Refrence provider: %s, level %s with secondary provider: %s, level %s",
-            ref_provider, ref_level, sec_provider, sec_level
-        )
-        ref = get_s2_ids(
-            s2_tile,
-            ref_provider,
-            start,
-            end,
-            creds,
-            cloudcover=cloudcover_max,
-            level=ref_level,
-        )
-        sec = get_s2_ids(
-            s2_tile,
-            sec_provider,
-            start,
-            end,
-            creds,
-            cloudcover=cloudcover_max,
-            level=sec_level,
-        )
-        # Merge two dictionaries
-        fusion = merge_ids(ref, sec)
-        # Sort by date ascending
-        fusion = {
-            el: v for el, v in sorted(fusion.items(), key=lambda item: item[1]["date"])
-        }
-        # Return list of best products for a given cloud cover and yearly threshold
-        fusion = get_best_prds(fusion, cloudcover_min, min_nb_prods)
-        return fusion
+        strategy = ["L2A"] * len(providers)
 
+    # Initilization
+    ref = get_s2_ids(
+        s2_tile,
+        providers[0],
+        start,
+        end,
+        creds,
+        cloudcover=cloudcover_max,
+        level=strategy[0],
+    )
+
+    nb_tests = len(providers)-1
+
+    while nb_tests>0:
+
+        _logger.debug(providers, strategy)
+
+        ref_provider =  providers[0]
+        ref_level = strategy[0]
+        sec_provider =  providers[1]
+        sec_level = strategy[1]
+
+        if ref is not None : 
+            _logger.debug('Number of %s products for %s = %s', ref_level, ref_provider, len(ref))
+        else:
+            _logger.debug('Number of %s products for %s = 0', ref_level, ref_provider)
+
+        # If the two providers are the same with same product level, only one provider is used
+        if (ref_provider == sec_provider) and (ref_level == sec_level):
+            _logger.info(
+                "One provider: %s will be used to get level: %s data",
+                ref_provider, ref_level
+            )
+        else:
+            _logger.info(
+                "Reference provider: %s, level %s with secondary provider: %s, level %s",
+                ref_provider, ref_level, sec_provider, sec_level
+            )
+            ref = cross_provider_ids(
+                    s2_tile,
+                    start,
+                    end,
+                    cloudcover_max,
+                    creds,
+                    ref,
+                    sec_provider,
+                    sec_level,
+                )
+        nb_tests -= 1
+        providers = providers[1:]
+        strategy = strategy[1:]
+
+    res_prd = format_results(ref, cloudcover_min, min_nb_prods)
+
+    return res_prd
+
+def cross_provider_ids(
+    s2_tile,
+    start,
+    end,
+    cloudcover_max,
+    creds,
+    ref,
+    sec_provider,
+    sec_level,
+):
+    sec = get_s2_ids(
+        s2_tile,
+        sec_provider,
+        start,
+        end,
+        creds,
+        cloudcover=cloudcover_max,
+        level=sec_level,
+    )
+
+    if sec is not None : 
+        _logger.debug('Number of %s products for %s = %s', sec_level, sec_provider, len(sec))
+    else:
+        _logger.debug('Number of %s products for %s = 0', sec_level, sec_provider)
+
+    # Merge two dictionaries
+    fusion = merge_ids(ref, sec)
+    return fusion
+
+def format_results(val, cloudcover_min, min_nb_prods):
+    # Sort by date ascending
+    val = {el: v for el, v in sorted(val.items(), key=lambda item: item[1]["date"])}
+    return get_best_prds(val, cloudcover_min, min_nb_prods)
 
 if __name__ == "__main__":
-    fusion = cross_prodvider_ids(
+    fusion = run_multiple_cross_provider(
         "31TCJ",
-        "2018-01-01",
-        "2021-01-01",
+        "2020-04-01",
+        "2020-05-01",
         cloudcover_max=100,
         cloudcover_min=95,
         min_nb_prods=50,
         creds="/eodag_config.yml",
-        providers=["creodias", "aws_cog"],
-        strategy=["L1C", "L2A"],
+        providers=["creodias", "creodias", "aws_cog"],
+        strategy=["L1C", "L2A", "L2A"],
     )
     for el in fusion:
         print(el)
