@@ -18,8 +18,7 @@ from ewoc_work_plan.utils import (
     eodag_prods,
     get_path_row,
     greatest_timedelta,
-    is_descending,
-    is_iw_grdh,
+    sort_sar_products,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,22 +137,9 @@ class WorkPlan:
             s1_prods_types[self._plan["s1_provider"]],
             eodag_config_filepath,
         )
-        # filter out undesirable _EW_GRDM_ products
-        s1_prods_full = [
-            s1_prod
-            for s1_prod in s1_prods_request
-            if is_iw_grdh(s1_prod)
-        ]
-        s1_prods_desc = [
-            s1_prod
-            for s1_prod in s1_prods_full
-            if is_descending(s1_prod, self._plan["s1_provider"])
-        ]
-        s1_prods_asc = [
-            s1_prod
-            for s1_prod in s1_prods_full
-            if not is_descending(s1_prod, self._plan["s1_provider"])
-        ]
+        print(len(s1_prods_request))
+        # filter out undesirable products
+        s1_prods_desc, s1_prods_asc = sort_sar_products(s1_prods_request,self._plan["s1_provider"])
         logger.info("Number of descending products: %s", len(s1_prods_desc))
         logger.info("Number of ascending products: %s", len(s1_prods_asc))
 

@@ -7,6 +7,7 @@ from typing import List
 
 import boto3
 from eodag.api.core import EODataAccessGateway
+from ewoc_dag.eo_prd_id.s1_prd_id import S1PrdIdInfo
 from shapely.wkt import dumps
 
 _logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ def set_logger(verbose_v):
 
 
 def eodag_prods(
-    df, start_date, end_date, provider, product_type, creds, cloud_cover=None
+        df, start_date, end_date, provider, product_type, creds, cloud_cover=None
 ):
     dag = EODataAccessGateway(user_conf_file_path=creds)
     dag.set_preferred_provider(provider)
@@ -63,11 +64,6 @@ def eodag_prods(
 
     return products
 
-def is_iw_grdh(s1_product):
-    if s1_product.properties["id"][3:12] != "_IW_GRDH_":
-        return False
-    else:
-        return True
 
 def is_descending(s1_product, provider):
     if provider.lower() == "creodias":
@@ -95,6 +91,30 @@ def is_descending(s1_product, provider):
             _logger.error("Could not determine orbit direction")
 
 
+def is_valid_sar(s1_product):
+    pid = s1_product.properties["id"]
+    s1_product_meta = S1PrdIdInfo(pid)
+    beam_mode = s1_product_meta.beam_mode
+    polarisation = s1_product_meta.polarisation
+    if beam_mode == "IW" and polarisation == "DV":
+        return True
+    else:
+        _logger.info(f"Bad product {s1_product.properties['id']} - polarisation: {polarisation}")
+        return False
+
+
+def sort_sar_products(s1_products, provider):
+    ascending = []
+    descending = []
+    for s1_product in s1_products:
+        if is_valid_sar(s1_product):
+            if is_descending(s1_product, provider):
+                descending.append(s1_product)
+            else:
+                ascending.append(s1_product)
+    return descending, ascending
+
+
 def get_path_row(product, provider):
     if provider.lower() == "creodias":
         path = str(product.properties["path"])
@@ -115,7 +135,7 @@ def get_path_row(product, provider):
 
 
 def greatest_timedelta(
-    EOProduct_list: list, start_date: str, end_date: str, date_format: str = "%Y%m%d"
+        EOProduct_list: list, start_date: str, end_date: str, date_format: str = "%Y%m%d"
 ) -> timedelta:
     """
     Computes the greatest time delta from a list of EOdag products
@@ -187,7 +207,7 @@ def remove_duplicates(prd_list_ids: List) -> List:
                 % len(pids_list)
             )
             pids_list.sort(
-                key=lambda x: datetime.strptime(x.split("_")[6].replace(".SAFE",""), "%Y%m%dT%H%M%S")
+                key=lambda x: datetime.strptime(x.split("_")[6].replace(".SAFE", ""), "%Y%m%dT%H%M%S")
             )
         res.append(pids_list[-1])
     return res
