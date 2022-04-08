@@ -92,11 +92,21 @@ def is_descending(s1_product, provider):
 
 
 def is_valid_sar(s1_product):
+    # Get some info from the eoproduct propeties
     pid = s1_product.properties["id"]
+    timeliness = s1_product.properties["timeliness"]
+    nrt_deadline = datetime.strptime("20210223T000000",'%Y%m%dT%H%M%S')
+    # Get more info from product id
     s1_product_meta = S1PrdIdInfo(pid)
+    start_time = s1_product_meta.start_time
     beam_mode = s1_product_meta.beam_mode
     polarisation = s1_product_meta.polarisation
-    if beam_mode == "IW" and polarisation == "DV":
+    # Kick-out the NRT-3h produced befor 20210223
+    if start_time < nrt_deadline and timeliness == "NRT-3h":
+        _logger.info(f"Bad product {s1_product.properties['id']} - timeliness: {timeliness}")
+        return False
+    # Check the sensor mode and polarisation
+    elif beam_mode == "IW" and polarisation == "DV":
         return True
     else:
         _logger.info(f"Bad product {s1_product.properties['id']} - polarisation: {polarisation}")
