@@ -20,38 +20,6 @@ def test_pattern(pattern, mylist):
     else:
         return False
 
-def check_bucket_e84(pid, bucket, prefix):
-    s3 = boto3.resource('s3')
-    s3.meta.client.meta.events.register('choose-signer.s3.*', disable_signing)
-    my_bucket = s3.Bucket(bucket)
-
-    _logger.debug('Search for product %s', pid)
-    path1 = pid.split('_')[-2][1:3]
-    path2 = pid.split('_')[-2][3]
-    path3 = pid.split('_')[-2][4:]
-    path4 = pid.split('_')[-1][:4]
-    path5 = pid.split('_')[-1][4:6].strip("0")
-    path6 = pid.split('_')[0]
-    path7 = pid.split('_')[5][1:]
-    path8 = pid.split('_')[-1][:8]
-    prd_prefix = f'{prefix}/{path1}/{path2}/{path3}/{path4}/{path5}/'
-    prd_pattern = f'{path6}_{path7}_{path8}'
-
-    result = my_bucket.meta.client.list_objects(Bucket=bucket,
-                                                Prefix=prd_prefix,
-                                                Delimiter='/')
-    s2_prods_e84_list = []
-    for res in result.get('CommonPrefixes'):
-        _logger.debug(res.get('Prefix'))
-        s2_prods_e84_list.append(res.get('Prefix'))
-
-    if test_pattern(prd_pattern, s2_prods_e84_list):
-        _logger.debug('Product %s exists in the bucket \n', prd_pattern)
-        return True
-    else:
-        _logger.debug('Product %s is missing \n', prd_pattern)
-        return False
-
 def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
     poly = main(s2_tile)[0]
 
@@ -90,8 +58,6 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         prd_prefix = "/".join(prefix_components) + "/"
         # prd_prefix = "/".join(prefix_components) + "/" + "B12.tif"
         my_bucket = AWSS2L2ABucket()
-        # if check_bucket_e84(pid, bucket='sentinel', prefix='sentinel-s2-l2a/tiles/'):
-            # s2_prods_e84.append(el)
         if my_bucket._check_product(prefix=prd_prefix):
             s2_prods_e84.append(el)
     # Filter and Clean
@@ -134,8 +100,6 @@ def get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         prd_prefix = "/".join(prefix_components) + "/" 
         # prd_prefix = "/".join(prefix_components) + "/" + "B12.tif"
         my_bucket = AWSS2L2ACOGSBucket()
-        # if check_bucket_e84(pid, bucket='sentinel-cogs', prefix='sentinel-s2-l2a-cogs'):
-            # s2_prods_e84_cogs.append(el)
         if my_bucket._check_product(prefix=prd_prefix):
             s2_prods_e84_cogs.append(el)
     # Filter and Clean
