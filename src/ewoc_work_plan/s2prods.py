@@ -57,12 +57,14 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
             s2_prd_info.tile_id[3:5],
             str(s2_prd_info.datatake_sensing_start_time.date().year),
             str(s2_prd_info.datatake_sensing_start_time.date().month).lstrip("0"),
-            el.properties["id"]
+            str(s2_prd_info.datatake_sensing_start_time.date().day).lstrip("0"),
+            str(el.properties["id"].split('_')[-2]),
+            "metadata.xml"
         ]
         prd_prefix = "/".join(prefix_components) + "/"
         # prd_prefix = "/".join(prefix_components) + "/" + "B12.tif"
         my_bucket = AWSS2L2ABucket()
-        if my_bucket._check_product(prefix=prd_prefix):
+        if my_bucket._check_product_file(prefix=prd_prefix):
             s2_prods_e84.append(el)
     # Filter and Clean
     e84 = {}
