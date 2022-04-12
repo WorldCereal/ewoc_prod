@@ -54,6 +54,16 @@ def get_tiles_from_aoi(s2tiles_layer: str, aoi_geom: str)->List[str]:
     s2tiles_layer.SetSpatialFilter(None)
     return tiles_id
 
+def get_tiles_from_user(tiles_layer: str)->List[str]:
+    """
+    Get s2 tiles list from tiles chosen by user
+    :param tiles_layer: user tiles
+    """
+    tiles_id = []
+    for tile in tiles_layer:
+        tiles_id.append(tile.GetField('tile'))
+    return tiles_id
+
 def get_tiles_from_date(s2tiles_layer: str, prod_start_date: date)->List[str]:
     """
     Get s2 tiles list from date provided by user
@@ -76,12 +86,14 @@ def extract_s2tiles_list(s2tiles_aez_file: str,
                         tile_id: str,
                         aez_id: str,
                         user_aoi: str,
+                        user_tiles: str,
                         prod_start_date: date)->List[str]:
     """
     Extraction of s2 tiles list from different input provided by user
     :param s2tiles_aez_file: MGRS grid that contains for each included tile
         the associated aez information (geojson file)
     :param tile_id: tile id (e.g. '31TCJ' Toulouse)
+    :param user_tiles: tiles selected by user (geojson file)
     :param aez_id: aez id (e.g. '46172')
     :param user_aoi: area of interest (geojson file)
     :param prod_start_date: production start date
@@ -107,11 +119,17 @@ def extract_s2tiles_list(s2tiles_aez_file: str,
             aoi_geom = aoi.GetGeometryRef()
             tiles_id_geom = get_tiles_from_aoi(s2tiles_layer, aoi_geom)
             tiles_id.extend(tiles_id_geom)
-        logging.info("Number of tiles selected = %s", len(tiles_id))
+    elif user_tiles is not None:
+        logging.info("Extract tiles corresponding to the user tiles list: %s", user_tiles)
+        driver = ogr.GetDriverByName('GeoJSON')
+        data_source3 = driver.Open(user_tiles, 1)
+        tiles_layer = data_source3.GetLayer()
+        tiles_id = get_tiles_from_user(tiles_layer)
     else:
         logging.info("Extract tiles corresponding to the production date requested: %s",
              prod_start_date)
         tiles_id = get_tiles_from_date(s2tiles_layer, prod_start_date)
+    logging.info("Number of tiles selected = %s", len(tiles_id))
     return tiles_id
 
 def check_number_of_aez_for_selected_tiles(s2tiles_aez_file: str, tiles_id: str)->List[str]:

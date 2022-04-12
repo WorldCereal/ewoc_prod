@@ -28,7 +28,7 @@ _logger = logging.getLogger(__name__)
 
 def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
               tile_start_date, tile_end_date, output_type):
-    """EWoC production main script 
+    """EWoC production main script
 
     Args:
       n (int): integer
@@ -40,7 +40,7 @@ def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
       output_type
 
     Returns:
-      
+
     """
     aez_db_filepath = Path('/home/mickael/dev/EWoC/aez/AEZ.geojson')
     tiles_id = list()
@@ -53,21 +53,23 @@ def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
         tiles_id.append(tiles_id)
         start_date = tile_start_date
         end_date = tile_end_date
-        _logger.debug('Use information provided for the tile: %s, %s, %s!',  tiles_id, start_date, end_date)
+        _logger.debug('Use information provided for the tile: %s, %s, %s!',
+                tiles_id, start_date, end_date)
 
     elif prototype_site_code is not None:
-        assert(tile_start_date is None)
-        assert(tile_end_date is None)
-        
+        assert tile_start_date is None
+        assert tile_end_date is None
+
         # TODO Connect to the prototype file and use right dates
         # TODO Open the Prototype site db to retrieve to retrieve information by a simple search
         tiles_id.append('XXXXX')
         start_date = date.today()
         end_date = date.today()
 
-        _logger.debug('Use information provided from the prototype db: %s, %s, %s!',  tiles_id, start_date, end_date)
+        _logger.debug('Use information provided from the prototype db: %s, %s, %s!', \
+            tiles_id, start_date, end_date)
         raise NotImplementedError
-   
+
     elif aez_region_id is not None:
         # Search the aez region according to prod_start_date
         _logger.debug('Search the aez information according the aez region id: %s', aez_region_id)
@@ -79,19 +81,26 @@ def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
         # TODO Manage sos > eos
         # TODO Compute according the right formula
         if output_type == 'crop_type_ww':
-            start_date = datetime.strptime(ref_year_str + '-' + str(int(aez['wwsos_min'])), "%Y-%j").date()
-            end_date = datetime.strptime(ref_year_str + '-' + str(int(aez['wweos_max'])), "%Y-%j").date()
+            start_date = datetime.strptime(ref_year_str + '-' + \
+                str(int(aez['wwsos_min'])), "%Y-%j").date()
+            end_date = datetime.strptime(ref_year_str + '-' + \
+                str(int(aez['wweos_max'])), "%Y-%j").date()
         elif output_type == 'crop_type_m1':
-            start_date = datetime.strptime(ref_year_str + '-' + str(int(aez['m1sos_min'])), "%Y-%j").date()
-            end_date = datetime.strptime(ref_year_str + '-' + str(int(aez['m1eos_max'])), "%Y-%j").date()
+            start_date = datetime.strptime(ref_year_str + '-' + \
+                str(int(aez['m1sos_min'])), "%Y-%j").date()
+            end_date = datetime.strptime(ref_year_str + '-' + \
+                str(int(aez['m1eos_max'])), "%Y-%j").date()
         elif output_type == 'crop_type_m2':
-            start_date = datetime.strptime(ref_year_str + '-' + str(int(aez['m2sos_min'])), "%Y-%j").date()
-            end_date = datetime.strptime(ref_year_str + '-' + str(int(aez['m2eos_max'])), "%Y-%j").date()
+            start_date = datetime.strptime(ref_year_str + '-' + \
+                str(int(aez['m2sos_min'])), "%Y-%j").date()
+            end_date = datetime.strptime(ref_year_str + '-' + \
+                str(int(aez['m2eos_max'])), "%Y-%j").date()
         else:
             # TODO Add all mode
             raise NotImplementedError
 
-        _logger.debug('Use information provided from the aez db: %s, %s, %s!',  tiles_id, start_date, end_date)
+        _logger.debug('Use information provided from the aez db: %s, %s, %s!', \
+            tiles_id, start_date, end_date)
         raise NotImplementedError
 
     else:
@@ -99,19 +108,21 @@ def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
         # Search the aez information according to aez_region_id
         aez_db = EWOC_AEZ_DB(aez_db_filepath)
         aezs = aez_db.get_aezs_from_end_date(prod_start_date)
-        _logger.info('Found %s aez for ', len(aezs), prod_start_date)
+        _logger.info('Found %s aez for %s', len(aezs), prod_start_date)
         # TODO manage the case where several aez are requested
         # TODO retrieve information
-        _logger.debug('Use information provided from the aez db: %s, %s, %s!',  tiles_id, start_date, end_date)
+        _logger.debug('Use information provided from the aez db: %s, %s, %s!', \
+            tiles_id, start_date, end_date)
         raise NotImplementedError
-    
+
     if tiles_id is None:
         if prototype_site_code is not None or tiles_id is not None or aez_region_id is not None:
             _logger.critical('No information to start production!')
         else:
             _logger.warning('No production for %s', prod_start_date)
     else:
-        _logger.info('Produce %s products for %s tiles [%s, %s]!', output_type, tiles_id, start_date, end_date)
+        _logger.info('Produce %s products for %s tiles [%s, %s]!', \
+            output_type, tiles_id, start_date, end_date)
 
     # Use ewoc_workplan to create the associated workplan
     wp = WorkPlan(tiles_id, start_date, end_date, 'creodias')
@@ -131,7 +142,7 @@ def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
             client = docker.from_env()
             env_dict = dict()
             env_filepath = Path('/path/to/env.file')
-            with open(env_filepath) as env_file:
+            with open(env_filepath, encoding="utf-8") as env_file:
                 for line in env_file:
                     key, val = line.partition('=')[::2]
                     env_dict[key.strip()] = val
@@ -148,7 +159,7 @@ def ewoc_prod(prod_start_date, aez_region_id, tile_id, prototype_site_code,
         cmd = ['argo', 'submit', str(workflow_filepath)]
         subprocess.run(cmd)
 
-    # Watch the workflow or interrogate the database to see how the processing progress ? 
+    # Watch the workflow or interrogate the database to see how the processing progress ?
 
 
 class EWOC_AEZ_DB():
@@ -167,7 +178,7 @@ class EWOC_AEZ_DB():
             if int(aez['properties']['zoneID']) == int(float(aez_zone_id)):
                 return aez['properties']
         return None
-    
+
     def get_aezs_from_end_date(self, end_date, crop_type='ww'):
         end_doy = end_date.strftime("%j")
         aez_date_key=None
@@ -179,12 +190,12 @@ class EWOC_AEZ_DB():
             aez_date_key = "m2eos_max"
         else:
             raise ValueError
-        
+
         aezs_info = list()
         for aez in self._aezs['features']:
             if int(aez['properties'][aez_date_key]) == int(end_doy):
                 aezs_info.append(aez)
-        
+
         return aezs_info
 
 # ---- CLI ----
@@ -194,11 +205,11 @@ class EWOC_AEZ_DB():
 
 def parse_date(date_str):
     try:
-        # With python 3.7 it could be replaced by 
+        # With python 3.7 it could be replaced by
         # return date.isoformat(date_str)
         return datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError:
-        msg = "Not a valid date: '{0}'.".format(date_str)
+        msg = f"Not a valid date: '{date_str}'."
         raise argparse.ArgumentTypeError(msg)
 
 def parse_args(args):
@@ -216,9 +227,9 @@ def parse_args(args):
     input_group.add_argument('-aid', "--aez_region_id",
                         help="AEZ region id",
                         type=str)
-    input_group.add_argument("-pd", "--prod_start_date", 
-                        help="Production start date - format YYYY-MM-DD", 
-                        type=parse_date, 
+    input_group.add_argument("-pd", "--prod_start_date",
+                        help="Production start date - format YYYY-MM-DD",
+                        type=parse_date,
                         default=date.today())
     input_group.add_argument("-t","--tile_id",
                         help="Tile id for production",
@@ -241,7 +252,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version="ewoc_prod {ver}".format(ver=__version__),
+        version=f"ewoc_prod {__version__}",
     )
     parser.add_argument(
         "-v",
