@@ -2,8 +2,6 @@ import logging
 from datetime import datetime
 from typing import List
 import re
-import boto3
-from botocore.handlers import disable_signing
 
 from eotile.eotile_module import main
 from ewoc_dag.bucket.aws import AWSS2L2ABucket, AWSS2L2ACOGSBucket
@@ -58,12 +56,11 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
             str(s2_prd_info.datatake_sensing_start_time.date().month).lstrip("0"),
             str(s2_prd_info.datatake_sensing_start_time.date().day).lstrip("0"),
             str(el.properties["id"].split('_')[-2]),
-            "metadata.xml"
         ]
-        prd_prefix = "/".join(prefix_components)
-        # prd_prefix = "/".join(prefix_components) + "/" + "B12.tif"
+        prd_prefix = "/".join(prefix_components) + "/"
+
         my_bucket = AWSS2L2ABucket()
-        if my_bucket._check_product_file(prefix=prd_prefix):
+        if my_bucket._check_product(prefix=prd_prefix, threshold=1, request_payer=True):
             s2_prods_e84.append(el)
     # Filter and Clean
     e84 = {}
@@ -108,9 +105,9 @@ def get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
             el.properties["id"]
         ]
         prd_prefix = "/".join(prefix_components) + "/"
-        # prd_prefix = "/".join(prefix_components) + "/" + "B12.tif"
+
         my_bucket = AWSS2L2ACOGSBucket()
-        if my_bucket._check_product(prefix=prd_prefix):
+        if my_bucket._check_product(prefix=prd_prefix, threshold=15, request_payer=False):
             s2_prods_e84_cogs.append(el)
     # Filter and Clean
     e84_cogs = {}
@@ -294,12 +291,12 @@ def run_multiple_cross_provider(
         else:
             # print('Number of reference products = 0')
             _logger.debug('Number of reference products = 0')
-        
+
         found = check_s2_prds_prov_level(ref, first_provider, first_level)
-        if found == False:
+        if found is False:
             # print("No need to check the other providers of the list, all products are already done")
             _logger.info("No need to check the other providers of the list, all products are already done")
-	    break
+            break
 
         # If the two providers are the same with same product level, only one provider is used
         if (ref_provider == sec_provider) and (ref_level == sec_level):
