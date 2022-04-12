@@ -179,7 +179,8 @@ def merge_ids(ref, sec):
     for pid_r in ref:
         found = False
         for pid_s in sec:
-            if ref[pid_r]["date"] == sec[pid_s]["date"] and ref[pid_r]["level"] != sec[pid_s]["level"]:
+            if ref[pid_r]["date"] == sec[pid_s]["date"] and \
+                ref[pid_r]["level"] != sec[pid_s]["level"]:
                 found = True
                 sec_id = pid_s
                 _logger.info("Found match between ref and sec %s -- %s", pid_r, pid_s)
@@ -285,7 +286,7 @@ def run_multiple_cross_provider(
         sec_provider =  providers[1]
         sec_level = strategy[1]
 
-        if ref is not None:  #except for the first iteration, ref_level and ref_provider is a mix of values
+        if ref is not None:  #ref_level and ref_provider is a mix of values
             # print(f'Number of reference products = {len(ref)}')
             _logger.debug('Number of reference products = %s', len(ref))
         else:
@@ -294,8 +295,10 @@ def run_multiple_cross_provider(
 
         found = check_s2_prds_prov_level(ref, first_provider, first_level)
         if found is False:
-            # print("No need to check the other providers of the list, all products are already done")
-            _logger.info("No need to check the other providers of the list, all products are already done")
+            # print("No need to check the other providers of the list, \
+            #     all products are already done")
+            _logger.info("No need to check the other providers of the list, \
+                all products are already done")
             break
 
         # If the two providers are the same with same product level, only one provider is used
