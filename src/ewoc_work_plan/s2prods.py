@@ -38,10 +38,14 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         creds=creds,
         cloud_cover=cloudcover,
     )
-    # Check bucket
-    # s2_prods_e84 = s2_prods_e84_all
-    s2_prods_e84 = []
+    # Filter products with s2_tile
+    s2_prods_e84_filtered = []
     for el in s2_prods_e84_all:
+        if s2_tile in el.properties["sentinel:product_id"]:
+            s2_prods_e84_filtered.append(el)
+    # Check bucket
+    s2_prods_e84 = []
+    for el in s2_prods_e84_filtered:
         pid = el.properties["sentinel:product_id"]
 
         s2_prd_info = S2PrdIdInfo(pid)
@@ -82,9 +86,14 @@ def get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         creds=creds,
         cloud_cover=cloudcover,
     )
+    # Filter products with s2_tile
+    s2_prods_e84_cogs_filtered = []
+    for el in s2_prods_e84_cogs_all:
+        if s2_tile in el.properties["sentinel:product_id"]:
+            s2_prods_e84_cogs_filtered.append(el)
     # Check bucket
     s2_prods_e84_cogs = []
-    for el in s2_prods_e84_cogs_all:
+    for el in s2_prods_e84_cogs_filtered:
         pid = el.properties["sentinel:product_id"]
 
         s2_prd_info = S2PrdIdInfo(pid)
@@ -97,7 +106,7 @@ def get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
             str(s2_prd_info.datatake_sensing_start_time.date().month).lstrip("0"),
             el.properties["id"]
         ]
-        prd_prefix = "/".join(prefix_components) + "/" 
+        prd_prefix = "/".join(prefix_components) + "/"
         # prd_prefix = "/".join(prefix_components) + "/" + "B12.tif"
         my_bucket = AWSS2L2ACOGSBucket()
         if my_bucket._check_product(prefix=prd_prefix):
@@ -130,9 +139,14 @@ def get_creodias_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         creds=creds,
         cloud_cover=cloudcover,
     )
+    # Filter products with s2_tile
+    s2_prods_creo_filtered = []
+    for el in s2_prods_creo:
+        if s2_tile in el.properties["title"]:
+            s2_prods_creo_filtered.append(el)
     # Filter and Clean
     creo = {}
-    for el in s2_prods_creo:
+    for el in s2_prods_creo_filtered:
         pid = el.properties["title"]
         cc = el.properties["cloudCover"]
         status = el.properties["storageStatus"]
