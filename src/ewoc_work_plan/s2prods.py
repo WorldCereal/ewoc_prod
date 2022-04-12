@@ -50,7 +50,6 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
 
         s2_prd_info = S2PrdIdInfo(pid)
         prefix_components = [
-            "sentinel-s2-l2a",
             "tiles",
             s2_prd_info.tile_id[0:2].lstrip("0"),
             s2_prd_info.tile_id[2],
@@ -61,7 +60,7 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
             str(el.properties["id"].split('_')[-2]),
             "metadata.xml"
         ]
-        prd_prefix = "/".join(prefix_components) + "/"
+        prd_prefix = "/".join(prefix_components)
         # prd_prefix = "/".join(prefix_components) + "/" + "B12.tif"
         my_bucket = AWSS2L2ABucket()
         if my_bucket._check_product_file(prefix=prd_prefix):
@@ -362,7 +361,7 @@ if __name__ == "__main__":
         cloudcover_max=100,
         cloudcover_min=95,
         min_nb_prods=50,
-        creds="/eodag_config.yml",
+        creds="../../../eodag_config.yml",
         providers=["creodias", "creodias", "aws_cog", "aws"],
         strategy=["L1C", "L2A", "L2A", "L2A"],
     )
