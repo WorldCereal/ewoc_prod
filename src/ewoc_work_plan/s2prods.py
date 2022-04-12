@@ -233,6 +233,17 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
         return list(s2_prds.keys())
 
 
+def check_s2_prds_prov_level(ref, first_provider, first_level):
+    found = False
+    for pid_r in ref:
+        _logger.debug(ref[pid_r]["provider"], ref[pid_r]["level"])
+        if (ref[pid_r]["provider"] == first_provider) and (ref[pid_r]["level"] == first_level):
+            found = True
+            # print(f"{pid_r} should be checked with another provider")
+            # _logger.debug("%s should be checked with another provider", pid_r)
+    return found
+
+
 def run_multiple_cross_provider(
     s2_tile,
     start,
@@ -259,8 +270,10 @@ def run_multiple_cross_provider(
         cloudcover=cloudcover_max,
         level=strategy[0],
     )
+    first_provider = providers[0]
+    first_level = strategy[0]
 
-    # print('Number of %s products for %s = %s' % (strategy[0], providers[0], len(ref)))
+    # print(f'Number of {strategy[0]} products for {providers[0]} = {len(ref)}')
     _logger.debug('Number of %s products for %s = %s', strategy[0], providers[0], len(ref))
 
     nb_tests = len(providers)-1
@@ -281,6 +294,12 @@ def run_multiple_cross_provider(
         else:
             # print('Number of reference products = 0')
             _logger.debug('Number of reference products = 0')
+        
+        found = check_s2_prds_prov_level(ref, first_provider, first_level)
+        if found == False:
+            # print("No need to check the other providers of the list, all products are already done")
+            _logger.info("No need to check the other providers of the list, all products are already done")
+	    break
 
         # If the two providers are the same with same product level, only one provider is used
         if (ref_provider == sec_provider) and (ref_level == sec_level):
@@ -361,7 +380,7 @@ if __name__ == "__main__":
         cloudcover_max=100,
         cloudcover_min=95,
         min_nb_prods=50,
-        creds="../../../eodag_config.yml",
+        creds="/eodag_config.yml",
         providers=["creodias", "creodias", "aws_cog", "aws"],
         strategy=["L1C", "L2A", "L2A", "L2A"],
     )
