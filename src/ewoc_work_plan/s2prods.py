@@ -237,7 +237,7 @@ def check_s2_prds_prov_level(ref, first_provider, first_level):
         if (ref[pid_r]["provider"] == first_provider) and (ref[pid_r]["level"] == first_level):
             found = True
             # print(f"{pid_r} should be checked with another provider")
-            # _logger.debug("%s should be checked with another provider", pid_r)
+            _logger.debug("%s should be checked with another provider", pid_r)
     return found
 
 
