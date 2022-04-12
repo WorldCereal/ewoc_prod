@@ -13,7 +13,6 @@ import json
 import logging
 import os
 import os.path as pa
-import shutil
 import sys
 import time
 
@@ -24,12 +23,12 @@ from multiprocessing.pool import ThreadPool as Pool
 from pathlib import Path
 from typing import List
 
+from ewoc_work_plan.workplan import WorkPlan
+
 from ewoc_prod.tiles_2_workplan import (extract_s2tiles_list,
     check_number_of_aez_for_selected_tiles, extract_s2tiles_list_per_aez,
     get_aez_season_type_from_date, get_tiles_infos_from_tiles,
         get_tiles_metaseason_infos_from_tiles, ewoc_s3_upload)
-
-from ewoc_work_plan.workplan import WorkPlan
 
 _logger = logging.getLogger(__name__)
 
@@ -82,10 +81,10 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-ut',"--user_tiles",
                         help="User tiles id for production (geojson file)",
                         type=str)
-    parser.add_argument('-meta', "--metaseason",
+    parser.add_argument('-m', "--metaseason",
                         help="Active the metaseason mode that cover all seasons",
                         action='store_true')
-    parser.add_argument('-meta_yr', "--metaseason_year",
+    parser.add_argument('-m_yr', "--metaseason_year",
                         help="Year of the season to process in the metaseason mode (e.g. 2021 to process 2020/2021)",
                         type=int,
                         default=2021)
@@ -95,8 +94,14 @@ def parse_args(args: List[str])->argparse.Namespace:
                         default=None)
     parser.add_argument('-s2prov', "--s2_data_provider",
                         help="s2 provider (peps/creodias/astraea_eod/aws)",
+                        nargs="+",
                         type=str,
-                        default="creodias")
+                        default=["creodias","aws"])
+    parser.add_argument('-strategy', "--s2_strategy",
+                        help="Fusion strategy (L2A,L1C)",
+                        nargs="+",
+                        type=str,
+                        default=["L1C","L2A"])
     parser.add_argument('-u', "--user",
                         help="Username",
                         type=str,
@@ -254,6 +259,7 @@ def main(args: List[str])->None:
                          json_path,
                          s2tiles_aez_file,
                          s2_data_provider,
+                         s2_strategy,
                          user,
                          visibility,
                          cloudcover,
@@ -284,23 +290,26 @@ def main(args: List[str])->None:
                     get_tiles_infos_from_tiles(s2tiles_aez_file, \
                     tile_lst, season_type, prod_start_date)
 
+                meta_dict = {"season_start": str(season_start),
+                            "season_end": str(season_end),
+                            "season_processing_start": str(season_processing_start),
+                            "season_processing_end": str(season_processing_end),
+                            "annual_processing_start": str(annual_processing_start),
+                            "annual_processing_end": str(annual_processing_end)}
+
                 #Print tile info
                 logging.info("aez_id = %s", aez_id)
                 if all(arg is None for arg in (season_start, season_end)) and not metaseason:
                     logging.info("No %s season", season_type)
                 else:
                     logging.info("data_provider = %s", s2_data_provider)
+                    logging.info("strategy = %s", s2_strategy)
                     logging.info("user = %s", user)
                     logging.info("visibility = %s", visibility)
                     logging.info("cloudcover = %s", cloudcover)
                     logging.info("min_nb_prods = %s", min_nb_prods)
                     logging.info("season_type = %s", season_type)
-                    logging.info("season_start = %s", season_start)
-                    logging.info("season_end = %s", season_end)
-                    logging.info("season_processing_start = %s", season_processing_start)
-                    logging.info("season_processing_end = %s", season_processing_end)
-                    logging.info("annual_processing_start = %s", annual_processing_start)
-                    logging.info("annual_processing_end = %s", annual_processing_end)
+                    logging.info("meta_dict = %s", meta_dict)
                     logging.info("wp_processing_start = %s", wp_processing_start)
                     logging.info("wp_processing_end = %s", wp_processing_end)
                     logging.info("l8_enable_sr = %s", l8_enable_sr)
@@ -310,15 +319,11 @@ def main(args: List[str])->None:
 
                 #Create the associated workplan
                 wp_for_tile = WorkPlan(tile_lst,
-                                        str(season_start),
-                                        str(season_end),
-                                        str(season_processing_start),
-                                        str(season_processing_end),
-                                        str(annual_processing_start),
-                                        str(annual_processing_end),
+                                        meta_dict,
                                         str(wp_processing_start),
                                         str(wp_processing_end),
                                         data_provider=s2_data_provider,
+                                        strategy=s2_strategy,
                                         l8_sr=l8_enable_sr,
                                         aez_id=int(aez_id),
                                         user=user,
@@ -341,6 +346,7 @@ def main(args: List[str])->None:
                          repeat(json_path),
                          repeat(args.s2tiles_aez_file),
                          repeat(args.s2_data_provider),
+                         repeat(args.s2_strategy),
                          repeat(args.user),
                          repeat(args.visibility),
                          repeat(args.cloudcover),
@@ -364,15 +370,6 @@ def main(args: List[str])->None:
                 if not args.no_upload_s3:
                     ewoc_s3_upload(Path(list_files_aez[0]), args.s3_bucket, \
                         f'{args.s3_key}/{Path(list_files_aez[0]).name}')
-
-                # #Copy json
-                # shutil.copy(list_files_aez[0], wp_for_aez)
-
-                # #Export json to s3 bucket
-                # if not args.no_upload_s3:
-                #     ewoc_s3_upload(Path(wp_for_aez), args.s3_bucket, \
-                #         f'{args.s3_key}/{Path(wp_for_aez).name}')
-
             else:
                 #Merge wp
                 i = 0
