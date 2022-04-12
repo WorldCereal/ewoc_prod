@@ -31,8 +31,8 @@ _logger = logging.getLogger(__name__)
 @click.option(
     "-wp_processing_end", help="Workplan processing end date, format YYYY-mm-dd"
 )
-@click.option("-prov", help="Provider (peps/creodias/astraea_eod)", type=(str, str))
-@click.option("-strategy", help="Fusion strategy (L2A,L1C)", type=(str, str))
+@click.option("-prov", help="Provider (peps/creodias/astraea_eod)", multiple=True)
+@click.option("-strategy", help="Fusion strategy (L2A,L1C)", multiple=True)
 @click.option("-l8_sr", default="False", help="Process L8 OLI bands or not")
 @click.option("-aez_id", default=0, type=int, help="ID of the AED")
 @click.option("-user", default="EWoC_admin", help="Username")

@@ -13,7 +13,7 @@ from shapely.wkt import dumps
 from ewoc_work_plan import __version__
 from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
 from ewoc_work_plan.reproc import reproc_wp
-from ewoc_work_plan.s2prods import cross_prodvider_ids
+from ewoc_work_plan.s2prods import run_multiple_cross_provider
 from ewoc_work_plan.utils import (
     eodag_prods,
     get_path_row,
@@ -197,7 +197,7 @@ class WorkPlan:
         return list(dic.values()), orbit_dir
 
     def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None):
-        s2_prods_ids = cross_prodvider_ids(
+        s2_prods_ids = run_multiple_cross_provider(
             tile_id,
             self._plan["wp_processing_start"],
             self._plan["wp_processing_end"],

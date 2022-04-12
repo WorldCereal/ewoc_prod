@@ -76,7 +76,7 @@ Options:
 **Generation example**
 ```bash
 ewoc_workplan -v generate -input_data 35UMQ -wp_processing_start 2018-07-02 -wp_processing_end 2019-10-26
-  -prov creodias creodias -l8_sr True -eodag_config_filepath ~/eodag_config.yml -strategy L1C L1C write 35UMQ.json
+  -prov creodias -prov creodias -l8_sr True -eodag_config_filepath ~/eodag_config.yml -strategy L1C -strategy L1C write 35UMQ.json
 ```
 You can use as many commands at once as you like, for example:
 ```bash
