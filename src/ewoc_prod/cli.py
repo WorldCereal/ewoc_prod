@@ -175,7 +175,7 @@ def merge_dict_list(dict_list):
 
     for dictionary in dict_list[1:]:
         for key, value in dictionary.items():
-            if isinstance(value, list):
+            if (isinstance(value, list)) and (key != 's2_provider'):
                 default_dict[key].extend(value)
             else:
                 pass
