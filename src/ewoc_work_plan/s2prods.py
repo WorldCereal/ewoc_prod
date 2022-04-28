@@ -191,7 +191,7 @@ def merge_ids(ref, sec):
     return fusion
 
 
-def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
+def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int, rm_l1c: bool) -> List:
     # Get number of months from sorted dict
     last_date = s2_prds[list(s2_prds.keys())[-1]]["date"]
     first_date = s2_prds[list((s2_prds.keys()))[0]]["date"]
@@ -201,6 +201,9 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
     min_nb_prods = round((n_months * min_nb_prods) / 12)
     # Remove duplicates
     s2_prds_set = remove_duplicates(list(s2_prds.keys()))
+    # Remove L1C products
+    if rm_l1c:
+        s2_prds_set = [item for item in s2_prds_set if 'MSIL1C' not in item]
     # Filter produtcs by cloud cover
     cc_filter = [
         [s2_prds[prd]["provider"], prd]
@@ -256,6 +259,7 @@ def run_multiple_cross_provider(
     creds,
     providers,
     strategy=None,
+    rm_l1c=None,
 ):
     if len(providers) != len(strategy):
         _logger.error("Number of providers must match number of strategies")
@@ -330,9 +334,12 @@ def run_multiple_cross_provider(
         providers = providers[1:]
         strategy = strategy[1:]
 
-    # print(f'Number of prd before cc filter = {len(ref)}')
-    _logger.debug('Number of prd before cc filter= %s', len(ref))
-    res_prd = format_results(ref, cloudcover_min, min_nb_prods)
+    if rm_l1c:
+        _logger.debug('Number of prd before cc filter and l1c deletion= %s', len(ref))
+    else:
+        # print(f'Number of prd before cc filter = {len(ref)}')
+        _logger.debug('Number of prd before cc filter= %s', len(ref))
+    res_prd = format_results(ref, cloudcover_min, min_nb_prods, rm_l1c)
     # print(f'Number of prd after cc filter = {len(res_prd)}')
     _logger.debug('Number of prd after cc filter= %s', len(res_prd))
     return res_prd
@@ -370,23 +377,25 @@ def cross_provider_ids(
     return fusion
 
 
-def format_results(val, cloudcover_min, min_nb_prods):
+def format_results(val, cloudcover_min, min_nb_prods, rm_l1c):
     # Sort by date ascending
     val = {el: v for el, v in sorted(val.items(), key=lambda item: item[1]["date"])}
-    return get_best_prds(val, cloudcover_min, min_nb_prods)
+    return get_best_prds(val, cloudcover_min, min_nb_prods, rm_l1c)
 
 
 if __name__ == "__main__":
     fusion = run_multiple_cross_provider(
-        "35LMK",
-        "2020-08-03",
-        "2020-08-04",
+        "34TFT",
+        "2017-03-22",
+        "2017-04-13",
         cloudcover_max=100,
         cloudcover_min=95,
         min_nb_prods=50,
         creds="/eodag_config.yml",
         providers=["creodias", "creodias", "aws", "aws_sng"],
         strategy=["L1C", "L2A", "L2A", "L2A"],
+        rm_l1c=True,
+
     )
     for el in fusion:
         print(el)

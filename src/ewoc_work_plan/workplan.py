@@ -43,6 +43,7 @@ class WorkPlan:
         eodag_config_filepath=None,
         cloudcover=90,
         min_nb_prods=50,
+        rm_l1c=None,
     ) -> None:
 
         self._cloudcover = cloudcover
@@ -80,6 +81,7 @@ class WorkPlan:
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
         self._plan["yearly_prd_threshold"] = min_nb_prods
+        self._plan["rm_l1c"] = rm_l1c
         # Addind tiles
         tiles_plan = list()
 
@@ -271,6 +273,7 @@ class WorkPlan:
         eodag_config_filepath=None,
         cloudcover=90,
         min_nb_prods=50,
+        rm_l1c=None,
     ):
         supported_format = [".shp", ".geojson", ".gpkg"]
         if aoi_filepath.suffix in supported_format:
@@ -307,6 +310,7 @@ class WorkPlan:
                 eodag_config_filepath,
                 min_nb_prods,
                 cloudcover,
+                rm_l1c,
             )
         else:
             logging.critical(
@@ -345,6 +349,7 @@ class WorkPlan:
         eodag_config_filepath=None,
         cloudcover=90,
         min_nb_prods=50,
+        rm_l1c=None,
     ):
         tile_ids = list()
         with open(csv_filepath, encoding="latin-1") as csvfile:
@@ -375,6 +380,7 @@ class WorkPlan:
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
+            rm_l1c=rm_l1c,
         )
 
     def to_json(self, out_filepath):

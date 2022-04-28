@@ -49,6 +49,7 @@ _logger = logging.getLogger(__name__)
 )
 @click.option("-cloudcover", default=90, help="Cloudcover parameter")
 @click.option("-min_nb_prods", default=50, help="Yearly minimum number of products")
+@click.option("-rm_l1c", default=False, help="Remove L1C products or not")
 def generate(
     ctx,
     input_data,
@@ -67,6 +68,7 @@ def generate(
     eodag_config_filepath,
     cloudcover,
     min_nb_prods,
+    rm_l1c,
 ):
     """
     Generate the workplan
@@ -86,6 +88,7 @@ def generate(
     :param eodag_config_filepath: path to the eodag yml config file
     :param cloudcover: cloud cover parameter
     :param min_nb_prods: Yearly minimum number of products
+    :param rm_l1c: remove L1C products or not
     """
     ctx.ensure_object(dict)
 
@@ -128,6 +131,7 @@ def generate(
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
+            rm_l1c=rm_l1c,
         )
     elif induced_type == "csv":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_csv(
@@ -147,6 +151,7 @@ def generate(
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
+            rm_l1c=rm_l1c,
         )
     elif induced_type == "aoi":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_aoi(
@@ -166,6 +171,7 @@ def generate(
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
+            rm_l1c=rm_l1c,
         )
     else:
         click.echo(f"Unrecognized {input_data} as input type")
