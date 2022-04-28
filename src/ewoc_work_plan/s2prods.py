@@ -384,7 +384,7 @@ if __name__ == "__main__":
         cloudcover_max=100,
         cloudcover_min=95,
         min_nb_prods=50,
-        creds="../../../eodag_config.yml",
+        creds="/eodag_config.yml",
         providers=["creodias", "creodias", "aws_cog", "aws"],
         strategy=["L1C", "L2A", "L2A", "L2A"],
     )
