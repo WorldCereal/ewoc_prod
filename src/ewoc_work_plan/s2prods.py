@@ -225,7 +225,11 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
             will be used",
             cloudcover,
         )
-        return list(s2_prds.keys())
+        no_cc_filter = [
+        [s2_prds[prd]["provider"], prd]
+        for prd in s2_prds_set
+        ]
+        return no_cc_filter
     else:
         _logger.error("Product list is empty!")
         return list(s2_prds.keys())
