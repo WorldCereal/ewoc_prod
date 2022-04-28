@@ -93,7 +93,7 @@ class WorkPlan:
                 s2_tile, eodag_config_filepath=eodag_config_filepath
             )
             s2_prd_ids = self._identify_s2(
-                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c
+                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c=rm_l1c
             )
             l8_prd_ids = self._identify_l8(
                 s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath
