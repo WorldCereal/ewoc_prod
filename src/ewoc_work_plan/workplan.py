@@ -48,7 +48,7 @@ class WorkPlan:
         self._cloudcover = cloudcover
         self.strategy = strategy
         if not set(data_provider).issubset(
-            ["creodias", "peps", "astraea_eod", "aws", "aws_cog"]
+            ["creodias", "peps", "astraea_eod", "aws", "aws_sng"]
         ):
             raise ValueError("Incorrect data provider")
         # Filling the plan
