@@ -225,7 +225,11 @@ def get_best_prds(s2_prds: dict, cloudcover: float, min_nb_prods: int) -> List:
             will be used",
             cloudcover,
         )
-        return list(s2_prds.keys())
+        no_cc_filter = [
+        [s2_prds[prd]["provider"], prd]
+        for prd in s2_prds_set
+        ]
+        return no_cc_filter
     else:
         _logger.error("Product list is empty!")
         return list(s2_prds.keys())
@@ -380,7 +384,7 @@ if __name__ == "__main__":
         cloudcover_max=100,
         cloudcover_min=95,
         min_nb_prods=50,
-        creds="/eodag_config.yml",
+        creds="../../../eodag_config.yml",
         providers=["creodias", "creodias", "aws_cog", "aws"],
         strategy=["L1C", "L2A", "L2A", "L2A"],
     )
