@@ -69,7 +69,7 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         cc = el.properties["cloudCover"]
         date = datetime.strptime(pid.split("_")[2], "%Y%m%dT%H%M%S")
         if s2_tile in pid:
-            e84[pid] = {"cc": float(cc), "date": date, "provider": "aws", "level": level}
+            e84[pid] = {"cc": float(cc), "date": date, "provider": "aws_sng", "level": level}
     return e84
 
 def get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
@@ -116,7 +116,7 @@ def get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         cc = el.properties["cloudCover"]
         date = datetime.strptime(pid.split("_")[2], "%Y%m%dT%H%M%S")
         if s2_tile in pid:
-            e84_cogs[pid] = {"cc": float(cc), "date": date, "provider": "aws_cog", "level": level}
+            e84_cogs[pid] = {"cc": float(cc), "date": date, "provider": "aws", "level": level}
     return e84_cogs
 
 
@@ -161,9 +161,9 @@ def get_creodias_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
 
 
 def get_s2_ids(s2_tile, provider, start, end, creds, cloudcover=100, level="L2A"):
-    if provider == "aws_cog" and level == "L2A":
+    if provider == "aws" and level == "L2A":
         return get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=cloudcover, level=level)
-    elif provider == "aws" and level == "L2A":
+    elif provider == "aws_sng" and level == "L2A":
         return get_e84_ids(s2_tile, start, end, creds, cloudcover=cloudcover, level=level)
     elif provider == "creodias":
         return get_creodias_ids(
@@ -392,9 +392,10 @@ if __name__ == "__main__":
         cloudcover_min=95,
         min_nb_prods=50,
         creds="/eodag_config.yml",
-        providers=["creodias", "creodias", "aws_cog"],
-        strategy=["L1C", "L2A", "L2A"],
+        providers=["creodias", "creodias", "aws", "aws_sng"],
+        strategy=["L1C", "L2A", "L2A", "L2A"],
         rm_l1c=True,
+
     )
     for el in fusion:
         print(el)
