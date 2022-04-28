@@ -93,7 +93,7 @@ class WorkPlan:
                 s2_tile, eodag_config_filepath=eodag_config_filepath
             )
             s2_prd_ids = self._identify_s2(
-                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath
+                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c
             )
             l8_prd_ids = self._identify_l8(
                 s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath
@@ -191,7 +191,7 @@ class WorkPlan:
 
         return list(dic.values()), orbit_dir
 
-    def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None):
+    def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None, rm_l1c=None):
         s2_prods_ids = run_multiple_cross_provider(
             tile_id,
             self._plan["wp_processing_start"],
@@ -202,6 +202,7 @@ class WorkPlan:
             eodag_config_filepath,
             providers=self._plan["s2_provider"],
             strategy=self.strategy,
+            rm_l1c = rm_l1c,
         )
         return s2_prods_ids
 
