@@ -118,6 +118,9 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Yearly minimum number of products",
                         type=int,
                         default=75)
+    parser.add_argument('-rm_l1c', "--remove_l1c",
+                        help="Remove L1C products or not",
+                        action='store_true')
     parser.add_argument('-o', "--output_path",
                         help="Output path for json files",
                         type=str)
@@ -264,6 +267,7 @@ def main(args: List[str])->None:
                          visibility,
                          cloudcover,
                          min_nb_prods,
+                         remove_l1c,
                          prod_start_date,
                          metaseason,
                          metaseason_year,
@@ -308,6 +312,7 @@ def main(args: List[str])->None:
                     logging.info("visibility = %s", visibility)
                     logging.info("cloudcover = %s", cloudcover)
                     logging.info("min_nb_prods = %s", min_nb_prods)
+                    logging.info("remove_l1c = %s", remove_l1c)
                     logging.info("season_type = %s", season_type)
                     logging.info("meta_dict = %s", meta_dict)
                     logging.info("wp_processing_start = %s", wp_processing_start)
@@ -333,7 +338,8 @@ def main(args: List[str])->None:
                                         enable_sw=enable_sw,
                                         eodag_config_filepath="../../../eodag_config.yml",
                                         cloudcover=cloudcover,
-                                        min_nb_prods=min_nb_prods)
+                                        min_nb_prods=min_nb_prods,
+                                        rm_l1c=remove_l1c)
 
                 #Export tile wp to json file
                 filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
@@ -351,6 +357,7 @@ def main(args: List[str])->None:
                          repeat(args.visibility),
                          repeat(args.cloudcover),
                          repeat(args.min_nb_prods),
+                         repeat(args.remove_l1c),
                          repeat(args.prod_start_date),
                          repeat(args.metaseason),
                          repeat(args.metaseason_year),
