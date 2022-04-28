@@ -43,12 +43,13 @@ class WorkPlan:
         eodag_config_filepath=None,
         cloudcover=90,
         min_nb_prods=50,
+        rm_l1c=None,
     ) -> None:
 
         self._cloudcover = cloudcover
         self.strategy = strategy
         if not set(data_provider).issubset(
-            ["creodias", "peps", "astraea_eod", "aws", "aws_cog"]
+            ["creodias", "peps", "astraea_eod", "aws", "aws_sng"]
         ):
             raise ValueError("Incorrect data provider")
         # Filling the plan
@@ -64,6 +65,15 @@ class WorkPlan:
         self._plan["season_type"] = season_type
         self._plan["enable_sw"] = enable_sw
         self._plan["detector_set"] = detector_set
+        if not meta_dict:
+            logger.warning("The meta dictionary is empty!!")
+        else:
+            self._plan["season_start"] = meta_dict.get("season_start")
+            self._plan["season_end"] = meta_dict.get("season_end")
+            self._plan["season_processing_start"] = meta_dict.get("season_processing_start")
+            self._plan["season_processing_end"] = meta_dict.get("season_processing_end")
+            self._plan["annual_processing_start"] = meta_dict.get("annual_processing_start")
+            self._plan["annual_processing_end"] = meta_dict.get("annual_processing_end")
         self._plan["wp_processing_start"] = wp_processing_start
         self._plan["wp_processing_end"] = wp_processing_end
         self._plan["s1_provider"] = "creodias"
@@ -71,8 +81,7 @@ class WorkPlan:
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
         self._plan["yearly_prd_threshold"] = min_nb_prods
-        if not meta_dict:
-            logger.warning("The meta dictionary is empty!!")
+        self._plan["rm_l1c"] = rm_l1c
         # Addind tiles
         tiles_plan = list()
 
@@ -84,7 +93,7 @@ class WorkPlan:
                 s2_tile, eodag_config_filepath=eodag_config_filepath
             )
             s2_prd_ids = self._identify_s2(
-                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath
+                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c=rm_l1c
             )
             l8_prd_ids = self._identify_l8(
                 s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath
@@ -182,7 +191,7 @@ class WorkPlan:
 
         return list(dic.values()), orbit_dir
 
-    def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None):
+    def _identify_s2(self, tile_id, s2_tile, eodag_config_filepath=None, rm_l1c=None):
         s2_prods_ids = run_multiple_cross_provider(
             tile_id,
             self._plan["wp_processing_start"],
@@ -193,6 +202,7 @@ class WorkPlan:
             eodag_config_filepath,
             providers=self._plan["s2_provider"],
             strategy=self.strategy,
+            rm_l1c = rm_l1c,
         )
         return s2_prods_ids
 
@@ -264,6 +274,7 @@ class WorkPlan:
         eodag_config_filepath=None,
         cloudcover=90,
         min_nb_prods=50,
+        rm_l1c=None,
     ):
         supported_format = [".shp", ".geojson", ".gpkg"]
         if aoi_filepath.suffix in supported_format:
@@ -300,6 +311,7 @@ class WorkPlan:
                 eodag_config_filepath,
                 min_nb_prods,
                 cloudcover,
+                rm_l1c,
             )
         else:
             logging.critical(
@@ -338,6 +350,7 @@ class WorkPlan:
         eodag_config_filepath=None,
         cloudcover=90,
         min_nb_prods=50,
+        rm_l1c=None,
     ):
         tile_ids = list()
         with open(csv_filepath, encoding="latin-1") as csvfile:
@@ -368,6 +381,7 @@ class WorkPlan:
             eodag_config_filepath=eodag_config_filepath,
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
+            rm_l1c=rm_l1c,
         )
 
     def to_json(self, out_filepath):
