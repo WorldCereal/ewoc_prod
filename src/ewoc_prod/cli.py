@@ -223,7 +223,7 @@ def main(args: List[str])->None:
 
     #Get tiles info for each AEZ
     for aez_id in aez_list:
-        logging.debug("Current AEZ = %s", aez_list)
+        logging.debug("Current AEZ = %s", aez_id)
         aez_id = str(int(aez_id)) #Remove .0
 
         #Create output folder
@@ -323,7 +323,8 @@ def main(args: List[str])->None:
                     logging.info("tiles = %s", tile_lst)
 
                 #Create the associated workplan
-                wp_for_tile = WorkPlan(tile_lst,
+                try:
+                    wp_for_tile = WorkPlan(tile_lst,
                                         meta_dict,
                                         str(wp_processing_start),
                                         str(wp_processing_end),
@@ -341,9 +342,11 @@ def main(args: List[str])->None:
                                         min_nb_prods=min_nb_prods,
                                         rm_l1c=remove_l1c)
 
-                #Export tile wp to json file
-                filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
-                wp_for_tile.to_json(filepath)
+                    #Export tile wp to json file
+                    filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
+                    wp_for_tile.to_json(filepath)
+                except AttributeError as error:
+                    logging.info(error)
 
         with Pool() as pool:
             pool.starmap(process_tile,
