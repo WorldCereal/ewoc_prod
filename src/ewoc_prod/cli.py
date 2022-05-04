@@ -366,7 +366,8 @@ def main(args: List[str])->None:
                          repeat(args.metaseason_year),
                          repeat(season_type),
                          repeat(user_short),
-                         repeat(date_now)))
+                         repeat(date_now)),
+                         chunksize = 20)
 
         #Merge all tiles wp to AEZ wp
         list_files_aez = glob.glob(pa.join(json_path, f'{aez_id}*.json'))

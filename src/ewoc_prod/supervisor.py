@@ -129,7 +129,7 @@ def main(args: List[str])->None:
 
         i = 1
 
-        while nb_tiles_processed != nb_tiles_to_do:
+        while (nb_tiles_processed != nb_tiles_to_do) and (i <= 10):
 
             logfile = pa.join(args.output_path, f'log_{aez_id}_part{i}.txt')
             with open(logfile, 'wb') as outfile:
