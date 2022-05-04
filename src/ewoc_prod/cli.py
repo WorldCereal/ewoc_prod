@@ -403,8 +403,8 @@ def main(args: List[str])->None:
                         f'{args.s3_key}/{Path(wp_for_aez).name}')
 
         else:
-            logging.info('Need to process %s missing tiles before merging to AEZ', \
-                (len(s2tiles_list_subset) - nb_tiles_processed))
+            logging.info('Need to process %s missing tiles among %s tiles before merging to AEZ', \
+                (len(s2tiles_list_subset) - nb_tiles_processed), len(s2tiles_list_subset))
 
     logging.info("END of the Process")
     logging.info("--- Total time : %s seconds ---", (time.time() - start_time))
