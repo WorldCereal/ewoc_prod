@@ -18,8 +18,6 @@ import sys
 from typing import List
 from osgeo import ogr
 
-from ewoc_prod.tiles_2_workplan import extract_s2tiles_list
-
 _logger = logging.getLogger(__name__)
 
 def parse_args(args: List[str])->argparse.Namespace:
@@ -84,7 +82,7 @@ def extract_s2tiles_list_from_aez(s2tiles_aez_file: str, aez_id: str)->List[str]
     driver = ogr.GetDriverByName('GeoJSON')
     data_source = driver.Open(s2tiles_aez_file, 1)
     s2tiles_layer = data_source.GetLayer()
-    
+
     # Identify the tiles corresponding to the AEZ
     logging.debug("Extract tiles corresponding to the aez region id: %s", aez_id)
 
@@ -111,7 +109,7 @@ def main(args: List[str])->None:
         json_path = pa.join(args.output_path, str(aez_id), 'json')
         if not pa.exists(json_path):
             os.makedirs(json_path)
-  
+
         # Number of tiles to process
         tiles_to_do = extract_s2tiles_list_from_aez(args.s2tiles_aez_file, aez_id)
         nb_tiles_to_do = len(tiles_to_do)
@@ -125,8 +123,8 @@ def main(args: List[str])->None:
         # Number of tiles with error
         error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
         if pa.isfile(error_file):
-            with open(error_file) as f:
-                nb_tiles_error = sum(1 for line in f)
+            with open(error_file, encoding="utf-8") as err_file:
+                nb_tiles_error = sum(1 for line in err_file)
         else:
             nb_tiles_error = 0
         logging.info("Number of tiles with error = %s", str(nb_tiles_error))
@@ -136,8 +134,10 @@ def main(args: List[str])->None:
         while (nb_tiles_processed != (nb_tiles_to_do-nb_tiles_error)) and (i <= 10):
 
             # Toolbox command
-            # cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' -m -s2prov creodias creodias aws -strategy L1C L2A L2A -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062 -no_s3"
-            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062"
+            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+                -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
+                    -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} \
+                        -k _WP_PHASE_II_/test_AEZ_release_062"
             logging.info(cmd_ewoc_prod)
 
             logfile = pa.join(args.output_path, f'log_{aez_id}_part{i}.txt')
@@ -148,7 +148,8 @@ def main(args: List[str])->None:
                                     stderr=outfile,#subprocess.PIPE,
                                     shell=True)
                 except OSError as err:
-                    logging.error('An error occurred while running command \'%s\'', cmd_ewoc_prod, exc_info=True)
+                    logging.error('An error occurred while running command \'%s\'',
+                    cmd_ewoc_prod, exc_info=True)
 
             # Check number of tiles processed
             tiles_processed = glob.glob(pa.join(json_path, f'{aez_id}*.json'))
