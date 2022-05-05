@@ -8,9 +8,11 @@
 '''
 
 import argparse
+import csv
 import glob
 import json
 import logging
+import numpy as np
 import os
 import os.path as pa
 import sys
@@ -274,6 +276,8 @@ def main(args: List[str])->None:
                          season_type,
                          user_short,
                          date_now):
+
+            error_tiles = []
             if glob.glob(pa.join(json_path, f'{aez_id}_{tile}_*.json')):
                 pass
             else:
@@ -345,37 +349,55 @@ def main(args: List[str])->None:
                     #Export tile wp to json file
                     filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
                     wp_for_tile.to_json(filepath)
-                except AttributeError as error:
-                    logging.info(error)
+                except AttributeError as att_err:
+                    logging.error(att_err)
+                    error_tiles.append([tile, att_err])
+                except ValueError as val_err:
+                    logging.error(val_err)
+                    error_tiles.append([tile, val_err])
+                except Exception as exception:
+                    logging.error(exception)
+                    error_tiles.append([tile, exception])
+
+            return error_tiles
 
         with Pool() as pool:
-            pool.starmap(process_tile,
-                         zip(s2tiles_list_subset,
-                         repeat(aez_id),
-                         repeat(json_path),
-                         repeat(args.s2tiles_aez_file),
-                         repeat(args.s2_data_provider),
-                         repeat(args.s2_strategy),
-                         repeat(args.user),
-                         repeat(args.visibility),
-                         repeat(args.cloudcover),
-                         repeat(args.min_nb_prods),
-                         repeat(args.remove_l1c),
-                         repeat(args.prod_start_date),
-                         repeat(args.metaseason),
-                         repeat(args.metaseason_year),
-                         repeat(season_type),
-                         repeat(user_short),
-                         repeat(date_now)),
-                         chunksize = 20)
+            error_tiles = pool.starmap(process_tile,
+                            zip(s2tiles_list_subset,
+                            repeat(aez_id),
+                            repeat(json_path),
+                            repeat(args.s2tiles_aez_file),
+                            repeat(args.s2_data_provider),
+                            repeat(args.s2_strategy),
+                            repeat(args.user),
+                            repeat(args.visibility),
+                            repeat(args.cloudcover),
+                            repeat(args.min_nb_prods),
+                            repeat(args.remove_l1c),
+                            repeat(args.prod_start_date),
+                            repeat(args.metaseason),
+                            repeat(args.metaseason_year),
+                            repeat(season_type),
+                            repeat(user_short),
+                            repeat(date_now)),
+                            chunksize = 20)
 
         #Merge all tiles wp to AEZ wp
         list_files_aez = glob.glob(pa.join(json_path, f'{aez_id}*.json'))
         nb_tiles_processed = len(list_files_aez)
 
-        if nb_tiles_processed == len(s2tiles_list_subset):
-            logging.info('All the tiles are processed')
+        error_tiles = [x for x in error_tiles if x]
+        error_tiles = np.squeeze(np.array(error_tiles))
+        logging.info('Number of tiles with errors = %s', str(len(error_tiles)))
+
+        if nb_tiles_processed == (len(s2tiles_list_subset)-len(error_tiles)):
+            logging.info('All the tiles are processed (%s tiles with error)', str(len(error_tiles)))
             wp_for_aez = pa.join(args.output_path, aez_id, f'{aez_id}_{user_short}_{date_now}.json')
+
+            with open(pa.join(args.output_path, f'error_tiles_{aez_id}.csv'), 'w') as f:
+                w = csv.writer(f, delimiter=';')
+                for row in error_tiles:
+                    w.writerow(row)
 
             if len(s2tiles_list_subset) == 1 or args.tile_id is not None: #only one tile
                 if not args.no_upload_s3:

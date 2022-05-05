@@ -122,14 +122,23 @@ def main(args: List[str])->None:
         nb_tiles_processed = len(tiles_processed)
         logging.info("Number of tiles processed = %s", str(nb_tiles_processed))
 
-        # Toolbox command
-        # cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' -m -s2prov creodias creodias aws -strategy L1C L2A L2A -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062 -no_s3"
-        cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062"
-        logging.info(cmd_ewoc_prod)
+        # Number of tiles with error
+        error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
+        if pa.isfile(error_file):
+            with open(error_file) as f:
+                nb_tiles_error = sum(1 for line in f)
+        else:
+            nb_tiles_error = 0
+        logging.info("Number of tiles with error = %s", str(nb_tiles_error))
 
         i = 1
 
-        while (nb_tiles_processed != nb_tiles_to_do) and (i <= 10):
+        while (nb_tiles_processed != (nb_tiles_to_do-nb_tiles_error)) and (i <= 10):
+
+            # Toolbox command
+            # cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' -m -s2prov creodias creodias aws -strategy L1C L2A L2A -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062 -no_s3"
+            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062"
+            logging.info(cmd_ewoc_prod)
 
             logfile = pa.join(args.output_path, f'log_{aez_id}_part{i}.txt')
             with open(logfile, 'wb') as outfile:
