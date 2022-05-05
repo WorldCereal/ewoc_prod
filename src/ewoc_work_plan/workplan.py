@@ -88,9 +88,15 @@ class WorkPlan:
         for i, tile_id in enumerate(tile_ids):
             tile_plan = dict()
             tile_plan["tile_id"] = tile_id
+            # Need to import 'file' with a list of tiles for which we want to force orbit
+            # Format : file = {'tile1': 'val1', 'tile2': 'val2', 'tile3': 'val3'}
+            if tile_id in file.keys(): 
+                orbit_dir = file['tile_id']
+            else:
+                orbit_dir = None
             s2_tile = eotile_module.main(tile_id)[0]
             s1_prd_ids, orbit_dir = self._identify_s1(
-                s2_tile, eodag_config_filepath=eodag_config_filepath
+                s2_tile, orbit_dir=orbit_dir, eodag_config_filepath=eodag_config_filepath
             )
             s2_prd_ids = self._identify_s2(
                 tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c=rm_l1c
@@ -132,7 +138,7 @@ class WorkPlan:
     def __str__(self):
         return json.dumps(self._plan, indent=4, sort_keys=False)
 
-    def _identify_s1(self, s2_tile, eodag_config_filepath=None):
+    def _identify_s1(self, s2_tile, orbit_dir=None, eodag_config_filepath=None):
         s1_prods_types = {
             "peps": "S1_SAR_GRD",
             "astraea_eod": "sentinel1_l1c_grd",
@@ -152,32 +158,37 @@ class WorkPlan:
         logger.info("Number of descending products: %s", len(s1_prods_desc))
         logger.info("Number of ascending products: %s", len(s1_prods_asc))
 
-        logger.debug("ASCENDING:")
-        td_asc = greatest_timedelta(
-            s1_prods_asc,
-            self._plan["wp_processing_start"],
-            self._plan["wp_processing_end"],
-        )
-        logger.debug("DESCENDING:")
-        td_desc = greatest_timedelta(
-            s1_prods_desc,
-            self._plan["wp_processing_start"],
-            self._plan["wp_processing_end"],
-        )
-
-        logger.info("The greatest time delta for ASCENTING product is %s", td_asc)
-        logger.info("The greatest time delta for DESCENDING product is %s", td_desc)
-
-        # Filtering by orbit type
-        # Selecting the least time_delta
-        if td_asc >= td_desc:
-            logger.info("Descending products where selected due to their repartition")
-            s1_prods = s1_prods_desc
-            orbit_dir = "DES"
-        else:
-            logger.info("Ascending products where selected due to their repartition")
+        if orbit_dir == 'ASC':
             s1_prods = s1_prods_asc
-            orbit_dir = "ASC"
+        elif orbit_dir == 'DES':
+            s1_prods = s1_prods_desc
+        else:
+            logger.debug("ASCENDING:")
+            td_asc = greatest_timedelta(
+                s1_prods_asc,
+                self._plan["wp_processing_start"],
+                self._plan["wp_processing_end"],
+            )
+            logger.debug("DESCENDING:")
+            td_desc = greatest_timedelta(
+                s1_prods_desc,
+                self._plan["wp_processing_start"],
+                self._plan["wp_processing_end"],
+            )
+
+            logger.info("The greatest time delta for ASCENTING product is %s", td_asc)
+            logger.info("The greatest time delta for DESCENDING product is %s", td_desc)
+
+            # Filtering by orbit type
+            # Selecting the least time_delta
+            if td_asc >= td_desc:
+                logger.info("Descending products where selected due to their repartition")
+                s1_prods = s1_prods_desc
+                orbit_dir = "DES"
+            else:
+                logger.info("Ascending products where selected due to their repartition")
+                s1_prods = s1_prods_asc
+                orbit_dir = "ASC"
 
         # Group by same acquisition date
         dic = {}
