@@ -43,6 +43,7 @@ class WorkPlan:
         eodag_config_filepath=None,
         cloudcover=90,
         min_nb_prods=50,
+        orbit_dir=None,
         rm_l1c=None,
     ) -> None:
 
@@ -81,6 +82,7 @@ class WorkPlan:
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
         self._plan["yearly_prd_threshold"] = min_nb_prods
+        self._plan["orbit_dir"] = orbit_dir
         self._plan["rm_l1c"] = rm_l1c
         # Addind tiles
         tiles_plan = list()
@@ -88,12 +90,6 @@ class WorkPlan:
         for i, tile_id in enumerate(tile_ids):
             tile_plan = dict()
             tile_plan["tile_id"] = tile_id
-            # Need to import 'file' with a list of tiles for which we want to force orbit
-            # Format : file = {'tile1': 'val1', 'tile2': 'val2', 'tile3': 'val3'}
-            if tile_id in file.keys(): 
-                orbit_dir = file['tile_id']
-            else:
-                orbit_dir = None
             s2_tile = eotile_module.main(tile_id)[0]
             s1_prd_ids, orbit_dir = self._identify_s1(
                 s2_tile, orbit_dir=orbit_dir, eodag_config_filepath=eodag_config_filepath
@@ -159,8 +155,10 @@ class WorkPlan:
         logger.info("Number of ascending products: %s", len(s1_prods_asc))
 
         if orbit_dir == 'ASC':
+            logger.info("The orbit direction is forced to ASC")
             s1_prods = s1_prods_asc
         elif orbit_dir == 'DES':
+            logger.info("The orbit direction is forced to DES")
             s1_prods = s1_prods_desc
         else:
             logger.debug("ASCENDING:")
