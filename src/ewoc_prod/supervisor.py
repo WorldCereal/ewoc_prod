@@ -128,14 +128,18 @@ def main(args: List[str])->None:
         error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
         if pa.isfile(error_file):
             with open(error_file, encoding="utf-8") as err_file:
-                nb_tiles_error = sum(1 for line in err_file)
+                nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
         else:
             nb_tiles_error = 0
         logging.info("Number of tiles with error = %s", str(nb_tiles_error))
 
-        i = 1
+        try:
+            i = int(glob.glob(pa.join(args.output_path, f'log_{aez_id}*.txt'))[-1].split("_")[-1].split(".")[0]) + 1 # log files already exists for this AEZ
+        except:
+            i = 1 # first run for this AEZ
 
         while (nb_tiles_processed != (nb_tiles_to_do-nb_tiles_error)) and (i <= 10):
+            logging.info("Run id = %s", i)
 
             # Toolbox command
             cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
@@ -144,7 +148,7 @@ def main(args: List[str])->None:
                         -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062"
             logging.info(cmd_ewoc_prod)
 
-            logfile = pa.join(args.output_path, f'log_{aez_id}_part{i}.txt')
+            logfile = pa.join(args.output_path, f'log_{aez_id}_part_{i}.txt')
             with open(logfile, 'wb') as outfile:
                 try:
                     subprocess.run([cmd_ewoc_prod],
@@ -159,6 +163,15 @@ def main(args: List[str])->None:
             tiles_processed = glob.glob(pa.join(json_path, f'{aez_id}*.json'))
             nb_tiles_processed = len(tiles_processed)
             logging.info("Number of tiles processed = %s", str(nb_tiles_processed))
+            
+            # Check number of tiles with error
+            error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
+            if pa.isfile(error_file):
+                with open(error_file, encoding="utf-8") as err_file:
+                    nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
+            else:
+                nb_tiles_error = 0
+            logging.info("Number of tiles with error = %s", str(nb_tiles_error))
 
             i += 1
 
