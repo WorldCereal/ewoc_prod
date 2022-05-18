@@ -120,6 +120,10 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Yearly minimum number of products",
                         type=int,
                         default=75)
+    parser.add_argument('-orbit', "--orbit_file",
+                        help="Force s1 orbit direction for a list of tiles",
+                        type=str,
+                        default=None)
     parser.add_argument('-rm_l1c', "--remove_l1c",
                         help="Remove L1C products or not",
                         action='store_true')
@@ -269,6 +273,7 @@ def main(args: List[str])->None:
                          visibility,
                          cloudcover,
                          min_nb_prods,
+                         orbit_file,
                          remove_l1c,
                          prod_start_date,
                          metaseason,
@@ -305,6 +310,17 @@ def main(args: List[str])->None:
                             "annual_processing_start": str(annual_processing_start),
                             "annual_processing_end": str(annual_processing_end)}
 
+		        #Get s1 orbit direction
+                orbit_dir = None
+                if args.orbit_file:
+                    with open(args.orbit_file, "r") as csv_file:
+                        reader = csv.reader(csv_file, delimiter=';')
+                        headers = next(reader)
+                        for row in reader:
+                            if row[0] == tile:
+                                orbit_dir = row[1]
+                                logging.info("Force orbit direction to %s for tile %s", orbit_dir, tile)
+
                 #Print tile info
                 logging.info("aez_id = %s", aez_id)
                 if all(arg is None for arg in (season_start, season_end)) and not metaseason:
@@ -316,6 +332,7 @@ def main(args: List[str])->None:
                     logging.info("visibility = %s", visibility)
                     logging.info("cloudcover = %s", cloudcover)
                     logging.info("min_nb_prods = %s", min_nb_prods)
+                    logging.info("orbit_dir = %s", orbit_dir)
                     logging.info("remove_l1c = %s", remove_l1c)
                     logging.info("season_type = %s", season_type)
                     logging.info("meta_dict = %s", meta_dict)
@@ -344,6 +361,7 @@ def main(args: List[str])->None:
                                         eodag_config_filepath="../../../eodag_config.yml",
                                         cloudcover=cloudcover,
                                         min_nb_prods=min_nb_prods,
+                                        orbit_dir=orbit_dir,
                                         rm_l1c=remove_l1c)
 
                     #Export tile wp to json file
@@ -373,6 +391,7 @@ def main(args: List[str])->None:
                             repeat(args.visibility),
                             repeat(args.cloudcover),
                             repeat(args.min_nb_prods),
+                            repeat(args.orbit_file),
                             repeat(args.remove_l1c),
                             repeat(args.prod_start_date),
                             repeat(args.metaseason),
