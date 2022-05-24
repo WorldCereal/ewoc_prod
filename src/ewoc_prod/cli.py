@@ -8,9 +8,11 @@
 '''
 
 import argparse
+import csv
 import glob
 import json
 import logging
+import numpy as np
 import os
 import os.path as pa
 import sys
@@ -81,6 +83,10 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-ut',"--user_tiles",
                         help="User tiles id for production (geojson file)",
                         type=str)
+    parser.add_argument('-ult',"--user_list_tiles",
+                        help="User tiles id for production (e.g. 38KKG 38KLF 38KLG)",
+                        nargs="+",
+                        default=[])
     parser.add_argument('-m', "--metaseason",
                         help="Active the metaseason mode that cover all seasons",
                         action='store_true')
@@ -118,6 +124,10 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Yearly minimum number of products",
                         type=int,
                         default=75)
+    parser.add_argument('-orbit', "--orbit_file",
+                        help="Force s1 orbit direction for a list of tiles",
+                        type=str,
+                        default=None)
     parser.add_argument('-rm_l1c', "--remove_l1c",
                         help="Remove L1C products or not",
                         action='store_true')
@@ -201,8 +211,8 @@ def main(args: List[str])->None:
         raise ValueError("Argument output_path is missing")
     if args.metaseason:
         logging.info("The metaseason mode is activated")
-        if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles)):
-            raise ValueError("The metaseason mode requires -t, -aid, -aoi or -ut inputs and is not compatible with -pd input")
+        if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles, args.user_list_tiles)):
+            raise ValueError("The metaseason mode requires -t, -aid, -aoi, -ut or -ult inputs and is not compatible with -pd input")
 
     #Extract list of s2 tiles
     s2tiles_list = extract_s2tiles_list(args.s2tiles_aez_file,
@@ -210,6 +220,7 @@ def main(args: List[str])->None:
                                         args.aez_id,
                                         args.user_aoi,
                                         args.user_tiles,
+                                        args.user_list_tiles,
                                         args.prod_start_date)
     logging.debug("Tiles = %s", s2tiles_list)
 
@@ -223,7 +234,7 @@ def main(args: List[str])->None:
 
     #Get tiles info for each AEZ
     for aez_id in aez_list:
-        logging.debug("Current AEZ = %s", aez_list)
+        logging.debug("Current AEZ = %s", aez_id)
         aez_id = str(int(aez_id)) #Remove .0
 
         #Create output folder
@@ -244,7 +255,11 @@ def main(args: List[str])->None:
             logging.info("Argument season_type is not used in the metaseason mode")
             season_type = None
         else:
-            if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles)):
+            if all(arg is None for arg in (args.tile_id,
+                                            args.aez_id,
+                                            args.user_aoi,
+                                            args.user_tiles,
+                                            args.user_list_tiles)):
                 if args.season_type:
                     logging.info("Argument season_type is not used, \
                         value retrieved from the date provided")
@@ -267,6 +282,7 @@ def main(args: List[str])->None:
                          visibility,
                          cloudcover,
                          min_nb_prods,
+                         orbit_file,
                          remove_l1c,
                          prod_start_date,
                          metaseason,
@@ -274,6 +290,8 @@ def main(args: List[str])->None:
                          season_type,
                          user_short,
                          date_now):
+
+            error_tiles = []
             if glob.glob(pa.join(json_path, f'{aez_id}_{tile}_*.json')):
                 pass
             else:
@@ -301,6 +319,17 @@ def main(args: List[str])->None:
                             "annual_processing_start": str(annual_processing_start),
                             "annual_processing_end": str(annual_processing_end)}
 
+		        #Get s1 orbit direction
+                orbit_dir = None
+                if orbit_file:
+                    with open(orbit_file, "r") as csv_file:
+                        reader = csv.reader(csv_file, delimiter=';')
+                        headers = next(reader)
+                        for row in reader:
+                            if row[0] == tile:
+                                orbit_dir = row[1]
+                                logging.info("Force orbit direction to %s for tile %s", orbit_dir, tile)
+
                 #Print tile info
                 logging.info("aez_id = %s", aez_id)
                 if all(arg is None for arg in (season_start, season_end)) and not metaseason:
@@ -312,6 +341,7 @@ def main(args: List[str])->None:
                     logging.info("visibility = %s", visibility)
                     logging.info("cloudcover = %s", cloudcover)
                     logging.info("min_nb_prods = %s", min_nb_prods)
+                    logging.info("orbit_dir = %s", orbit_dir)
                     logging.info("remove_l1c = %s", remove_l1c)
                     logging.info("season_type = %s", season_type)
                     logging.info("meta_dict = %s", meta_dict)
@@ -323,7 +353,8 @@ def main(args: List[str])->None:
                     logging.info("tiles = %s", tile_lst)
 
                 #Create the associated workplan
-                wp_for_tile = WorkPlan(tile_lst,
+                try:
+                    wp_for_tile = WorkPlan(tile_lst,
                                         meta_dict,
                                         str(wp_processing_start),
                                         str(wp_processing_end),
@@ -339,39 +370,62 @@ def main(args: List[str])->None:
                                         eodag_config_filepath="../../../eodag_config.yml",
                                         cloudcover=cloudcover,
                                         min_nb_prods=min_nb_prods,
+                                        orbit_dir=orbit_dir,
                                         rm_l1c=remove_l1c)
 
-                #Export tile wp to json file
-                filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
-                wp_for_tile.to_json(filepath)
+                    #Export tile wp to json file
+                    filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
+                    wp_for_tile.to_json(filepath)
+                except AttributeError as att_err:
+                    logging.error(att_err)
+                    error_tiles.append([tile, att_err])
+                except ValueError as val_err:
+                    logging.error(val_err)
+                    error_tiles.append([tile, val_err])
+                except Exception as exception:
+                    logging.error(exception)
+                    error_tiles.append([tile, exception])
+
+            return error_tiles
 
         with Pool() as pool:
-            pool.starmap(process_tile,
-                         zip(s2tiles_list_subset,
-                         repeat(aez_id),
-                         repeat(json_path),
-                         repeat(args.s2tiles_aez_file),
-                         repeat(args.s2_data_provider),
-                         repeat(args.s2_strategy),
-                         repeat(args.user),
-                         repeat(args.visibility),
-                         repeat(args.cloudcover),
-                         repeat(args.min_nb_prods),
-                         repeat(args.remove_l1c),
-                         repeat(args.prod_start_date),
-                         repeat(args.metaseason),
-                         repeat(args.metaseason_year),
-                         repeat(season_type),
-                         repeat(user_short),
-                         repeat(date_now)))
+            error_tiles = pool.starmap(process_tile,
+                            zip(s2tiles_list_subset,
+                            repeat(aez_id),
+                            repeat(json_path),
+                            repeat(args.s2tiles_aez_file),
+                            repeat(args.s2_data_provider),
+                            repeat(args.s2_strategy),
+                            repeat(args.user),
+                            repeat(args.visibility),
+                            repeat(args.cloudcover),
+                            repeat(args.min_nb_prods),
+                            repeat(args.orbit_file),
+                            repeat(args.remove_l1c),
+                            repeat(args.prod_start_date),
+                            repeat(args.metaseason),
+                            repeat(args.metaseason_year),
+                            repeat(season_type),
+                            repeat(user_short),
+                            repeat(date_now)),
+                            chunksize = 20)
 
         #Merge all tiles wp to AEZ wp
         list_files_aez = glob.glob(pa.join(json_path, f'{aez_id}*.json'))
         nb_tiles_processed = len(list_files_aez)
 
-        if nb_tiles_processed == len(s2tiles_list_subset):
-            logging.info('All the tiles are processed')
+        error_tiles = [x for x in error_tiles if x]
+        error_tiles = np.squeeze(np.array(error_tiles))
+        logging.info('Number of tiles with errors = %s', str(len(error_tiles)))
+
+        if nb_tiles_processed == (len(s2tiles_list_subset)-len(error_tiles)):
+            logging.info('All the tiles are processed (%s tiles with error)', str(len(error_tiles)))
             wp_for_aez = pa.join(args.output_path, aez_id, f'{aez_id}_{user_short}_{date_now}.json')
+
+            with open(pa.join(args.output_path, f'error_tiles_{aez_id}.csv'), 'w') as f:
+                w = csv.writer(f, delimiter=';')
+                for row in error_tiles:
+                    w.writerow(row)
 
             if len(s2tiles_list_subset) == 1 or args.tile_id is not None: #only one tile
                 if not args.no_upload_s3:
@@ -399,8 +453,8 @@ def main(args: List[str])->None:
                         f'{args.s3_key}/{Path(wp_for_aez).name}')
 
         else:
-            logging.info('Need to process %s missing tiles before merging to AEZ', \
-                (len(s2tiles_list_subset) - nb_tiles_processed))
+            logging.info('Need to process %s missing tiles among %s tiles before merging to AEZ', \
+                (len(s2tiles_list_subset) - nb_tiles_processed), len(s2tiles_list_subset))
 
     logging.info("END of the Process")
     logging.info("--- Total time : %s seconds ---", (time.time() - start_time))

@@ -87,6 +87,7 @@ def extract_s2tiles_list(s2tiles_aez_file: str,
                         aez_id: str,
                         user_aoi: str,
                         user_tiles: str,
+                        user_list_tiles: str,
                         prod_start_date: date)->List[str]:
     """
     Extraction of s2 tiles list from different input provided by user
@@ -94,6 +95,7 @@ def extract_s2tiles_list(s2tiles_aez_file: str,
         the associated aez information (geojson file)
     :param tile_id: tile id (e.g. '31TCJ' Toulouse)
     :param user_tiles: tiles selected by user (geojson file)
+    :param user_list_tiles: tiles selected by user (e.g. 38KKG 38KLF 38KLG)
     :param aez_id: aez id (e.g. '46172')
     :param user_aoi: area of interest (geojson file)
     :param prod_start_date: production start date
@@ -125,6 +127,9 @@ def extract_s2tiles_list(s2tiles_aez_file: str,
         data_source3 = driver.Open(user_tiles, 1)
         tiles_layer = data_source3.GetLayer()
         tiles_id = get_tiles_from_user(tiles_layer)
+    elif user_list_tiles is not None:
+        logging.info("Extract tiles corresponding to the user tiles list: %s", user_list_tiles)
+        tiles_id = user_list_tiles
     else:
         logging.info("Extract tiles corresponding to the production date requested: %s",
              prod_start_date)
