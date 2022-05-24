@@ -129,12 +129,20 @@ def main(args: List[str])->None:
         if pa.isfile(error_file):
             with open(error_file, encoding="utf-8") as err_file:
                 nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
+            with open(error_file, encoding="utf-8") as err_file:
+                nb_tiles_random_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" in line)
+            with open(error_file, encoding="utf-8") as err_file:
+                tiles_random_error = list(line.split(";")[0] for line in err_file if "Can't get attribute 'W3Segment'" in line)
         else:
             nb_tiles_error = 0
+            nb_tiles_random_error = 0
+            tiles_random_error = []
         logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+        logging.info("Number of tiles with random error = %s", str(nb_tiles_random_error))
+        logging.info("Tiles with random error = %s", tiles_random_error)
 
         try:
-            i = int(glob.glob(pa.join(args.output_path, f'log_{aez_id}*.txt'))[-1].split("_")[-1].split(".")[0]) + 1 # log files already exists for this AEZ
+            i = int(len(glob.glob(pa.join(args.output_path, f'log_{aez_id}*.txt'))) + 1) # if log files already exist for this AEZ
         except:
             i = 1 # first run for this AEZ
 
@@ -142,10 +150,16 @@ def main(args: List[str])->None:
             logging.info("Run id = %s", i)
 
             # Toolbox command
-            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
-                -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
-                    -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
-                        -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062"
+            if tiles_random_error: # Run only these tiles
+                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -ult {' '.join(tiles_random_error)} \
+                    -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
+                        -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                            -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062"
+            else:
+                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+                    -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
+                        -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                            -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_062"
             logging.info(cmd_ewoc_prod)
 
             logfile = pa.join(args.output_path, f'log_{aez_id}_part_{i}.txt')
@@ -163,7 +177,7 @@ def main(args: List[str])->None:
             tiles_processed = glob.glob(pa.join(json_path, f'{aez_id}*.json'))
             nb_tiles_processed = len(tiles_processed)
             logging.info("Number of tiles processed = %s", str(nb_tiles_processed))
-            
+
             # Check number of tiles with error
             error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
             if pa.isfile(error_file):

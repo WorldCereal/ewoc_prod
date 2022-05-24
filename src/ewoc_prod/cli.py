@@ -83,6 +83,10 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-ut',"--user_tiles",
                         help="User tiles id for production (geojson file)",
                         type=str)
+    parser.add_argument('-ult',"--user_list_tiles",
+                        help="User tiles id for production (e.g. 38KKG 38KLF 38KLG)",
+                        nargs="+",
+                        default=[])
     parser.add_argument('-m', "--metaseason",
                         help="Active the metaseason mode that cover all seasons",
                         action='store_true')
@@ -207,8 +211,8 @@ def main(args: List[str])->None:
         raise ValueError("Argument output_path is missing")
     if args.metaseason:
         logging.info("The metaseason mode is activated")
-        if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles)):
-            raise ValueError("The metaseason mode requires -t, -aid, -aoi or -ut inputs and is not compatible with -pd input")
+        if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles, args.user_list_tiles)):
+            raise ValueError("The metaseason mode requires -t, -aid, -aoi, -ut or -ult inputs and is not compatible with -pd input")
 
     #Extract list of s2 tiles
     s2tiles_list = extract_s2tiles_list(args.s2tiles_aez_file,
@@ -216,6 +220,7 @@ def main(args: List[str])->None:
                                         args.aez_id,
                                         args.user_aoi,
                                         args.user_tiles,
+                                        args.user_list_tiles,
                                         args.prod_start_date)
     logging.debug("Tiles = %s", s2tiles_list)
 
@@ -250,7 +255,11 @@ def main(args: List[str])->None:
             logging.info("Argument season_type is not used in the metaseason mode")
             season_type = None
         else:
-            if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles)):
+            if all(arg is None for arg in (args.tile_id,
+                                            args.aez_id,
+                                            args.user_aoi,
+                                            args.user_tiles,
+                                            args.user_list_tiles)):
                 if args.season_type:
                     logging.info("Argument season_type is not used, \
                         value retrieved from the date provided")
@@ -312,8 +321,8 @@ def main(args: List[str])->None:
 
 		        #Get s1 orbit direction
                 orbit_dir = None
-                if args.orbit_file:
-                    with open(args.orbit_file, "r") as csv_file:
+                if orbit_file:
+                    with open(orbit_file, "r") as csv_file:
                         reader = csv.reader(csv_file, delimiter=';')
                         headers = next(reader)
                         for row in reader:
