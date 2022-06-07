@@ -339,7 +339,10 @@ def run_multiple_cross_provider(
     else:
         # print(f'Number of prd before cc filter = {len(ref)}')
         _logger.debug('Number of prd before cc filter= %s', len(ref))
-    res_prd = format_results(ref, cloudcover_min, min_nb_prods, rm_l1c)
+    if len(ref) == 0:
+        res_prd = []
+    else:
+        res_prd = format_results(ref, cloudcover_min, min_nb_prods, rm_l1c)
     # print(f'Number of prd after cc filter = {len(res_prd)}')
     _logger.debug('Number of prd after cc filter= %s', len(res_prd))
     return res_prd

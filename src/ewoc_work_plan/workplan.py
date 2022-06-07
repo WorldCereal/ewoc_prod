@@ -113,19 +113,19 @@ class WorkPlan:
                 tile_plan["l8_enable_sr"] = l8_sr[i]
             elif isinstance(l8_sr, list):
                 logger.error("Input l8_sr should be of size %s", len(tile_ids))
-                raise ValueError
+                raise ValueError(f"Input l8_sr should be of size {len(tile_ids)}")
             else:
                 tile_plan["l8_enable_sr"] = l8_sr
 
             if len(s1_prd_ids) == 0:
                 logger.error("No relevant S1 product found for %s", tile_id)
-                raise ValueError
+                raise ValueError(f"No relevant S1 product found for {tile_id}")
             if len(s2_prd_ids) == 0:
                 logger.error("No relevant S2 product found for %s", tile_id)
-                raise ValueError
+                raise ValueError(f"No relevant S2 product found for{tile_id}")
             if len(l8_prd_ids) == 0:
                 logger.error("No relevant L8 product found for %s", tile_id)
-                raise ValueError
+                raise ValueError(f"No relevant L8 product found for {tile_id}")
 
             tiles_plan.append(tile_plan)
 
@@ -326,7 +326,7 @@ class WorkPlan:
             logging.critical(
                 "%s is not supported (%s)", aoi_filepath.name, supported_format
             )
-            raise ValueError
+            raise ValueError(f"{aoi_filepath.name} is not supported ({supported_format})")
 
     @classmethod
     def load(cls, wp_filepath):
