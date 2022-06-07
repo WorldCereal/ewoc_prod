@@ -189,7 +189,7 @@ class EWOC_AEZ_DB():
         elif crop_type == "m2":
             aez_date_key = "m2eos_max"
         else:
-            raise ValueError
+            raise ValueError("Croptype different than ww, m1, m2 is not possible!")
 
         aezs_info = list()
         for aez in self._aezs['features']:
