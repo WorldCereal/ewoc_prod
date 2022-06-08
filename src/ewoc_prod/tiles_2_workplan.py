@@ -227,7 +227,7 @@ def get_aez_dates_from_season_type(season_type: str)->Tuple[str,str]:
         aez_start_date_key = "m2sos_min"
         aez_end_date_key = "m2eos_max"
     else:
-        raise ValueError
+        raise ValueError("Season type different than winter, summer1, summer2 is not possible!")
     return aez_start_date_key, aez_end_date_key
 
 def add_buffer_to_dates(season_type: str,
@@ -274,7 +274,7 @@ def get_detector_set_from_season_type(season_type: str,
     elif season_type == "summer2":
         detector_set = ['cropland', 'maize', 'irrigation']
     else:
-        raise ValueError
+        raise ValueError("Season type different than winter, summer1, summer2 is not possible!")
     detector_set = ', '.join(detector_set)
     return detector_set
 
@@ -331,14 +331,14 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
     elif tile.GetField('L8')==1:
         l8_enable_sr = True
     else:
-        raise ValueError
+        raise ValueError("L8 different than 0, 1 is not possible!")
     #Get spring wheat info
     if tile.GetField('trigger_sw')==0:
         enable_sw = False
     elif tile.GetField('trigger_sw')==1:
         enable_sw = True
     else:
-        raise ValueError
+        raise ValueError("trigger_sw different than 0, 1 is not possible!")
     #Get detector_set
     detector_set = get_detector_set_from_season_type(season_type, enable_sw, tile)
     #Get wp_processing_dates
@@ -379,7 +379,7 @@ def get_tiles_metaseason_infos_from_tiles(s2tiles_aez_file: str,
     elif tile.GetField('L8')==1:
         l8_enable_sr = True
     else:
-        raise ValueError
+        raise ValueError("L8 different than 0, 1 is not possible!")
     #Get spring wheat info
     enable_sw = True
     #Get detector_set
