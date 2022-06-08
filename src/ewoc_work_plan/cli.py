@@ -217,7 +217,7 @@ def check_wp(ctx):
     ctx.ensure_object(dict)
     if ctx.obj["wp"] is None:
         click.echo("The WorkPlan needs to be set")
-        raise ValueError
+        raise ValueError("The WorkPlan needs to be set")
 
 
 @click.command()
