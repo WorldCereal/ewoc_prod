@@ -47,6 +47,9 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-o', "--output_path",
                     help="Output path for json files",
                     type=str)
+    parser.add_argument('s3_folder', "--output_s3_bucket_folder",
+                    help="Name of the output bucket directory", 
+                    type=str)
     parser.add_argument(
         "-v",
         "--verbose",
@@ -154,12 +157,12 @@ def main(args: List[str])->None:
                 cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -ult {' '.join(tiles_random_error)} \
                     -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
                         -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
-                            -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_063"
+                            -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
             else:
                 cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
                     -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
                         -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
-                            -o {args.output_path} -k _WP_PHASE_II_/test_AEZ_release_063"
+                            -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
             logging.info(cmd_ewoc_prod)
 
             logfile = pa.join(args.output_path, f'log_{aez_id}_part_{i}.txt')
