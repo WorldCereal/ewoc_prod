@@ -91,10 +91,11 @@ def is_descending(s1_product, provider):
             _logger.error("Could not determine orbit direction")
 
 
-def is_valid_sar(s1_product):
+def is_valid_sar(s1_product, provider):
     # Get some info from the eoproduct propeties
     pid = s1_product.properties["id"]
-    timeliness = s1_product.properties["timeliness"]
+    if provider == 'creodias':
+        timeliness = s1_product.properties["timeliness"]
     nrt_deadline = datetime.strptime("20210223T000000",'%Y%m%dT%H%M%S')
     # Get more info from product id
     s1_product_meta = S1PrdIdInfo(pid)
@@ -102,11 +103,11 @@ def is_valid_sar(s1_product):
     beam_mode = s1_product_meta.beam_mode
     polarisation = s1_product_meta.polarisation
     # Kick-out the NRT-3h produced befor 20210223
-    if start_time < nrt_deadline and timeliness == "NRT-3h":
+    if provider == 'creodias' and start_time < nrt_deadline and timeliness == "NRT-3h":
         _logger.info(f"Bad product {s1_product.properties['id']} - timeliness: {timeliness}")
         return False
     # Check the sensor mode and polarisation
-    elif beam_mode == "IW" and polarisation == "DV":
+    if beam_mode == "IW" and polarisation == "DV":
         return True
     else:
         _logger.info(f"Bad product {s1_product.properties['id']} - polarisation: {polarisation}")
@@ -117,7 +118,7 @@ def sort_sar_products(s1_products, provider):
     ascending = []
     descending = []
     for s1_product in s1_products:
-        if is_valid_sar(s1_product):
+        if is_valid_sar(s1_product, provider):
             if is_descending(s1_product, provider):
                 descending.append(s1_product)
             else:
