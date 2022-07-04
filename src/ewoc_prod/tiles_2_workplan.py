@@ -247,7 +247,7 @@ def add_buffer_to_dates(season_type: str,
     start_processing_doy = start_doy - season_buffer.get(season_type)
     year_processing_date = year
     #Manage specific case (e.g. : wwsos = 15 for AEZ 46172)
-    if start_processing_doy == 0:
+    if start_processing_doy <= 0:
         start_date = conversion_doy_to_date(start_doy, year) - \
             relativedelta(days=season_buffer.get(season_type))
         start_processing_doy = start_date.strftime("%j")
