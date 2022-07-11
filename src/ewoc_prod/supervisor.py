@@ -47,7 +47,7 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-o', "--output_path",
                     help="Output path for json files",
                     type=str)
-    parser.add_argument('s3_folder', "--output_s3_bucket_folder",
+    parser.add_argument('-s3_folder', "--output_s3_bucket_folder",
                     help="Name of the output bucket directory", 
                     type=str)
     parser.add_argument(
