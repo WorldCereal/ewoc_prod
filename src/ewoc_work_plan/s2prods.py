@@ -21,10 +21,10 @@ def test_pattern(pattern, mylist):
 def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
     poly = main(s2_tile)[0]
 
-    # if level == "L1C":
-    #     product_type = "S2_MSI_L1C"
-    # elif level == "L2A":
-    #     product_type = "S2_MSI_L2A"
+    if level == "L1C":
+        product_type = "sentinel-s2-l1c"
+    elif level == "L2A":
+        product_type = "sentinel-s2-l2a"
 
     # Start search with element84 API
     s2_prods_e84_all = eodag_prods(
@@ -32,7 +32,7 @@ def get_e84_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
         start,
         end,
         "earth_search",
-        "sentinel-s2-l2a",
+        product_type=product_type,
         creds=creds,
         cloud_cover=cloudcover,
     )
@@ -163,7 +163,7 @@ def get_creodias_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
 def get_s2_ids(s2_tile, provider, start, end, creds, cloudcover=100, level="L2A"):
     if provider == "aws" and level == "L2A":
         return get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=cloudcover, level=level)
-    elif provider == "aws_sng" and level == "L2A":
+    elif provider == "aws_sng":
         return get_e84_ids(s2_tile, start, end, creds, cloudcover=cloudcover, level=level)
     elif provider == "creodias":
         return get_creodias_ids(
