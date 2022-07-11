@@ -163,7 +163,7 @@ def get_creodias_ids(s2_tile, start, end, creds, cloudcover=100, level="L2A"):
 def get_s2_ids(s2_tile, provider, start, end, creds, cloudcover=100, level="L2A"):
     if provider == "aws" and level == "L2A":
         return get_e84_cogs_ids(s2_tile, start, end, creds, cloudcover=cloudcover, level=level)
-    elif provider == "aws_sng" and level == "L2A":
+    elif provider == "aws_sng":
         return get_e84_ids(s2_tile, start, end, creds, cloudcover=cloudcover, level=level)
     elif provider == "creodias":
         return get_creodias_ids(
