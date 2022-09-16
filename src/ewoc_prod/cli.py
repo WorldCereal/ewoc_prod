@@ -418,16 +418,29 @@ def main(args: List[str])->None:
         error_tiles = np.squeeze(np.array(error_tiles))
         logging.info('Number of tiles with errors = %s', str(len(error_tiles)))
 
-        if nb_tiles_processed == (len(s2tiles_list_subset)-len(error_tiles)):
-            logging.info('All the tiles are processed (%s tiles with error)', str(len(error_tiles)))
+        error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
+        with open(error_file, 'w') as err_file:
+            w = csv.writer(err_file, delimiter=';')
+            for row in error_tiles:
+                logging.info(row)
+                w.writerow(row)
+        err_file.close()
+
+        if pa.isfile(error_file):
+            with open(error_file, encoding="utf-8") as err_file:
+                nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
+                logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+        else:
+            nb_tiles_error = 0
+        logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+
+        if nb_tiles_processed == (len(s2tiles_list_subset)-nb_tiles_error):
+            logging.info('All the tiles are processed (%s tiles with error)', str(nb_tiles_error))
             wp_for_aez = pa.join(args.output_path, aez_id, f'{aez_id}_{user_short}_{date_now}.json')
 
-            with open(pa.join(args.output_path, f'error_tiles_{aez_id}.csv'), 'w') as f:
-                w = csv.writer(f, delimiter=';')
-                for row in error_tiles:
-                    w.writerow(row)
-
-            if len(s2tiles_list_subset) == 1 or args.tile_id is not None: #only one tile
+            if nb_tiles_processed==0:
+                logging.info("No tile processed --> No merge")
+            elif len(s2tiles_list_subset) == 1 or args.tile_id is not None: #only one tile
                 if not args.no_upload_s3:
                     ewoc_s3_upload(Path(list_files_aez[0]), args.s3_bucket, \
                         f'{args.s3_key}/{Path(list_files_aez[0]).name}')

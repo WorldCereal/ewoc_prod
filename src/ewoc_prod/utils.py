@@ -19,6 +19,7 @@ def conversion_doy_to_date(doy: int, year: date = date.today().year)->date:
     :param year: year
     """
     year = str(year)
+    doy = doy + 1
     str(doy).rjust(3 + len(str(doy)), '0')
     date_string = datetime.strptime(year + "-" + str(doy), "%Y-%j").strftime("%Y-%m-%d")
     date_format = datetime.strptime(date_string, "%Y-%m-%d").date()

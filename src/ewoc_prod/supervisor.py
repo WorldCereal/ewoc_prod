@@ -43,13 +43,16 @@ def parse_args(args: List[str])->argparse.Namespace:
     parser.add_argument('-orbit', "--orbit_file",
                     help="Force s1 orbit direction for a list of tiles",
                     type=str,
-		    default=None)
+		            default=None)
+    parser.add_argument('-merge', "--force_merge",
+                    help="Force merging tiles json into aez file",
+                    action='store_true')
     parser.add_argument('-o', "--output_path",
                     help="Output path for json files",
                     type=str)
-    parser.add_argument('-s3_folder', "--output_s3_bucket_folder",
-                    help="Name of the output bucket directory", 
-                    type=str)
+    # parser.add_argument('-s3_folder', "--output_s3_bucket_folder",
+    #                 help="Name of the output bucket directory",
+    #                 type=str)
     parser.add_argument(
         "-v",
         "--verbose",
@@ -130,6 +133,7 @@ def main(args: List[str])->None:
         # Number of tiles with error
         error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
         if pa.isfile(error_file):
+            logging.info("Extract infos from Error file")
             with open(error_file, encoding="utf-8") as err_file:
                 nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
             with open(error_file, encoding="utf-8") as err_file:
@@ -137,6 +141,7 @@ def main(args: List[str])->None:
             with open(error_file, encoding="utf-8") as err_file:
                 tiles_random_error = list(line.split(";")[0] for line in err_file if "Can't get attribute 'W3Segment'" in line)
         else:
+            logging.info("Error file does not exist")
             nb_tiles_error = 0
             nb_tiles_random_error = 0
             tiles_random_error = []
@@ -153,16 +158,28 @@ def main(args: List[str])->None:
             logging.info("Run id = %s", i)
 
             # Toolbox command
-            if tiles_random_error: # Run only these tiles
-                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -ult {' '.join(tiles_random_error)} \
-                    -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
+            # if tiles_random_error: # Run only these tiles
+            #     cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -ult {' '.join(tiles_random_error)} \
+            #         -m -s2prov aws aws_sng -strategy L2A L2A \
+            #             -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+            #                 -o {args.output_path} -no_s3"
+            #     # cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -ult {' '.join(tiles_random_error)} \
+            #     #     -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
+            #     #         -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+            #     #             -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
+            # else:
+            #     cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+            #         -m -s2prov aws aws_sng -strategy L2A L2A \
+            #             -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+            #                 -o {args.output_path} -no_s3"
+            #     # cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+            #     #     -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
+            #     #         -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+            #     #             -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
+            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+                    -m -s2prov aws aws_sng -strategy L2A L2A \
                         -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
-                            -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
-            else:
-                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
-                    -m -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
-                        -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
-                            -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
+                            -o {args.output_path} -no_s3"
             logging.info(cmd_ewoc_prod)
 
             logfile = pa.join(args.output_path, f'log_{aez_id}_part_{i}.txt')
@@ -184,13 +201,47 @@ def main(args: List[str])->None:
             # Check number of tiles with error
             error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
             if pa.isfile(error_file):
+                logging.info("Extract infos from Error file")
                 with open(error_file, encoding="utf-8") as err_file:
                     nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
+                with open(error_file, encoding="utf-8") as err_file:
+                    nb_tiles_random_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" in line)
+                with open(error_file, encoding="utf-8") as err_file:
+                    tiles_random_error = list(line.split(";")[0] for line in err_file if "Can't get attribute 'W3Segment'" in line)
+                logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+                logging.info("Number of tiles with random error = %s", str(nb_tiles_random_error))
+                logging.info("Tiles with random error = %s", tiles_random_error)
             else:
+                logging.info("Error file does not exist")
                 nb_tiles_error = 0
-            logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+                nb_tiles_random_error = 0
+                tiles_random_error = []
+                logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+                logging.info("Number of tiles with random error = %s", str(nb_tiles_random_error))
+                logging.info("Tiles with random error = %s", tiles_random_error)
 
             i += 1
+
+        if args.force_merge:
+            logging.info("Merge json files")
+            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+                    -m -s2prov aws aws_sng -strategy L2A L2A \
+                        -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                            -o {args.output_path} -no_s3"
+            logging.info(cmd_ewoc_prod)
+            
+            logfile = pa.join(args.output_path, f'log_{aez_id}_part_{i}.txt')
+            with open(logfile, 'wb') as outfile:
+                try:
+                    subprocess.run([cmd_ewoc_prod],
+                                    stdout=outfile,#subprocess.PIPE,
+                                    stderr=outfile,#subprocess.PIPE,
+                                    shell=True)
+                except OSError as err:
+                    logging.error('An error occurred while running command \'%s\'',
+                    cmd_ewoc_prod, exc_info=True)
+
+        logging.info("-- END of the Process --")
 
 def run()->None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
