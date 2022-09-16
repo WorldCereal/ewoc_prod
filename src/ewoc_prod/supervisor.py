@@ -44,6 +44,9 @@ def parse_args(args: List[str])->argparse.Namespace:
                     help="Force s1 orbit direction for a list of tiles",
                     type=str,
 		            default=None)
+    parser.add_argument('-merge', "--force_merge",
+                    help="Force merging tiles json into aez file",
+                    action='store_true')
     parser.add_argument('-o', "--output_path",
                     help="Output path for json files",
                     type=str)
@@ -218,6 +221,27 @@ def main(args: List[str])->None:
                 logging.info("Tiles with random error = %s", tiles_random_error)
 
             i += 1
+
+        if args.force_merge:
+            logging.info("Merge json files")
+            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+                    -m -s2prov aws aws_sng -strategy L2A L2A \
+                        -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                            -o {args.output_path} -no_s3"
+            logging.info(cmd_ewoc_prod)
+            
+            logfile = pa.join(args.output_path, f'log_{aez_id}_part_{i}.txt')
+            with open(logfile, 'wb') as outfile:
+                try:
+                    subprocess.run([cmd_ewoc_prod],
+                                    stdout=outfile,#subprocess.PIPE,
+                                    stderr=outfile,#subprocess.PIPE,
+                                    shell=True)
+                except OSError as err:
+                    logging.error('An error occurred while running command \'%s\'',
+                    cmd_ewoc_prod, exc_info=True)
+
+        logging.info("-- END of the Process --")
 
 def run()->None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
