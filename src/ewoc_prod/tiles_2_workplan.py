@@ -248,7 +248,7 @@ def add_buffer_to_dates(season_type: str,
     year_processing_date = year
     #Manage specific case (e.g. : wwsos = 15 for AEZ 46172)
     if start_processing_doy <= 0:
-        start_date = conversion_doy_to_date(start_doy, year) - \
+        start_date = conversion_doy_to_date(int(start_doy), year) - \
             relativedelta(days=season_buffer.get(season_type))
         start_processing_doy = start_date.strftime("%j")
         year_processing_date = year-1
@@ -316,11 +316,11 @@ def get_tiles_infos_from_tiles(s2tiles_aez_file: str,
         else:
             year_start_date = prod_start_date.year
 
-        season_start = conversion_doy_to_date(season_start_doy, year_start_date)
-        season_end = conversion_doy_to_date(season_end_doy, prod_start_date.year)
+        season_start = conversion_doy_to_date(int(season_start_doy), year_start_date)
+        season_end = conversion_doy_to_date(int(season_end_doy), prod_start_date.year)
         season_processing_start_doy, year_processing_start_date = \
             add_buffer_to_dates(season_type, season_start_doy, year_start_date)
-        season_processing_start = conversion_doy_to_date(season_processing_start_doy, \
+        season_processing_start = conversion_doy_to_date(int(season_processing_start_doy), \
             year_processing_start_date)
         season_processing_end = season_end
         annual_processing_start = season_end - relativedelta(years=1)
@@ -429,10 +429,10 @@ def retrieve_custom_dates(tile: str, year: int)->List[str]:
     if m2_start_doy == m2_end_doy == 0:
         m2_exists = 0
     #Get crops end dates
-    ww_end = conversion_doy_to_date(ww_end_doy, year)
-    m1_end = conversion_doy_to_date(m1_end_doy, year)
+    ww_end = conversion_doy_to_date(int(ww_end_doy), year)
+    m1_end = conversion_doy_to_date(int(m1_end_doy), year)
     if m2_exists!=0:
-        m2_end = conversion_doy_to_date(m2_end_doy, year)
+        m2_end = conversion_doy_to_date(int(m2_end_doy), year)
     #Get custom dates
     if m2_exists!=0:
         wp_processing_end = max(ww_end, m1_end, m2_end)
@@ -447,7 +447,7 @@ def retrieve_custom_dates(tile: str, year: int)->List[str]:
         ww_year_start_date = year
     ww_start_doy, ww_year_start_date = \
         add_buffer_to_dates('winter', ww_start_doy, ww_year_start_date)
-    ww_start = conversion_doy_to_date(ww_start_doy, ww_year_start_date)
+    ww_start = conversion_doy_to_date(int(ww_start_doy), ww_year_start_date)
     if ww_start < wp_processing_start:
         wp_processing_start = ww_start
     if m1_start_doy > m1_end_doy:
@@ -456,7 +456,7 @@ def retrieve_custom_dates(tile: str, year: int)->List[str]:
         m1_year_start_date = year
     m1_start_doy, m1_year_start_date = \
         add_buffer_to_dates('summer1', m1_start_doy, m1_year_start_date)
-    m1_start = conversion_doy_to_date(m1_start_doy, m1_year_start_date)
+    m1_start = conversion_doy_to_date(int(m1_start_doy), m1_year_start_date)
     if m1_start < wp_processing_start:
         wp_processing_start = m1_start
     if m2_exists!=0:
@@ -466,7 +466,7 @@ def retrieve_custom_dates(tile: str, year: int)->List[str]:
             m2_year_start_date = year
         m2_start_doy, m2_year_start_date = \
             add_buffer_to_dates('summer2', m2_start_doy, m2_year_start_date)
-        m2_start = conversion_doy_to_date(m2_start_doy, m2_year_start_date)
+        m2_start = conversion_doy_to_date(int(m2_start_doy), m2_year_start_date)
         if m2_start < wp_processing_start:
             wp_processing_start = m2_start
     return wp_processing_start, wp_processing_end, m2_exists
