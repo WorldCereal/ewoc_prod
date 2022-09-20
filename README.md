@@ -130,9 +130,7 @@ optional arguments:
     * ewoc_prod -v -in /path/to/s2tile_selection_aez.geojson -orbit /path/to/s1_orbit_tiles_ASC_DES_prod.csv -t '37MBS' -m (metaseason mode on a tile)
     * ewoc_prod -v -in /path/to/s2tile_selection_aez.geojson -orbit /path/to/s1_orbit_tiles_ASC_DES_prod.csv -aid '37189' -m (metaseason mode on a AEZ) 
 
-SUPERVISOR
-
-A random error occured when using ewoc_prod. The supervisor allows to launch ewoc_prod several times until the tiles are produced. It also creates an error_tiles.csv file. If some tiles did not succeed, this file contains tiles_id and related error (empty file if all tiles are done)
+## Use the supervisor
 
 A random error occured several times while using ewoc_prod. The supervisor allows to launch ewoc_prod several times until the tiles concerned are produced. It also creates an error_tiles.csv file. If some tiles have not been produced (for a real error ; not random), this file contains the tiles_id and the associated errors (empty file if all tiles are done)
 
@@ -160,7 +158,7 @@ optional arguments:
 ```
 
 ### Steps for production (example for AEZ 34119 in the RUN6):
-Preparation :
+- Preparation :
     * connect on creodias vm (mng)
     * create config.sh (containing AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY) in ~/dev
     * create venv with EWOC code in ~/dev
@@ -168,18 +166,18 @@ Preparation :
     * check supervisor.py (s2prov, strategy, user etc.) and change if needed
     * upload the files : ~/dev/s2tile_selection_aez_prod_details_RUN6.geojson, ~/dev/s1_orbit_tiles_ASC_DES_prod.csv
     * create output directory : ~/dev/WorkPlan/prod_RUN6
-Source files : 
+- Source files : 
     * cd ~/dev
     * source config.sh
     * source .venv/bin/activate
-Run supervisor :
+- Run supervisor :
     * cd ~/dev/.venv/lib/python3.6/site-packages/ewoc_prod/
     * nohup python supervisor.py -v -aez 34119 -in ~/dev/s2tile_selection_aez_prod_details_RUN6.geojson -orbit ~/dev/s1_orbit_tiles_ASC_DES_prod.csv -o ~/dev/WorkPlan/prod_RUN6 2>&1 > ~/dev/WorkPlan/prod_RUN6/log/log_34119.txt &
-Check number of tiles produced:
+- Check number of tiles produced:
     * ls ~/dev/WorkPlan/prod_RUN6/34119/json | wc -l
-Check final json creation:
+- Check final json creation:
     * ls ~/dev/WorkPlan/prod_RUN6/34119/*.json
-If one tile is missing:
+- If one tile is missing:
     * check and suppress error file : ~/dev/WorkPlan/prod_RUN6/error_tiles_34119.csv
     * run supervisor in merge mode : nohup python supervisor.py -v -aez 34119 -in ~/dev/s2tile_selection_aez_prod_details_RUN6.geojson -orbit ~/dev/s1_orbit_tiles_ASC_DES_prod.csv -o ~/dev/WorkPlan/prod_RUN6 -merge 2>&1 > ~/dev/WorkPlan/prod_RUN6/log/log_34119_merge.txt &
-Save final json on local machine and put it on aws vm (mng) using scp
+- Save final json on local machine and put it on aws vm (mng) using scp
