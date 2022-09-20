@@ -415,7 +415,10 @@ def main(args: List[str])->None:
         nb_tiles_processed = len(list_files_aez)
 
         error_tiles = [x for x in error_tiles if x]
-        error_tiles = np.squeeze(np.array(error_tiles))
+        if len(np.array(error_tiles)) == 1:
+            error_tiles = np.array(error_tiles)[0]
+        else:
+            error_tiles = np.squeeze(np.array(error_tiles))
         logging.info('Number of tiles with errors = %s', str(len(error_tiles)))
 
         error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
