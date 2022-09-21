@@ -138,7 +138,8 @@ A random error occured several times while using ewoc_prod. The supervisor allow
 ```bash
 usage: supervisor.py [-h] [-in S2TILES_AEZ_FILE]
                      [-aez AEZ_LIST [AEZ_LIST ...]] [-orbit ORBIT_FILE]
-                     [-merge] [-o OUTPUT_PATH] [-v] [-vv]
+                     [-m_yr METASEASON_YEAR] [-merge] [-o OUTPUT_PATH] [-v]
+                     [-vv]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -149,6 +150,9 @@ optional arguments:
                         List of aez to process
   -orbit ORBIT_FILE, --orbit_file ORBIT_FILE
                         Force s1 orbit direction for a list of tiles
+  -m_yr METASEASON_YEAR, --metaseason_year METASEASON_YEAR
+                        Year of the season to process in the metaseason mode
+                        (e.g. 2021 to process 2020/2021)
   -merge, --force_merge
                         Force merging tiles json into aez file
   -o OUTPUT_PATH, --output_path OUTPUT_PATH
@@ -157,7 +161,7 @@ optional arguments:
   -vv, --very-verbose   set loglevel to DEBUG
 ```
 
-### Steps for production (example for AEZ 34119 in the RUN6):
+### Steps for production (example for AEZ 34119 in the RUN6 for year 2021):
 - Preparation :
     * connect on creodias vm (mng)
     * create config.sh (containing AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY) in ~/dev
