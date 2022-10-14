@@ -230,6 +230,12 @@ class WorkPlan:
         # prod.properties['id'].endswith(('T1','T1_L1TP'))]
         logger.debug(l8_prods)
 
+        # Filter with land cloud cover
+        l8_prods = [prod for prod in l8_prods if
+                (prod.properties['landsat:cloud_cover_land']!=-1) and (prod.properties['landsat:cloud_cover_land']<=self._cloudcover)]
+
+        logger.debug("Found %s result(s) after land cloud cover filtering", len(l8_prods))
+
         # Group by same path & date
         dic = {}
         for l8_prod in l8_prods:
