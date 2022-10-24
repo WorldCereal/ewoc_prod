@@ -31,7 +31,8 @@ class WorkPlan:
         meta_dict,
         wp_processing_start,
         wp_processing_end,
-        data_provider,
+        s1_data_provider,
+        s2_data_provider,
         strategy,
         l8_sr=False,
         aez_id=0,
@@ -49,7 +50,11 @@ class WorkPlan:
 
         self._cloudcover = cloudcover
         self.strategy = strategy
-        if not set(data_provider).issubset(
+        if not set(s1_data_provider).issubset(
+            ["creodias", "astraea_eod"]
+        ):
+            raise ValueError("Incorrect data provider")
+        if not set(s2_data_provider).issubset(
             ["creodias", "peps", "astraea_eod", "aws", "aws_sng"]
         ):
             raise ValueError("Incorrect data provider")
@@ -77,8 +82,8 @@ class WorkPlan:
             self._plan["annual_processing_end"] = meta_dict.get("annual_processing_end")
         self._plan["wp_processing_start"] = wp_processing_start
         self._plan["wp_processing_end"] = wp_processing_end
-        self._plan["s1_provider"] = "creodias"
-        self._plan["s2_provider"] = data_provider
+        self._plan["s1_provider"] = s1_data_provider
+        self._plan["s2_provider"] = s2_data_provider
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
         self._plan["yearly_prd_threshold"] = min_nb_prods
@@ -230,6 +235,12 @@ class WorkPlan:
         # prod.properties['id'].endswith(('T1','T1_L1TP'))]
         logger.debug(l8_prods)
 
+        # Filter with land cloud cover
+        l8_prods = [prod for prod in l8_prods if
+                (prod.properties['landsat:cloud_cover_land']!=-1) and (prod.properties['landsat:cloud_cover_land']<=self._cloudcover)]
+
+        logger.debug("Found %s result(s) after land cloud cover filtering", len(l8_prods))
+
         # Group by same path & date
         dic = {}
         for l8_prod in l8_prods:
@@ -271,7 +282,8 @@ class WorkPlan:
         annual_processing_end,
         wp_processing_start,
         wp_processing_end,
-        data_provider,
+        s1_data_provider,
+        s2_data_provider,
         strategy,
         l8_sr=False,
         aez_id=0,
@@ -308,7 +320,8 @@ class WorkPlan:
                 annual_processing_end,
                 wp_processing_start,
                 wp_processing_end,
-                data_provider,
+                s1_data_provider,
+                s2_data_provider,
                 strategy,
                 l8_sr,
                 aez_id,
@@ -347,7 +360,8 @@ class WorkPlan:
         annual_processing_end,
         wp_processing_start,
         wp_processing_end,
-        data_provider,
+        s1_data_provider,
+        s2_data_provider,
         strategy,
         l8_sr=False,
         aez_id=0,
@@ -378,7 +392,8 @@ class WorkPlan:
             annual_processing_end,
             wp_processing_start,
             wp_processing_end,
-            data_provider,
+            s1_data_provider,
+            s2_data_provider,
             strategy,
             l8_sr=l8_sr,
             aez_id=aez_id,

@@ -103,7 +103,7 @@ def is_valid_sar(s1_product, provider):
     beam_mode = s1_product_meta.beam_mode
     polarisation = s1_product_meta.polarisation
     # Kick-out the NRT-3h produced befor 20210223
-    if provider == 'creodias' and start_time < nrt_deadline and timeliness == "NRT-3h":
+    if provider == 'creodias' and start_time < nrt_deadline and timeliness != "Fast-24h":
         _logger.info(f"Bad product {s1_product.properties['id']} - timeliness: {timeliness}")
         return False
     # Check the sensor mode and polarisation
