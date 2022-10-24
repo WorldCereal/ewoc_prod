@@ -98,6 +98,10 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Season type (winter, summer1, summer2)",
                         type=str,
                         default=None)
+    parser.add_argument('-s1prov', "--s1_data_provider",
+                        help="s1 provider (creodias/astraea_eod)",
+                        type=str,
+                        default="creodias")
     parser.add_argument('-s2prov', "--s2_data_provider",
                         help="s2 provider (peps/creodias/astraea_eod/aws)",
                         nargs="+",
@@ -276,6 +280,7 @@ def main(args: List[str])->None:
                          aez_id,
                          json_path,
                          s2tiles_aez_file,
+                         s1_data_provider,
                          s2_data_provider,
                          s2_strategy,
                          user,
@@ -335,7 +340,8 @@ def main(args: List[str])->None:
                 if all(arg is None for arg in (season_start, season_end)) and not metaseason:
                     logging.info("No %s season", season_type)
                 else:
-                    logging.info("data_provider = %s", s2_data_provider)
+                    logging.info("s1_data_provider = %s", s1_data_provider)
+                    logging.info("s2_data_provider = %s", s2_data_provider)
                     logging.info("strategy = %s", s2_strategy)
                     logging.info("user = %s", user)
                     logging.info("visibility = %s", visibility)
@@ -358,7 +364,8 @@ def main(args: List[str])->None:
                                         meta_dict,
                                         str(wp_processing_start),
                                         str(wp_processing_end),
-                                        data_provider=s2_data_provider,
+                                        s1_data_provider=s1_data_provider,
+                                        s2_data_provider=s2_data_provider,
                                         strategy=s2_strategy,
                                         l8_sr=l8_enable_sr,
                                         aez_id=int(aez_id),
@@ -394,6 +401,7 @@ def main(args: List[str])->None:
                             repeat(aez_id),
                             repeat(json_path),
                             repeat(args.s2tiles_aez_file),
+                            repeat(args.s1_data_provider),
                             repeat(args.s2_data_provider),
                             repeat(args.s2_strategy),
                             repeat(args.user),
@@ -415,19 +423,35 @@ def main(args: List[str])->None:
         nb_tiles_processed = len(list_files_aez)
 
         error_tiles = [x for x in error_tiles if x]
-        error_tiles = np.squeeze(np.array(error_tiles))
+        if len(np.array(error_tiles)) == 1:
+            error_tiles = np.array(error_tiles)[0]
+        else:
+            error_tiles = np.squeeze(np.array(error_tiles))
         logging.info('Number of tiles with errors = %s', str(len(error_tiles)))
 
-        if nb_tiles_processed == (len(s2tiles_list_subset)-len(error_tiles)):
-            logging.info('All the tiles are processed (%s tiles with error)', str(len(error_tiles)))
+        error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
+        with open(error_file, 'w') as err_file:
+            w = csv.writer(err_file, delimiter=';')
+            for row in error_tiles:
+                logging.info(row)
+                w.writerow(row)
+        err_file.close()
+
+        if pa.isfile(error_file):
+            with open(error_file, encoding="utf-8") as err_file:
+                nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
+                logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+        else:
+            nb_tiles_error = 0
+        logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+
+        if nb_tiles_processed == (len(s2tiles_list_subset)-nb_tiles_error):
+            logging.info('All the tiles are processed (%s tiles with error)', str(nb_tiles_error))
             wp_for_aez = pa.join(args.output_path, aez_id, f'{aez_id}_{user_short}_{date_now}.json')
 
-            with open(pa.join(args.output_path, f'error_tiles_{aez_id}.csv'), 'w') as f:
-                w = csv.writer(f, delimiter=';')
-                for row in error_tiles:
-                    w.writerow(row)
-
-            if len(s2tiles_list_subset) == 1 or args.tile_id is not None: #only one tile
+            if nb_tiles_processed==0:
+                logging.info("No tile processed --> No merge")
+            elif len(s2tiles_list_subset) == 1 or args.tile_id is not None: #only one tile
                 if not args.no_upload_s3:
                     ewoc_s3_upload(Path(list_files_aez[0]), args.s3_bucket, \
                         f'{args.s3_key}/{Path(list_files_aez[0]).name}')
