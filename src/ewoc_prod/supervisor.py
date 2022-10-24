@@ -182,7 +182,7 @@ def main(args: List[str])->None:
             #     #             -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
             cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
                     -m -m_yr {args.metaseason_year} -s2prov aws aws_sng -strategy L2A L2A \
-                        -s1_prov astraea_eod -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                        -s1prov astraea_eod -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
                             -o {args.output_path} -no_s3"
             logging.info(cmd_ewoc_prod)
 
@@ -230,7 +230,7 @@ def main(args: List[str])->None:
             logging.info("Merge json files")
             cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
                     -m -m_yr {args.metaseason_year} -s2prov aws aws_sng -strategy L2A L2A \
-                        -s1_prov astraea_eod -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                        -s1prov astraea_eod -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
                             -o {args.output_path} -no_s3"
             logging.info(cmd_ewoc_prod)
             
