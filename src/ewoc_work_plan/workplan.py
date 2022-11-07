@@ -50,14 +50,12 @@ class WorkPlan:
 
         self._cloudcover = cloudcover
         self.strategy = strategy
-        if not set(s1_data_provider).issubset(
-            ["creodias", "astraea_eod"]
-        ):
-            raise ValueError("Incorrect data provider")
+        if s1_data_provider not in ["creodias", "astraea_eod"]:
+            raise ValueError("Incorrect s1 data provider")
         if not set(s2_data_provider).issubset(
             ["creodias", "peps", "astraea_eod", "aws", "aws_sng"]
         ):
-            raise ValueError("Incorrect data provider")
+            raise ValueError("Incorrect s2 data provider")
         # Filling the plan
         self._plan = dict()
         #  Common MetaData
@@ -153,7 +151,6 @@ class WorkPlan:
             s1_prods_types[self._plan["s1_provider"]],
             eodag_config_filepath,
         )
-        print(len(s1_prods_request))
         # filter out undesirable products
         s1_prods_desc, s1_prods_asc = sort_sar_products(s1_prods_request,self._plan["s1_provider"])
         logger.info("Number of descending products: %s", len(s1_prods_desc))
