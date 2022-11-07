@@ -98,6 +98,10 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Season type (winter, summer1, summer2)",
                         type=str,
                         default=None)
+    parser.add_argument('-s1prov', "--s1_data_provider",
+                        help="s1 provider (creodias/astraea_eod)",
+                        type=str,
+                        default="creodias")
     parser.add_argument('-s2prov', "--s2_data_provider",
                         help="s2 provider (peps/creodias/astraea_eod/aws)",
                         nargs="+",
@@ -276,6 +280,7 @@ def main(args: List[str])->None:
                          aez_id,
                          json_path,
                          s2tiles_aez_file,
+                         s1_data_provider,
                          s2_data_provider,
                          s2_strategy,
                          user,
@@ -335,7 +340,8 @@ def main(args: List[str])->None:
                 if all(arg is None for arg in (season_start, season_end)) and not metaseason:
                     logging.info("No %s season", season_type)
                 else:
-                    logging.info("data_provider = %s", s2_data_provider)
+                    logging.info("s1_data_provider = %s", s1_data_provider)
+                    logging.info("s2_data_provider = %s", s2_data_provider)
                     logging.info("strategy = %s", s2_strategy)
                     logging.info("user = %s", user)
                     logging.info("visibility = %s", visibility)
@@ -358,7 +364,8 @@ def main(args: List[str])->None:
                                         meta_dict,
                                         str(wp_processing_start),
                                         str(wp_processing_end),
-                                        data_provider=s2_data_provider,
+                                        s1_data_provider=s1_data_provider,
+                                        s2_data_provider=s2_data_provider,
                                         strategy=s2_strategy,
                                         l8_sr=l8_enable_sr,
                                         aez_id=int(aez_id),
@@ -394,6 +401,7 @@ def main(args: List[str])->None:
                             repeat(aez_id),
                             repeat(json_path),
                             repeat(args.s2tiles_aez_file),
+                            repeat(args.s1_data_provider),
                             repeat(args.s2_data_provider),
                             repeat(args.s2_strategy),
                             repeat(args.user),
