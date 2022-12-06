@@ -88,7 +88,6 @@ class WorkPlan:
         # Only L8 C2L2 provider supported for now is aws usgs
         self._plan["l8_provider"] = "usgs_satapi_aws"
         self._plan["yearly_prd_threshold"] = min_nb_prods
-        self._plan["orbit_dir"] = orbit_dir
         self._plan["rm_l1c"] = rm_l1c
         self._plan["only_s2"] = only_s2
         self._plan["only_s1"] = only_s1
