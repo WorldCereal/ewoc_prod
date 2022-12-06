@@ -46,6 +46,9 @@ class WorkPlan:
         min_nb_prods=50,
         orbit_dir=None,
         rm_l1c=None,
+        only_s2=False,
+        only_s1=False,
+        only_l8=False,
     ) -> None:
 
         self._cloudcover = cloudcover
@@ -87,6 +90,9 @@ class WorkPlan:
         self._plan["yearly_prd_threshold"] = min_nb_prods
         self._plan["orbit_dir"] = orbit_dir
         self._plan["rm_l1c"] = rm_l1c
+        self._plan["only_s2"] = only_s2
+        self._plan["only_s1"] = only_s1
+        self._plan["only_l8"] = only_l8
         # Addind tiles
         tiles_plan = list()
 
@@ -94,15 +100,33 @@ class WorkPlan:
             tile_plan = dict()
             tile_plan["tile_id"] = tile_id
             s2_tile = eotile_module.main(tile_id)[0]
-            s1_prd_ids, orbit_dir = self._identify_s1(
-                s2_tile, orbit_dir=orbit_dir, eodag_config_filepath=eodag_config_filepath
-            )
-            s2_prd_ids = self._identify_s2(
-                tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c=rm_l1c
-            )
-            l8_prd_ids = self._identify_l8(
-                s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath
-            )
+            s1_prd_ids = []
+            s2_prd_ids = []
+            l8_prd_ids = []
+            orbit_dir = None
+
+            if only_s1:
+                s1_prd_ids, orbit_dir = self._identify_s1(
+                    s2_tile, orbit_dir=orbit_dir, eodag_config_filepath=eodag_config_filepath
+                )     
+            elif only_s2:
+                s2_prd_ids = self._identify_s2(
+                    tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c=rm_l1c
+                )       
+            elif only_l8:
+                l8_prd_ids = self._identify_l8(
+                    s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath
+                )
+            else:
+                s1_prd_ids, orbit_dir = self._identify_s1(
+                    s2_tile, orbit_dir=orbit_dir, eodag_config_filepath=eodag_config_filepath
+                )
+                s2_prd_ids = self._identify_s2(
+                    tile_id, s2_tile, eodag_config_filepath=eodag_config_filepath, rm_l1c=rm_l1c
+                )
+                l8_prd_ids = self._identify_l8(
+                    s2_tile, l8_sr=l8_sr, eodag_config_filepath=eodag_config_filepath
+                )
             tile_plan["s1_ids"] = s1_prd_ids
             tile_plan["s1_orbit_dir"] = orbit_dir
             tile_plan["s1_nb"] = len(s1_prd_ids)
@@ -120,12 +144,12 @@ class WorkPlan:
             else:
                 tile_plan["l8_enable_sr"] = l8_sr
 
-            if len(s2_prd_ids) == 0:
+            if len(s2_prd_ids) == 0 and not only_s1 and not only_l8:
                 logger.critical("No relevant S2 product found for %s", tile_id)
-                raise ValueError(f"No relevant S2 product found for{tile_id}")
-            if len(s1_prd_ids) == 0:
+                raise ValueError(f"No relevant S2 product found for {tile_id}")
+            if len(s1_prd_ids) == 0 and not only_s2 and not only_l8:
                 logger.error("No relevant S1 product found for %s", tile_id)
-            if len(l8_prd_ids) == 0:
+            if len(l8_prd_ids) == 0 and not only_s2 and not only_s1:
                 logger.warning("No relevant L8 product found for %s", tile_id)
 
             tiles_plan.append(tile_plan)
@@ -291,6 +315,9 @@ class WorkPlan:
         cloudcover=90,
         min_nb_prods=50,
         rm_l1c=None,
+        only_s2=False,
+        only_s1=False,
+        only_l8=False,
     ):
         supported_format = [".shp", ".geojson", ".gpkg"]
         if aoi_filepath.suffix in supported_format:
@@ -329,6 +356,9 @@ class WorkPlan:
                 min_nb_prods,
                 cloudcover,
                 rm_l1c,
+                only_s2,
+                only_s1,
+                only_l8,
             )
         else:
             logging.critical(
@@ -369,6 +399,9 @@ class WorkPlan:
         cloudcover=90,
         min_nb_prods=50,
         rm_l1c=None,
+        only_s2=False,
+        only_s1=False,
+        only_l8=False
     ):
         tile_ids = list()
         with open(csv_filepath, encoding="latin-1") as csvfile:
@@ -401,6 +434,9 @@ class WorkPlan:
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
             rm_l1c=rm_l1c,
+            only_s2=only_s2,
+            only_s1=only_s1,
+            only_l8=only_l8
         )
 
     def to_json(self, out_filepath):
