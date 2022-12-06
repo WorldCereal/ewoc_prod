@@ -165,6 +165,16 @@ def parse_args(args: List[str])->argparse.Namespace:
         action="store_const",
         const=logging.DEBUG,
     )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-only_s2', "--extract_only_s2",
+                        help="Extract only S2 products",
+                        action='store_true')
+    group.add_argument('-only_s1', "--extract_only_s1",
+                        help="Extract only S1 products",
+                        action='store_true')
+    group.add_argument('-only_l8', "--extract_only_l8",
+                        help="Extract only L8 products",
+                        action='store_true')         
     return parser.parse_args(args)
 
 def setup_logging(loglevel: int)->None:
@@ -289,6 +299,9 @@ def main(args: List[str])->None:
                          min_nb_prods,
                          orbit_file,
                          remove_l1c,
+                         extract_only_s2,
+                         extract_only_s1,
+                         extract_only_l8,
                          prod_start_date,
                          metaseason,
                          metaseason_year,
@@ -349,6 +362,9 @@ def main(args: List[str])->None:
                     logging.info("min_nb_prods = %s", min_nb_prods)
                     logging.info("orbit_dir = %s", orbit_dir)
                     logging.info("remove_l1c = %s", remove_l1c)
+                    logging.info("extract_only_s2 = %s", extract_only_s2)
+                    logging.info("extract_only_s1 = %s", extract_only_s1)
+                    logging.info("extract_only_l8 = %s", extract_only_l8)
                     logging.info("season_type = %s", season_type)
                     logging.info("meta_dict = %s", meta_dict)
                     logging.info("wp_processing_start = %s", wp_processing_start)
@@ -378,7 +394,11 @@ def main(args: List[str])->None:
                                         cloudcover=cloudcover,
                                         min_nb_prods=min_nb_prods,
                                         orbit_dir=orbit_dir,
-                                        rm_l1c=remove_l1c)
+                                        rm_l1c=remove_l1c,
+                                        only_s2=extract_only_s2,
+                                        only_s1=extract_only_s1,
+                                        only_l8=extract_only_l8,
+                                        )
 
                     #Export tile wp to json file
                     filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
@@ -410,6 +430,9 @@ def main(args: List[str])->None:
                             repeat(args.min_nb_prods),
                             repeat(args.orbit_file),
                             repeat(args.remove_l1c),
+                            repeat(args.extract_only_s2),
+                            repeat(args.extract_only_s1),
+                            repeat(args.extract_only_l8),
                             repeat(args.prod_start_date),
                             repeat(args.metaseason),
                             repeat(args.metaseason_year),
