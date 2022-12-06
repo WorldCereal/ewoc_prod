@@ -120,15 +120,13 @@ class WorkPlan:
             else:
                 tile_plan["l8_enable_sr"] = l8_sr
 
+            if len(s2_prd_ids) == 0:
+                logger.critical("No relevant S2 product found for %s", tile_id)
+                raise ValueError(f"No relevant S2 product found for{tile_id}")
             if len(s1_prd_ids) == 0:
                 logger.error("No relevant S1 product found for %s", tile_id)
-                raise ValueError(f"No relevant S1 product found for {tile_id}")
-            if len(s2_prd_ids) == 0:
-                logger.error("No relevant S2 product found for %s", tile_id)
-                raise ValueError(f"No relevant S2 product found for{tile_id}")
             if len(l8_prd_ids) == 0:
-                logger.error("No relevant L8 product found for %s", tile_id)
-                raise ValueError(f"No relevant L8 product found for {tile_id}")
+                logger.warning("No relevant L8 product found for %s", tile_id)
 
             tiles_plan.append(tile_plan)
 
