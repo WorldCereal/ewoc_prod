@@ -103,7 +103,6 @@ class WorkPlan:
             s1_prd_ids = []
             s2_prd_ids = []
             l8_prd_ids = []
-            orbit_dir = None
 
             if only_s1:
                 s1_prd_ids, orbit_dir = self._identify_s1(
