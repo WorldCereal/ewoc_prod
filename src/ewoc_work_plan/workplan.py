@@ -258,6 +258,12 @@ class WorkPlan:
 
         logger.debug("Found %s result(s) after land cloud cover filtering", len(l8_prods))
 
+        # Remove L2SR products
+        l8_prods = [prod for prod in l8_prods if
+                (prod.properties['landsat:correction']!='L2SR')]
+
+        logger.debug("Found %s result(s) after L2SR filtering", len(l8_prods))
+
         # Group by same path & date
         dic = {}
         for l8_prod in l8_prods:
