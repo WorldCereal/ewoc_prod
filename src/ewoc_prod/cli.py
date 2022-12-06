@@ -71,22 +71,6 @@ def parse_args(args: List[str])->argparse.Namespace:
                         help="Production start date - format YYYY-MM-DD",
                         type=parse_date,
                         default=date.today())
-    parser.add_argument('-t',"--tile_id",
-                        help="Tile id for production (e.g. '31TCJ')",
-                        type=str)
-    parser.add_argument('-aid', "--aez_id",
-                        help="AEZ region id for production (e.g. '46172')",
-                        type=int)
-    parser.add_argument('-aoi', "--user_aoi",
-                        help="User AOI for production (geojson file)",
-                        type=str)
-    parser.add_argument('-ut',"--user_tiles",
-                        help="User tiles id for production (geojson file)",
-                        type=str)
-    parser.add_argument('-ult',"--user_list_tiles",
-                        help="User tiles id for production (e.g. 38KKG 38KLF 38KLG)",
-                        nargs="+",
-                        default=[])
     parser.add_argument('-m', "--metaseason",
                         help="Active the metaseason mode that cover all seasons",
                         action='store_true')
@@ -165,14 +149,31 @@ def parse_args(args: List[str])->argparse.Namespace:
         action="store_const",
         const=logging.DEBUG,
     )
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('-only_s2', "--extract_only_s2",
+    group1 = parser.add_mutually_exclusive_group()
+    group1.add_argument('-t',"--tile_id",
+                        help="Tile id for production (e.g. '31TCJ')",
+                        type=str)
+    group1.add_argument('-aid', "--aez_id",
+                        help="AEZ region id for production (e.g. '46172')",
+                        type=int)
+    group1.add_argument('-aoi', "--user_aoi",
+                        help="User AOI for production (geojson file)",
+                        type=str)
+    group1.add_argument('-ut',"--user_tiles",
+                        help="User tiles id for production (geojson file)",
+                        type=str)
+    group1.add_argument('-ult',"--user_list_tiles",
+                        help="User tiles id for production (e.g. 38KKG 38KLF 38KLG)",
+                        nargs="+",
+                        default=[])
+    group2 = parser.add_mutually_exclusive_group()
+    group2.add_argument('-only_s2', "--extract_only_s2",
                         help="Extract only S2 products",
                         action='store_true')
-    group.add_argument('-only_s1', "--extract_only_s1",
+    group2.add_argument('-only_s1', "--extract_only_s1",
                         help="Extract only S1 products",
                         action='store_true')
-    group.add_argument('-only_l8', "--extract_only_l8",
+    group2.add_argument('-only_l8', "--extract_only_l8",
                         help="Extract only L8 products",
                         action='store_true')         
     return parser.parse_args(args)
