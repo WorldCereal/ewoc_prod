@@ -5,6 +5,7 @@ import json
 import logging
 import sys
 import tarfile
+import shutil
 
 from datetime import datetime
 from pathlib import Path
@@ -52,11 +53,16 @@ def parse_args(args):
         type=Path,
     )
     parser.add_argument(
+        dest="selection_filepath",
+        help="Filepath to selection tiles geojson",
+        default=None,
+        type=Path,
+    )
+    parser.add_argument(
         "-o","--out-dirpath",
         dest="out_dirpath",
         help="Cropland models version",
         type=Path,
-
     )
     parser.add_argument(
         "-v",
@@ -136,14 +142,16 @@ def main(args):
     setup_logging(args.loglevel)
 
     ewoc_status_filepath = args.status_filepath
-
+    
     if ewoc_status_filepath.suffix == ".gz":
         with tarfile.open(ewoc_status_filepath) as ewoc_status_file:
             _logger.debug(ewoc_status_file.getnames())
+            first_folder=ewoc_status_file.getnames()[0]
             csv_filename = ewoc_status_file.getnames()[1]
             ewoc_status_file.extract(str(csv_filename), Path('.'))
 
         ewoc_status_filepath=Path('.') / csv_filename
+        print('path', ewoc_status_filepath)
 
     ewoc_season_year=ewoc_status_filepath.stem.split('_')[1]
     ewoc_date_status=ewoc_status_filepath.stem.split('_')[2]
@@ -175,11 +183,11 @@ def main(args):
 
         ewoc_w_status=analyse_rows(ewoc_status_reader, WINTER_KEY)
     
-    ewoc_tiles_filepath=Path('./tile_selection.geojson')
+    ewoc_tiles_filepath=Path(args.selection_filepath)
 
-    out_filepath_geojson=Path(f'./ewoc_prd_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
+    out_filepath_geojson=Path(f'{args.out_dirpath}/ewoc_prd_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
     out_filepath_geojson.unlink(missing_ok=True)
-    status_filepath_geojson=Path(f'./ewoc_status_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
+    status_filepath_geojson=Path(f'{args.out_dirpath}/ewoc_status_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
     status_filepath_geojson.unlink(missing_ok=True)
     out_filepath_csv=out_filepath_geojson.with_suffix('.csv')
     out_filepath_csv.unlink(missing_ok=True)
@@ -248,16 +256,7 @@ def main(args):
                     # Remove unused element
                     i['properties'].pop('tile_id')
                     i['properties'].pop('optical_l8')
-                    i['properties'].pop('GP_v1_srtm_coverage_issue')
-                    i['properties'].pop('GP_v1_exclusion')
                     i['properties'].pop('GP_v2_include')
-                    i['properties'].pop('GP_v1_wp_S1_error')
-                    i['properties'].pop('GP_v1_wp_S2_error')
-                    i['properties'].pop('GP_v1_preproc_error')
-                    i['properties'].pop('GP_v1_cropland_error')
-                    i['properties'].pop('GP_v1_summer1_error')
-                    i['properties'].pop('GP_v1_summer2_error')
-                    i['properties'].pop('GP_v1_winter_error')
                     i['properties'].pop('UKR')
 
                     new_data['features'].append(i)
@@ -305,6 +304,11 @@ def main(args):
         with open(status_filepath_geojson, 'w') as status_geojson_file:
             json.dump(status_data, status_geojson_file)
             _logger.info(f'Sucessfully write: {status_filepath_geojson}')
+    
+    #deleting csv file and its folder extracted from .tag.gz file 
+    shutil.rmtree(Path('.',first_folder))
+
+    return out_filepath_geojson, status_filepath_geojson, out_filepath_csv
 
 def run():
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
