@@ -151,7 +151,6 @@ def main(args):
             ewoc_status_file.extract(str(csv_filename), Path('.'))
 
         ewoc_status_filepath=Path('.') / csv_filename
-        print('path', ewoc_status_filepath)
 
     ewoc_season_year=ewoc_status_filepath.stem.split('_')[1]
     ewoc_date_status=ewoc_status_filepath.stem.split('_')[2]
@@ -307,9 +306,7 @@ def main(args):
     
     #deleting csv file and its folder extracted from .tag.gz file 
     shutil.rmtree(Path('.',first_folder))
-
-    return out_filepath_geojson, status_filepath_geojson, out_filepath_csv
-
+    
 def run():
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
 
