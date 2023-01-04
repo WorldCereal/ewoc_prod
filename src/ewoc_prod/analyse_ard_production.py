@@ -11,7 +11,7 @@ import shutil
 
 from datetime import datetime
 from pathlib import Path
-from analyse_production import setup_logging, parse_args, is_s3path
+from analyse_production import setup_logging, is_s3path
 
 __author__ = "Romain Buguet de Chargere"
 __copyright__ = "CS Group France"
@@ -32,6 +32,55 @@ def setup_logging(loglevel: int) -> None:
         format=logformat,
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
+
+def parse_args(args):
+    """Parse command line parameters
+
+    Args:
+      args (List[str]): command line parameters as list of strings
+          (for example  ``["--help"]``).
+
+    Returns:
+      :obj:`argparse.Namespace`: command line parameters namespace
+    """
+    parser = argparse.ArgumentParser(description="EWoC Classification parser")
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"TODO",
+    )
+    parser.add_argument(
+        dest="status_filepath",
+        help="Filepath to status",
+        default=None,
+        type=Path,
+    )
+    parser.add_argument(
+        "-o","--out-dirpath",
+        dest="out_dirpath",
+        help="Cropland models version",
+        type=Path,
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="loglevel",
+        help="set loglevel to INFO",
+        action="store_const",
+        const=logging.INFO,
+    )
+    parser.add_argument(
+        "-vv",
+        "--very-verbose",
+        dest="loglevel",
+        help="set loglevel to DEBUG",
+        action="store_const",
+        const=logging.DEBUG,
+    )
+    return parser.parse_args(args)
+
+
 
 def analyse_ard_rows(csv_dict_reader, tile, file_name):
     """Analyze csv file rows for several tiles about OPTICAL, SAR and TIR ARD data status 
