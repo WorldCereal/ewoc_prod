@@ -1,13 +1,11 @@
 import argparse
 import csv
-from datetime import datetime
 import json
 import logging
 import sys
 import tarfile
 import shutil
 
-from datetime import datetime
 from pathlib import Path
 
 __author__ = "Mickael Savinaud"
@@ -44,7 +42,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version=f"TODO",
+        version="TODO",
     )
     parser.add_argument(
         dest="status_filepath",
@@ -118,18 +116,18 @@ def analyse_rows(ewoc_status_reader, type):
             nb_done_status+=1
             ewoc_status[row['Tile name']]=row[type]
         else:
-            raise ValueError('Unknow value: %s',row[type])
+            raise ValueError(f'Unknow value: {row[type]}')
 
-    _logger.info(f'------- {ewoc_season} -------')
+    _logger.info('------- %s -------', ewoc_season)
     if ewoc_season == 'Summer2':
-        nb_requested_tiles = nb_requested_tiles - nb_na_status    
-    _logger.info(f'Nb Tiles requested {nb_requested_tiles}')
-    _logger.info(f'Nb Tiles not ingested {nb_unknown_status}')
-    _logger.info(f'Nb Tiles scheduled {nb_scheduled_status}')
-    _logger.info(f'Nb Tiles in processing {nb_processing_status}')
-    _logger.info(f'Nb Tiles blocked in pre-processing error {nb_pp_error_status}')
-    _logger.info(f'Nb Tiles in error {nb_error_status}')
-    _logger.info(f'Nb Tiles in success {nb_done_status}')
+        nb_requested_tiles = nb_requested_tiles - nb_na_status
+    _logger.info('Nb Tiles requested %d', nb_requested_tiles)
+    _logger.info('Nb Tiles not ingested %d', nb_unknown_status)
+    _logger.info('Nb Tiles scheduled %d', nb_scheduled_status)
+    _logger.info('Nb Tiles in processing %d', nb_processing_status)
+    _logger.info('Nb Tiles blocked in pre-processing error %d', nb_pp_error_status)
+    _logger.info('Nb Tiles in error %d', nb_error_status)
+    _logger.info('Nb Tiles in success %d', nb_done_status)
 
     return ewoc_status
 
@@ -137,12 +135,14 @@ def is_s3path(value:str)->bool:
     return value.split('/')[0] == 's3:'
 
 def main(args):
-
+    """
+    Main script
+    """
     args = parse_args(args)
     setup_logging(args.loglevel)
 
     ewoc_status_filepath = args.status_filepath
-    
+
     if ewoc_status_filepath.suffix == ".gz":
         with tarfile.open(ewoc_status_filepath) as ewoc_status_file:
             _logger.debug(ewoc_status_file.getnames())
@@ -155,13 +155,13 @@ def main(args):
     ewoc_season_year=ewoc_status_filepath.stem.split('_')[1]
     ewoc_date_status=ewoc_status_filepath.stem.split('_')[2]
     ewoc_time_status=ewoc_status_filepath.stem.split('_')[3]
-    
+
     CROPMAP_KEY='Cropmap path'
     SUMMER1_KEY='Summer1 path'
     SUMMER2_KEY='Summer2 path'
     WINTER_KEY='Winter path'
-    
-   
+
+
     with open(ewoc_status_filepath, 'r') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
@@ -181,7 +181,7 @@ def main(args):
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_w_status=analyse_rows(ewoc_status_reader, WINTER_KEY)
-    
+
     ewoc_tiles_filepath=Path(args.selection_filepath)
 
     out_filepath_geojson=Path(f'{args.out_dirpath}/ewoc_prd_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
@@ -215,13 +215,13 @@ def main(args):
                                  'summer1_path',
                                  'summer2_path',
                                  'winter_path'])
-            
+
             # Iterating through the geojson features
             for i in data['features']:
 
-                # change the name of key and the type related to aez id    
+                # change the name of key and the type related to aez id
                 tile_id = i['properties']['tile_id']
-                
+
                 gp_v2_inclusion = i['properties']['GP_v2_include']
 
                 cropmap_path=None
@@ -259,27 +259,27 @@ def main(args):
                     i['properties'].pop('UKR')
 
                     new_data['features'].append(i)
-                    
+
                     if is_s3path(ewoc_cm_status[tile_id]):
                         i['properties']['cropmap_status']='ok'
                     else:
                         i['properties']['cropmap_status']=ewoc_cm_status[tile_id]
-                    
+
                     if is_s3path(ewoc_s1_status[tile_id]):
                         i['properties']['summer1_status']='ok'
                     else:
                         i['properties']['summer1_status']=ewoc_s1_status[tile_id]
-                    
+
                     if is_s3path(ewoc_s2_status[tile_id]):
                         i['properties']['summer2_status']='ok'
                     else:
                         i['properties']['summer2_status']=ewoc_s2_status[tile_id]
-                    
+
                     if is_s3path(ewoc_w_status[tile_id]):
                         i['properties']['winter_status']='ok'
                     else:
                         i['properties']['winter_status']=ewoc_w_status[tile_id]
-                    
+
                     i['properties'].pop('cropmap_path')
                     i['properties'].pop('summer1_path')
                     i['properties'].pop('summer2_path')
@@ -294,19 +294,19 @@ def main(args):
                                      summer2_path,
                                      winter_path])
 
-        _logger.info(f'Sucessfully write: {out_filepath_csv}')
+        _logger.info('Sucessfully write: %s', out_filepath_csv)
 
         with open(out_filepath_geojson, 'w') as geojson_file:
             json.dump(new_data, geojson_file)
-            _logger.info(f'Sucessfully write: {out_filepath_geojson}')
+            _logger.info('Sucessfully write: %s', out_filepath_geojson)
 
         with open(status_filepath_geojson, 'w') as status_geojson_file:
             json.dump(status_data, status_geojson_file)
-            _logger.info(f'Sucessfully write: {status_filepath_geojson}')
-    
-    #deleting csv file and its folder extracted from .tag.gz file 
+            _logger.info('Sucessfully write: %s', status_filepath_geojson)
+
+    #deleting csv file and its folder extracted from .tag.gz file
     shutil.rmtree(Path('.',first_folder))
-    
+
 def run():
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
 

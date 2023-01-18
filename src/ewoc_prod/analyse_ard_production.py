@@ -1,15 +1,10 @@
 import argparse
 import csv
-from datetime import datetime
-import json
 import logging
 import sys
 import tarfile
-import numpy as np
-import os 
 import shutil
 
-from datetime import datetime
 from pathlib import Path
 from analyse_production import setup_logging, is_s3path
 
@@ -48,7 +43,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version=f"TODO",
+        version="TODO",
     )
     parser.add_argument(
         dest="status_filepath",
@@ -83,14 +78,14 @@ def parse_args(args):
 
 
 def analyse_ard_rows(csv_dict_reader, tile, file_name):
-    """Analyze csv file rows for several tiles about OPTICAL, SAR and TIR ARD data status 
-    
+    """Analyze csv file rows for several tiles about OPTICAL, SAR and TIR ARD data status
+
     Args;
         csv_dict (DictReader) : Ordered dict containing the products and address (or error status) of each csv file
         tile (str) ; the tile concerned by the csv file examinated
-        file_name (str) : path to the csv file 
+        file_name (str) : path to the csv file
     """
-    
+
     nb_error_opt=0
     nb_error_sar=0
     nb_error_tir=0
@@ -102,13 +97,13 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
         for row in csv_dict_reader:
             nb_prd_opt+=1
             if row['status']=='error':
-                logging.debug(f"OPTICAL product {row['product']} is in error")
+                logging.debug("OPTICAL product %s is in error", row['product'])
                 nb_error_opt+=1
                 ard_list.append([tile,'OPTICAL', row['product']])
             elif row['status']=='scheluded':
-                logging.debug(f"OPTICAL product {row['product']} of tile {tile} is scheduled")
+                logging.debug("OPTICAL product %s of tile %s is scheduled", row['product'], tile)
             elif not is_s3path(row['status']):
-                logging.debug(f"OPTICAL product {row['product']} status of tile {tile} is unknown")
+                logging.debug("OPTICAL product %s status of tile %s is unknown", row['product'], tile)
 
         opt_ratio=(nb_error_opt/(nb_prd_opt+1e-15))
         print(f"OPTICAL Tile {tile} has {round(opt_ratio*100, ndigits=4)}% products in errors")
@@ -118,13 +113,13 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
         for row in csv_dict_reader:
             nb_prd_tir+=1
             if row['status']=='error':
-                logging.info(f"TIR product {row['product']} of tile {tile} is in error")
+                logging.info("TIR product %s of tile %s is in error", row['product'], tile)
                 nb_error_tir+=1
                 ard_list.append([tile,'TIR', row['product']])
             elif row['status']=='scheluded':
-                logging.debug(f"TIR product {row['product']} of tile {tile} is scheduled")
+                logging.debug("TIR product %s of tile %s is scheduled", row['product'], tile)
             elif not is_s3path(row['status']):
-                logging.debug(f"TIR product {row['product']} status of tile {tile} is unknown")
+                logging.debug("TIR product %s status of tile %s is unknown", row['product'], tile)
 
         tir_ratio=(nb_error_tir/(nb_prd_tir+1e-15))
         print(f"TIR Tile {tile} has {round(tir_ratio*100, ndigits=4)}% products in error")
@@ -134,13 +129,13 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
         for row in csv_dict_reader:
             if row['status']=='error':
                 nb_prd_sar+=1
-                logging.info(f"SAR product {row['product']} of tile {tile} is in error")
+                logging.info("SAR product %s of tile %s is in error", row['product'], tile)
                 nb_error_sar+=1
                 ard_list.append([tile,'SAR', row['product']])
             elif row['status']=='scheluded':
-                logging.debug(f"SAR product {row['product']} of tile {tile} is scheduled")
+                logging.debug("SAR product %s of tile %s is scheduled", row['product'], tile)
             elif not is_s3path(row['status']):
-                logging.debug(f"SAR product {row['product']} status of tile {tile} is unknown")
+                logging.debug("SAR product %s status of tile %s is unknown", row['product'], tile)
 
         sar_ratio=(nb_error_sar/(nb_prd_sar+1e-15))
         print(f"SAR Tile {tile} has {sar_ratio*100}% product in error")
@@ -149,12 +144,15 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
 
 
 def main(args):
+    """
+    Main script
+    """
     args = parse_args(args)
     setup_logging(args.loglevel)
 
-    ewoc_status_filepath = args.status_filepath 
+    ewoc_status_filepath = args.status_filepath
 
-    #Take date and time written at the end of the filename 
+    #Take date and time written at the end of the filename
     info_date=str(ewoc_status_filepath).split('_')[-3:]
 
     if ewoc_status_filepath.suffix == ".gz":
@@ -164,9 +162,9 @@ def main(args):
 
             #Take folder name where is stored extracted files
             first_folder=ewoc_status_file.getnames()[0]
-            
-            #Select only desired csv files 
-            name_list=[i for i in names if "path.csv" in i] 
+
+            #Select only desired csv files
+            name_list=[i for i in names if "path.csv" in i]
             for i in name_list:
                 ewoc_status_file.extract(str(i), Path(args.out_dirpath))
 
@@ -178,21 +176,21 @@ def main(args):
             result_ard=analyse_ard_rows(csv_dict, tile, csv_file)
             if type(result_ard) is not None:
                 ard_list.append(result_ard)
-    
+
 
     out_file_path=Path(f'{args.out_dirpath}/ard_error').with_suffix('.csv')
 
     with open(out_file_path, 'w') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter='|',
+        csv_writer = csv.writer(csv_file, delimiter='|',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            csv_writer.writerow(['tile_name','type','ard_product'])
-            csv_writer.writerows(ard_list)
-    
-    logging.info(f"File {args.out_dirpath}/ard_error.csv succesfully created ")
+        csv_writer.writerow(['tile_name','type','ard_product'])
+        csv_writer.writerows(ard_list)
 
-    #deleting csv file extracted from .tag.gz file 
+    logging.info("File %s/ard_error.csv succesfully created ", args.out_dirpath)
+
+    #deleting csv file extracted from .tag.gz file
     shutil.rmtree(Path(args.out_dirpath,first_folder))
-    logging.info(f"File {args.out_dirpath}/{first_folder} succesfully deleted ")
+    logging.info("File %s/%s succesfully deleted ", args.out_dirpath, first_folder)
 
 
 def run():

@@ -1,4 +1,4 @@
-import os 
+import os
 import otbApplication
 import argparse
 import sys
@@ -31,7 +31,9 @@ def parse_args(args):
     return parser.parse_args(args)
 
 def main(args):
-    
+    """
+    Main script
+    """
     args = parse_args(args)
     dir_path = args.dir_path #r'/home/rbuguetd/data/optical_mask/15PXR/'
     our_dir = args.out_dirpath
@@ -42,12 +44,12 @@ def main(args):
 
     app = otbApplication.Registry.CreateApplication("BandMath")
 
-    
+
     nb_files=len([entry for entry in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, entry))])
     expr_str = ', '.join([f"im{i}b1" for i in range(1,nb_files+1)])
-    
+
     #print(expr_str)
-    
+
     files_str=[os.path.join(dir_path, file) for file in os.listdir(dir_path)]
 
     #["/home/rbuguetd/data/optical_mask/15PXR/S2B_L2A_20210228T162119_N0214R040T15PXR_15PXR_MASK.tif", "/home/rbuguetd/data/optical_mask/15PXR/S2B_L2A_20210218T162329_N0214R040T15PXR_15PXR_MASK.tif"]
@@ -61,6 +63,10 @@ def main(args):
     app.ExecuteAndWriteOutput()
 
 def run():
+    """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
+
+    This function can be used as entry point to create console scripts with setuptools.
+    """
     main(sys.argv[1:])
 
 if __name__=="__main__":

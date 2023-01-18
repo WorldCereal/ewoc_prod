@@ -1,5 +1,4 @@
 import csv
-import numpy as np
 from pathlib import Path
 import argparse
 import sys
@@ -41,11 +40,11 @@ def parse_args(args):
 
 def build_rows(tile_unk, add_list, add_tile):
     """From different list obtained with csv file status, assign when it is possible a production id to tiles with error status
-    
+
     Args;
-        tile_aez (list) : List of tile and corresponding aez which are in error 
-        add_list (list) : list of all different s3 bucket address containing production id 
-        add_tile (list) : list of all tiles 
+        tile_aez (list) : List of tile and corresponding aez which are in error
+        add_list (list) : list of all different s3 bucket address containing production id
+        add_tile (list) : list of all tiles
     """
     prd_id_unk=[]
 
@@ -62,12 +61,12 @@ def build_rows(tile_unk, add_list, add_tile):
             cond = cnt<1 and i<len(add_list)
 
     return prd_id_unk
-    
+
 
 def filter_func(err_list, final_prd):
-    """From different list obtained with csv file status and tiles in error for different season, 
-    filter the tile - production id list with tile in error 
-    
+    """From different list obtained with csv file status and tiles in error for different season,
+    filter the tile - production id list with tile in error
+
     Args;
         err_list (list) : List of tile in error for a season
         final_prd (list) : list of all tile and production id
@@ -87,7 +86,9 @@ def filter_func(err_list, final_prd):
 
 
 def main(args):
-
+    """
+    Main script
+    """
     tile_aez=[]
     add_list=[]
     add_tile=[]
@@ -104,10 +105,11 @@ def main(args):
             aez_pres = row_prd['aez_id']!=''
             if aez_pres:
                 add_tile.append(row_prd['s2_tile_name'])
-            missing=row_prd['cropmap_path']!='' 
+            missing=row_prd['cropmap_path']!=''
             if missing:
                 add_list.append(row_prd['cropmap_path'])
-                prd_init.append([row_prd['cropmap_path'].split('/')[-2], row_prd['cropmap_path'].split('/')[3]])
+                prd_init.append([row_prd['cropmap_path'].split('/')[-2],
+                                row_prd['cropmap_path'].split('/')[3]])
             elif aez_pres:
                 tile_aez.append(row_prd['s2_tile_name']+'_'+row_prd['aez_id'])
 
@@ -118,7 +120,7 @@ def main(args):
 
     out_path=args.out_dirpath
     final_prd = sorted(prd_unknown+prd_init)
-    
+
     #check if optionnal argument file containing tile in error for a season is given and compute list to call filter_func()
     if ewoc_tiles_error_path is not None:
         season=str(ewoc_tiles_error_path).split('_')[1]
@@ -126,13 +128,13 @@ def main(args):
             err_dict=csv.DictReader(error_file, delimiter=',')
             for row_err in err_dict:
                 err_list.append(row_err['s2_tile_name'])
-    
+
         filter_list=filter_func(err_list, final_prd)
         with open(Path(out_path, f'prd_id_tile_{season}'), 'w') as run_file:
             csv_writer = csv.writer(run_file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(['tile_name','prd_id'])
             csv_writer.writerows(filter_list)
-        
+
     with open(Path(out_path, "prd_id_tile_all.csv"), 'w') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerow(['tile_name','prd_id'])
@@ -140,6 +142,10 @@ def main(args):
 
 
 def run():
+    """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
+
+    This function can be used as entry point to create console scripts with setuptools.
+    """
     main(sys.argv[1:])
 
 if __name__=='__main__':
