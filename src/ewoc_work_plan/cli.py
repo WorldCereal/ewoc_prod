@@ -4,7 +4,7 @@ from pathlib import Path
 import click
 
 from ewoc_work_plan import __version__
-from ewoc_work_plan.utils import set_logger
+from ewoc_work_plan.utils import set_logger, MutuallyExclusiveOption
 from ewoc_work_plan.workplan import WorkPlan
 
 __author__ = "Mathis Germa"
@@ -50,6 +50,9 @@ _logger = logging.getLogger(__name__)
 @click.option("-cloudcover", default=90, help="Cloudcover parameter")
 @click.option("-min_nb_prods", default=50, help="Yearly minimum number of products")
 @click.option("-rm_l1c", default=False, help="Remove L1C products or not")
+@click.option("-only_s2", default=False, help="Extract only s2 products", cls=MutuallyExclusiveOption, mutually_exclusive=["only_s1", "only_l8"])
+@click.option("-only_s1", default=False, help="Extract only s1 products", cls=MutuallyExclusiveOption, mutually_exclusive=["only_s2", "only_l8"])
+@click.option("-only_l8", default=False, help="Extract only l8 products", cls=MutuallyExclusiveOption, mutually_exclusive=["only_s2", "only_s1"])
 def generate(
     ctx,
     input_data,
@@ -69,6 +72,9 @@ def generate(
     cloudcover,
     min_nb_prods,
     rm_l1c,
+    only_s2,
+    only_s1,
+    only_l8
 ):
     """
     Generate the workplan
@@ -89,6 +95,9 @@ def generate(
     :param cloudcover: cloud cover parameter
     :param min_nb_prods: Yearly minimum number of products
     :param rm_l1c: remove L1C products or not
+    :param only_s2: extract only S2 products
+    :param only_s1: extract only S1 products
+    :param only_l8: extract only L8 products
     """
     ctx.ensure_object(dict)
 
@@ -132,6 +141,9 @@ def generate(
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
             rm_l1c=rm_l1c,
+            only_s2=only_s2,
+            only_s1=only_s1,
+            only_l8=only_l8
         )
     elif induced_type == "csv":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_csv(
@@ -152,6 +164,9 @@ def generate(
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
             rm_l1c=rm_l1c,
+            only_s2=only_s2,
+            only_s1=only_s1,
+            only_l8=only_l8
         )
     elif induced_type == "aoi":  # To remove ?
         ctx.obj["wp"] = WorkPlan.from_aoi(
@@ -172,6 +187,9 @@ def generate(
             cloudcover=cloudcover,
             min_nb_prods=min_nb_prods,
             rm_l1c=rm_l1c,
+            only_s2=only_s2,
+            only_s1=only_s1,
+            only_l8=only_l8
         )
     else:
         click.echo(f"Unrecognized {input_data} as input type")
