@@ -81,6 +81,13 @@ def parse_args(args):
     return parser.parse_args(args)
 
 def analyse_rows(ewoc_status_reader, type):
+    """From different list obtained with csv file status and tiles in error for different season,
+    filter the tile - production id list with tile in error
+
+    Args:
+        ewoc_status_reader (Dict) : Dictionnary containing tiles status.
+        type (str) : cropland, summer1, summer2 or winter season.
+        """
     ewoc_season=type.split(" ")[0]
 
     nb_requested_tiles=0
@@ -132,6 +139,10 @@ def analyse_rows(ewoc_status_reader, type):
     return ewoc_status
 
 def is_s3path(value:str)->bool:
+    """Check if the path begin by s3
+        Args:
+            value (str) : path to check
+    """
     return value.split('/')[0] == 's3:'
 
 def main(args):
@@ -162,22 +173,22 @@ def main(args):
     WINTER_KEY='Winter path'
 
 
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_cm_status= analyse_rows(ewoc_status_reader, CROPMAP_KEY)
 
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_s1_status=analyse_rows(ewoc_status_reader, SUMMER1_KEY)
 
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_s2_status=analyse_rows(ewoc_status_reader, SUMMER2_KEY)
 
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_w_status=analyse_rows(ewoc_status_reader, WINTER_KEY)
@@ -193,7 +204,7 @@ def main(args):
 
     new_data={}
     status_data={}
-    with open(ewoc_tiles_filepath, 'r') as ewoc_tiles_file:
+    with open(ewoc_tiles_filepath, 'r', encoding='utf8') as ewoc_tiles_file:
         data = json.load(ewoc_tiles_file)
         new_data['type'] = data['type']
         new_data['name'] = "ewoc_prd_tiles"
@@ -205,7 +216,7 @@ def main(args):
         status_data['crs'] = data['crs']
         status_data['features']=[]
 
-        with open(out_filepath_csv, 'w', newline='') as csv_file:
+        with open(out_filepath_csv, 'w', newline='', encoding='utf8') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter='|',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(['s2_tile_name',
@@ -293,14 +304,13 @@ def main(args):
                                      summer1_path,
                                      summer2_path,
                                      winter_path])
-
         _logger.info('Sucessfully write: %s', out_filepath_csv)
 
-        with open(out_filepath_geojson, 'w') as geojson_file:
+        with open(out_filepath_geojson, 'w', encoding='utf8') as geojson_file:
             json.dump(new_data, geojson_file)
             _logger.info('Sucessfully write: %s', out_filepath_geojson)
 
-        with open(status_filepath_geojson, 'w') as status_geojson_file:
+        with open(status_filepath_geojson, 'w', encoding='utf8') as status_geojson_file:
             json.dump(status_data, status_geojson_file)
             _logger.info('Sucessfully write: %s', status_filepath_geojson)
 

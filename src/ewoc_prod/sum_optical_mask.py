@@ -35,7 +35,7 @@ def main(args):
     Main script
     """
     args = parse_args(args)
-    dir_path = args.dir_path #r'/home/rbuguetd/data/optical_mask/15PXR/'
+    dir_path = args.dir_path 
     our_dir = args.out_dirpath
 
     print("dir_path", dir_path)
@@ -48,18 +48,13 @@ def main(args):
     nb_files=len([entry for entry in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, entry))])
     expr_str = ', '.join([f"im{i}b1" for i in range(1,nb_files+1)])
 
-    #print(expr_str)
-
+    #Compute the input str list of file to sum 
     files_str=[os.path.join(dir_path, file) for file in os.listdir(dir_path)]
 
-    #["/home/rbuguetd/data/optical_mask/15PXR/S2B_L2A_20210228T162119_N0214R040T15PXR_15PXR_MASK.tif", "/home/rbuguetd/data/optical_mask/15PXR/S2B_L2A_20210218T162329_N0214R040T15PXR_15PXR_MASK.tif"]
-    #files_str= os.listdir(dir_path)
-    print(files_str)
-
+    #Assign parameters, expression and run OTB application
     app.SetParameterStringList("il", files_str)
     app.SetParameterString("out", f"{our_dir}/S2A_L2A_{tile}_SUM")
     app.SetParameterString("exp", "sum("+expr_str+")")
-
     app.ExecuteAndWriteOutput()
 
 def run():

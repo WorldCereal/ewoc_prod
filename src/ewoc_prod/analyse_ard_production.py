@@ -6,7 +6,7 @@ import tarfile
 import shutil
 
 from pathlib import Path
-from analyse_production import setup_logging, is_s3path
+from analyse_production import is_s3path
 
 __author__ = "Romain Buguet de Chargere"
 __copyright__ = "CS Group France"
@@ -89,7 +89,6 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
     nb_error_opt=0
     nb_error_sar=0
     nb_error_tir=0
-    ewoc_status={}
     ard_list=[]
 
     if "opt" in str(file_name):
@@ -152,9 +151,6 @@ def main(args):
 
     ewoc_status_filepath = args.status_filepath
 
-    #Take date and time written at the end of the filename
-    info_date=str(ewoc_status_filepath).split('_')[-3:]
-
     if ewoc_status_filepath.suffix == ".gz":
         with tarfile.open(ewoc_status_filepath) as ewoc_status_file:
             _logger.debug(ewoc_status_file.getnames())
@@ -171,7 +167,7 @@ def main(args):
     ard_list=[]
     for csv_path in name_list:
         tile=csv_path.split('/')[-2]
-        with open(Path(args.out_dirpath)/csv_path) as csv_file:
+        with open(Path(args.out_dirpath)/csv_path, 'r', encoding='utf8') as csv_file:
             csv_dict=csv.DictReader(csv_file, fieldnames=['product', 'status'], delimiter=',')
             result_ard=analyse_ard_rows(csv_dict, tile, csv_file)
             if type(result_ard) is not None:
@@ -180,7 +176,7 @@ def main(args):
 
     out_file_path=Path(f'{args.out_dirpath}/ard_error').with_suffix('.csv')
 
-    with open(out_file_path, 'w') as csv_file:
+    with open(out_file_path, 'w', encoding='utf8') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter='|',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerow(['tile_name','type','ard_product'])
