@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import List
 
 import boto3
+from click import command, option, Option, UsageError
 from eodag.api.core import EODataAccessGateway
 from ewoc_dag.eo_prd_id.s1_prd_id import S1PrdIdInfo
 from shapely.wkt import dumps
@@ -222,3 +223,31 @@ def remove_duplicates(prd_list_ids: List) -> List:
             )
         res.append(pids_list[-1])
     return res
+
+class MutuallyExclusiveOption(Option):
+    def __init__(self, *args, **kwargs):
+        self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
+        help = kwargs.get('help', '')
+        if self.mutually_exclusive:
+            ex_str = ', '.join(self.mutually_exclusive)
+            kwargs['help'] = help + (
+                ' NOTE: This argument is mutually exclusive with '
+                ' arguments: [' + ex_str + '].'
+            )
+        super(MutuallyExclusiveOption, self).__init__(*args, **kwargs)
+
+    def handle_parse_result(self, ctx, opts, args):
+        if self.mutually_exclusive.intersection(opts) and self.name in opts:
+            raise UsageError(
+                "Illegal usage: `{}` is mutually exclusive with "
+                "arguments `{}`.".format(
+                    self.name,
+                    ', '.join(self.mutually_exclusive)
+                )
+            )
+
+        return super(MutuallyExclusiveOption, self).handle_parse_result(
+            ctx,
+            opts,
+            args
+        )
