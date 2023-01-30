@@ -180,9 +180,15 @@ def main(args: List[str])->None:
             #     #     -m -m_yr {args.metaseason_year} -s2prov creodias creodias aws aws_sng -strategy L1C L2A L2A L2A \
             #     #         -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
             #     #             -o {args.output_path} -k _WP_PHASE_II_/{args.output_s3_bucket_folder}"
-            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+            if args.orbit_file:
+                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
                     -m -m_yr {args.metaseason_year} -s2prov aws aws_sng -strategy L2A L2A \
                         -s1prov astraea_eod -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                            -o {args.output_path} -no_s3"
+            else:
+                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+                    -m -m_yr {args.metaseason_year} -s2prov aws aws_sng -strategy L2A L2A \
+                        -s1prov astraea_eod -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
                             -o {args.output_path} -no_s3"
             logging.info(cmd_ewoc_prod)
 
@@ -228,9 +234,15 @@ def main(args: List[str])->None:
 
         if args.force_merge:
             logging.info("Merge json files")
-            cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+            if args.orbit_file:
+                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
                     -m -m_yr {args.metaseason_year} -s2prov aws aws_sng -strategy L2A L2A \
                         -s1prov astraea_eod -orbit {args.orbit_file} -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
+                            -o {args.output_path} -no_s3"
+            else:
+                cmd_ewoc_prod = f"ewoc_prod -v -in {args.s2tiles_aez_file} -aid '{aez_id}' \
+                    -m -m_yr {args.metaseason_year} -s2prov aws aws_sng -strategy L2A L2A \
+                        -s1prov astraea_eod -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
                             -o {args.output_path} -no_s3"
             logging.info(cmd_ewoc_prod)
             
