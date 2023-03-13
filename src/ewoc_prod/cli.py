@@ -25,7 +25,7 @@ from multiprocessing.pool import ThreadPool as Pool
 from pathlib import Path
 from typing import List
 
-from ewoc_work_plan.workplan import WorkPlan
+from ewoc_prod.workplan import WorkPlan
 
 from ewoc_prod.tiles_2_workplan import (extract_s2tiles_list,
     check_number_of_aez_for_selected_tiles, extract_s2tiles_list_per_aez,
@@ -341,7 +341,7 @@ def main(args: List[str])->None:
 		        #Get s1 orbit direction
                 orbit_dir = None
                 if orbit_file:
-                    with open(orbit_file, "r") as csv_file:
+                    with open(orbit_file, "r", encoding='utf8') as csv_file:
                         reader = csv.reader(csv_file, delimiter=';')
                         headers = next(reader)
                         for row in reader:

@@ -10,11 +10,11 @@ from eotile import eotile_module
 from ewoc_db.fill.fill_db import main as main_ewoc_db
 from shapely.wkt import dumps
 
-from ewoc_work_plan import __version__
-from ewoc_work_plan.remote.landsat_cloud_mask import Landsat_Cloud_Mask
-from ewoc_work_plan.reproc import reproc_wp
-from ewoc_work_plan.s2prods import run_multiple_cross_provider
-from ewoc_work_plan.utils import (
+from ewoc_prod import __version__
+from ewoc_prod.remote.landsat_cloud_mask import Landsat_Cloud_Mask
+from ewoc_prod.reproc import reproc_wp
+from ewoc_prod.s2prods import run_multiple_cross_provider
+from ewoc_prod.utils import (
     eodag_prods,
     get_path_row,
     greatest_timedelta,

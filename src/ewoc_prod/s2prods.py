@@ -7,7 +7,7 @@ from eotile.eotile_module import main
 from ewoc_dag.bucket.aws import AWSS2L2ABucket, AWSS2L2ACOGSBucket
 from ewoc_dag.eo_prd_id.s2_prd_id import S2PrdIdInfo
 
-from ewoc_work_plan.utils import eodag_prods, remove_duplicates
+from ewoc_prod.utils import eodag_prods, remove_duplicates
 
 _logger = logging.getLogger(__name__)
 

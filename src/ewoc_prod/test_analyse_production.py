@@ -1,6 +1,6 @@
 import unittest
 from pathlib import Path
-from analyse_production import main
+from ewoc_prod.analyse_production import main
 import sys
 
 out_filepath_geojson, status_filepath_geojson, out_filepath_csv = main(sys.argv)
