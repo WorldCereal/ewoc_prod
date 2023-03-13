@@ -1,8 +1,10 @@
+<<<<<<< HEAD
 =========
 ewoc_prod
 =========
 
 This is the documentation of **ewoc_prod**.
+
 
 .. note::
 
