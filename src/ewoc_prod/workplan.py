@@ -7,7 +7,6 @@ from datetime import datetime
 
 import geopandas as gpd
 from eotile import eotile_module
-from ewoc_db.fill.fill_db import main as main_ewoc_db
 from shapely.wkt import dumps
 
 from ewoc_prod import __version__
@@ -446,12 +445,6 @@ class WorkPlan:
     def to_json(self, out_filepath):
         with open(out_filepath, "w", encoding="utf-8") as json_file:
             json.dump(self._plan, json_file, indent=4)
-
-    def to_ewoc_db(self):
-        temporary_json_file = tempfile.NamedTemporaryFile(suffix=".json")
-        self.to_json(temporary_json_file.name)
-        main_ewoc_db(temporary_json_file.name)
-        temporary_json_file.close()
 
     def reproc(self, bucket, path):
         new_wp = WorkPlan.__new__(WorkPlan)
