@@ -174,8 +174,8 @@ def main(args):
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_w_status=analyse_rows(ewoc_status_reader, WINTER_KEY)
-    
-    ewoc_tiles_filepath=Path('./tile_selection.geojson')
+
+    ewoc_tiles_filepath=Path('./ewoc_tiles_v3.2.2.geojson')
 
     out_filepath_geojson=Path(f'./ewoc_prd_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
     out_filepath_geojson.unlink(missing_ok=True)
@@ -224,14 +224,18 @@ def main(args):
                 epsg_code=''
                 aez_id=''
                 if gp_v2_inclusion:
-                    if is_s3path(ewoc_cm_status.get(tile_id)):
-                        cropmap_path = ewoc_cm_status[tile_id]
-                    if is_s3path(ewoc_s1_status.get(tile_id)):
-                        summer1_path = ewoc_s1_status[tile_id]
-                    if is_s3path(ewoc_s2_status.get(tile_id)):
-                        summer2_path = ewoc_s2_status[tile_id]
-                    if is_s3path(ewoc_w_status.get(tile_id)):
-                        winter_path = ewoc_w_status[tile_id]
+                    try:
+                        if is_s3path(ewoc_cm_status.get(tile_id)):
+                            cropmap_path = ewoc_cm_status[tile_id]
+                        if is_s3path(ewoc_s1_status.get(tile_id)):
+                            summer1_path = ewoc_s1_status[tile_id]
+                        if is_s3path(ewoc_s2_status.get(tile_id)):
+                            summer2_path = ewoc_s2_status[tile_id]
+                        if is_s3path(ewoc_w_status.get(tile_id)):
+                            winter_path = ewoc_w_status[tile_id]
+                    except Exception:
+                        _logger.error(f'{tile_id}')
+
 
                     epsg_code = i['properties']['epsg_code']
                     i['properties'].pop('epsg_code')
@@ -248,16 +252,16 @@ def main(args):
                     # Remove unused element
                     i['properties'].pop('tile_id')
                     i['properties'].pop('optical_l8')
-                    i['properties'].pop('GP_v1_srtm_coverage_issue')
-                    i['properties'].pop('GP_v1_exclusion')
+                    #i['properties'].pop('GP_v1_srtm_coverage_issue')
+                    #i['properties'].pop('GP_v1_exclusion')
                     i['properties'].pop('GP_v2_include')
-                    i['properties'].pop('GP_v1_wp_S1_error')
-                    i['properties'].pop('GP_v1_wp_S2_error')
-                    i['properties'].pop('GP_v1_preproc_error')
-                    i['properties'].pop('GP_v1_cropland_error')
-                    i['properties'].pop('GP_v1_summer1_error')
-                    i['properties'].pop('GP_v1_summer2_error')
-                    i['properties'].pop('GP_v1_winter_error')
+                    #i['properties'].pop('GP_v1_wp_S1_error')
+                    #i['properties'].pop('GP_v1_wp_S2_error')
+                    #i['properties'].pop('GP_v1_preproc_error')
+                    #i['properties'].pop('GP_v1_cropland_error')
+                    #i['properties'].pop('GP_v1_summer1_error')
+                    #i['properties'].pop('GP_v1_summer2_error')
+                    #i['properties'].pop('GP_v1_winter_error')
                     i['properties'].pop('UKR')
 
                     new_data['features'].append(i)
