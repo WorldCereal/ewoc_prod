@@ -5,8 +5,8 @@ import json
 import logging
 import sys
 import tarfile
-import shutil
 
+from datetime import datetime
 from pathlib import Path
 
 __author__ = "Mickael Savinaud"
@@ -52,16 +52,11 @@ def parse_args(args):
         type=Path,
     )
     parser.add_argument(
-        dest="selection_filepath",
-        help="Filepath to selection tiles geojson",
-        default=None,
-        type=Path,
-    )
-    parser.add_argument(
         "-o","--out-dirpath",
         dest="out_dirpath",
         help="Cropland models version",
         type=Path,
+
     )
     parser.add_argument(
         "-v",
@@ -82,13 +77,6 @@ def parse_args(args):
     return parser.parse_args(args)
 
 def analyse_rows(ewoc_status_reader, type):
-    """From different list obtained with csv file status and tiles in error for different season,
-    filter the tile - production id list with tile in error
-
-    Args:
-        ewoc_status_reader (Dict) : Dictionnary containing tiles status.
-        type (str) : cropland, summer1, summer2 or winter season.
-        """
     ewoc_season=type.split(" ")[0]
 
     nb_requested_tiles=0
@@ -124,7 +112,7 @@ def analyse_rows(ewoc_status_reader, type):
             nb_done_status+=1
             ewoc_status[row['Tile name']]=row[type]
         else:
-            raise ValueError(f'Unknow value: {row[type]}')
+            raise ValueError('Unknow value: %s',row[type])
 
     _logger.info(f'------- {ewoc_season} -------')
     if ewoc_season == 'Summer2':
@@ -140,16 +128,10 @@ def analyse_rows(ewoc_status_reader, type):
     return ewoc_status
 
 def is_s3path(value:str)->bool:
-    """Check if the path begin by s3
-        Args:
-            value (str) : path to check
-    """
     return value.split('/')[0] == 's3:'
 
 def main(args):
-    """
-    Main script
-    """
+
     args = parse_args(args)
     setup_logging(args.loglevel)
 
@@ -158,7 +140,6 @@ def main(args):
     if ewoc_status_filepath.suffix == ".gz":
         with tarfile.open(ewoc_status_filepath) as ewoc_status_file:
             _logger.debug(ewoc_status_file.getnames())
-            first_folder=ewoc_status_file.getnames()[0]
             csv_filename = ewoc_status_file.getnames()[1]
             ewoc_status_file.extract(str(csv_filename), Path('.'))
 
@@ -167,47 +148,45 @@ def main(args):
     ewoc_season_year=ewoc_status_filepath.stem.split('_')[1]
     ewoc_date_status=ewoc_status_filepath.stem.split('_')[2]
     ewoc_time_status=ewoc_status_filepath.stem.split('_')[3]
-
+    
     CROPMAP_KEY='Cropmap path'
     SUMMER1_KEY='Summer1 path'
     SUMMER2_KEY='Summer2 path'
     WINTER_KEY='Winter path'
-
-
-    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
+    
+   
+    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_cm_status= analyse_rows(ewoc_status_reader, CROPMAP_KEY)
 
-    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_s1_status=analyse_rows(ewoc_status_reader, SUMMER1_KEY)
 
-    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_s2_status=analyse_rows(ewoc_status_reader, SUMMER2_KEY)
 
-    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_w_status=analyse_rows(ewoc_status_reader, WINTER_KEY)
     
-    ewoc_tiles_filepath=Path('./tile_selection.geojson')
+    ewoc_tiles_filepath=Path('./ewoc_tiles_v2.1.geojson')
 
-    ewoc_tiles_filepath=Path(args.selection_filepath)
-
-    out_filepath_geojson=Path(f'{args.out_dirpath}/ewoc_prd_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
+    out_filepath_geojson=Path(f'./ewoc_prd_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
     out_filepath_geojson.unlink(missing_ok=True)
-    status_filepath_geojson=Path(f'{args.out_dirpath}/ewoc_status_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
+    status_filepath_geojson=Path(f'./ewoc_status_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
     status_filepath_geojson.unlink(missing_ok=True)
     out_filepath_csv=out_filepath_geojson.with_suffix('.csv')
     out_filepath_csv.unlink(missing_ok=True)
 
     new_data={}
     status_data={}
-    with open(ewoc_tiles_filepath, 'r', encoding='utf8') as ewoc_tiles_file:
+    with open(ewoc_tiles_filepath, 'r') as ewoc_tiles_file:
         data = json.load(ewoc_tiles_file)
         new_data['type'] = data['type']
         new_data['name'] = "ewoc_prd_tiles"
@@ -219,7 +198,7 @@ def main(args):
         status_data['crs'] = data['crs']
         status_data['features']=[]
 
-        with open(out_filepath_csv, 'w', newline='', encoding='utf8') as csv_file:
+        with open(out_filepath_csv, 'w', newline='') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter='|',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(['s2_tile_name',
@@ -229,23 +208,22 @@ def main(args):
                                  'summer1_path',
                                  'summer2_path',
                                  'winter_path'])
-
+            
             # Iterating through the geojson features
             for i in data['features']:
+                if i['properties']['UKR']:
+                    # change the name of key and the type related to aez id    
+                    tile_id = i['properties']['tile_id']
+                    
+                    gp_v2_inclusion = i['properties']['GP_v2_include']
 
-                # change the name of key and the type related to aez id
-                tile_id = i['properties']['tile_id']
-
-                gp_v2_inclusion = i['properties']['GP_v2_include']
-
-                cropmap_path=None
-                summer1_path=None
-                summer2_path=None
-                winter_path=None
-                epsg_code=''
-                aez_id=''
-                if gp_v2_inclusion:
-                    try:
+                    cropmap_path=None
+                    summer1_path=None
+                    summer2_path=None
+                    winter_path=None
+                    epsg_code=''
+                    aez_id=''
+                    if gp_v2_inclusion:
                         if is_s3path(ewoc_cm_status.get(tile_id)):
                             cropmap_path = ewoc_cm_status[tile_id]
                         if is_s3path(ewoc_s1_status.get(tile_id)):
@@ -254,76 +232,70 @@ def main(args):
                             summer2_path = ewoc_s2_status[tile_id]
                         if is_s3path(ewoc_w_status.get(tile_id)):
                             winter_path = ewoc_w_status[tile_id]
-                    except Exception:
-                        _logger.error(f'{tile_id}')
 
+                        epsg_code = i['properties']['epsg_code']
+                        i['properties'].pop('epsg_code')
+                        aez_id = i['properties']['aez_id']
+                        i['properties'].pop('aez_id')
 
-                    epsg_code = i['properties']['epsg_code']
-                    i['properties'].pop('epsg_code')
-                    aez_id = i['properties']['aez_id']
-                    i['properties'].pop('aez_id')
+                        i['properties']['s2_tile_name']= tile_id
+                        i['properties']['epsg_code']= epsg_code
+                        i['properties']['aez_id']=aez_id
+                        i['properties']['cropmap_path']= cropmap_path
+                        i['properties']['summer1_path']= summer1_path
+                        i['properties']['summer2_path']= summer2_path
+                        i['properties']['winter_path']= winter_path
+                        # Remove unused element
+                        i['properties'].pop('tile_id')
+                        i['properties'].pop('optical_l8')
+                        i['properties'].pop('GP_v2_include')
+                        i['properties'].pop('UKR')
 
-                    i['properties']['s2_tile_name']= tile_id
-                    i['properties']['epsg_code']= epsg_code
-                    i['properties']['aez_id']=aez_id
-                    i['properties']['cropmap_path']= cropmap_path
-                    i['properties']['summer1_path']= summer1_path
-                    i['properties']['summer2_path']= summer2_path
-                    i['properties']['winter_path']= winter_path
-                    # Remove unused element
-                    i['properties'].pop('tile_id')
-                    i['properties'].pop('optical_l8')
-                    i['properties'].pop('GP_v2_include')
-                    i['properties'].pop('UKR')
+                        new_data['features'].append(i)
+                        
+                        if is_s3path(ewoc_cm_status[tile_id]):
+                            i['properties']['cropmap_status']='ok'
+                        else:
+                            i['properties']['cropmap_status']=ewoc_cm_status[tile_id]
+                        
+                        if is_s3path(ewoc_s1_status[tile_id]):
+                            i['properties']['summer1_status']='ok'
+                        else:
+                            i['properties']['summer1_status']=ewoc_s1_status[tile_id]
+                        
+                        if is_s3path(ewoc_s2_status[tile_id]):
+                            i['properties']['summer2_status']='ok'
+                        else:
+                            i['properties']['summer2_status']=ewoc_s2_status[tile_id]
+                        
+                        if is_s3path(ewoc_w_status[tile_id]):
+                            i['properties']['winter_status']='ok'
+                        else:
+                            i['properties']['winter_status']=ewoc_w_status[tile_id]
+                        
+                        i['properties'].pop('cropmap_path')
+                        i['properties'].pop('summer1_path')
+                        i['properties'].pop('summer2_path')
+                        i['properties'].pop('winter_path')
+                        status_data['features'].append(i)
 
-                    new_data['features'].append(i)
-
-                    if is_s3path(ewoc_cm_status[tile_id]):
-                        i['properties']['cropmap_status']='ok'
-                    else:
-                        i['properties']['cropmap_status']=ewoc_cm_status[tile_id]
-
-                    if is_s3path(ewoc_s1_status[tile_id]):
-                        i['properties']['summer1_status']='ok'
-                    else:
-                        i['properties']['summer1_status']=ewoc_s1_status[tile_id]
-
-                    if is_s3path(ewoc_s2_status[tile_id]):
-                        i['properties']['summer2_status']='ok'
-                    else:
-                        i['properties']['summer2_status']=ewoc_s2_status[tile_id]
-
-                    if is_s3path(ewoc_w_status[tile_id]):
-                        i['properties']['winter_status']='ok'
-                    else:
-                        i['properties']['winter_status']=ewoc_w_status[tile_id]
-
-                    i['properties'].pop('cropmap_path')
-                    i['properties'].pop('summer1_path')
-                    i['properties'].pop('summer2_path')
-                    i['properties'].pop('winter_path')
-                    status_data['features'].append(i)
-
-                csv_writer.writerow([tile_id,
-                                     epsg_code,
-                                     aez_id,
-                                     cropmap_path,
-                                     summer1_path,
-                                     summer2_path,
-                                     winter_path])
+                    csv_writer.writerow([tile_id,
+                                        epsg_code,
+                                        aez_id,
+                                        cropmap_path,
+                                        summer1_path,
+                                        summer2_path,
+                                        winter_path])
 
         _logger.info(f'Sucessfully write: {out_filepath_csv}')
 
-        with open(out_filepath_geojson, 'w', encoding='utf8') as geojson_file:
+        with open(out_filepath_geojson, 'w') as geojson_file:
             json.dump(new_data, geojson_file)
             _logger.info(f'Sucessfully write: {out_filepath_geojson}')
 
         with open(status_filepath_geojson, 'w') as status_geojson_file:
             json.dump(status_data, status_geojson_file)
             _logger.info(f'Sucessfully write: {status_filepath_geojson}')
-
-    #deleting csv file and its folder extracted from .tag.gz file
-    shutil.rmtree(Path('.',first_folder))
 
 def run():
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
