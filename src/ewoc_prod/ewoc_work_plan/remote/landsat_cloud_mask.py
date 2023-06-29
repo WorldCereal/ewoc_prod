@@ -55,7 +55,7 @@ class Landsat_Cloud_Mask:
             s3 = boto3.client("s3")
             file_keys = []
             year = self.date[:4]
-            prod_dir = "{}/{}/{}/".format(year, self.path, self.row)
+            prod_dir = f"{year}/{self.path}/{self.row}/"
             response = s3.list_objects_v2(
                 Bucket=self.bucket,
                 Prefix=self.prefix + prod_dir,
@@ -97,8 +97,8 @@ class Landsat_Cloud_Mask:
         """
         s3 = boto3.resource("s3")
         if self.mask_exists():
-            object = s3.Object(self.bucket, self.cloud_key)
-            resp = object.get(RequestPayer="requester")
+            s3_object = s3.Object(self.bucket, self.cloud_key)
+            resp = s3_object.get(RequestPayer="requester")
             with open(out_file, "wb") as f:
                 for chunk in iter(lambda: resp["Body"].read(4096), b""):
                     f.write(chunk)
@@ -115,7 +115,7 @@ class Landsat_Cloud_Mask:
         :rtype: bool
         """
         if self.provider == "aws":
-            self.download_aws(self, out_file)
+            self.download_aws(out_file)
             return True
         else:
             # Add more download methods for other providers or local folders

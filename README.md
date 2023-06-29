@@ -4,7 +4,7 @@ The toolbox is in charge to prepare WorkPlan inputs from AEZ information (associ
 
 ## Link AEZ information to S2 tiles
 
-First step is to link the AEZ information to each s2 tile on the MRGS grid. 
+First step is to link the AEZ information to each s2 tile on the MRGS grid.
 A tile corresponds to an AEZ (the one that covers the most).
 
 ```bash
@@ -20,7 +20,7 @@ optional arguments:
   --debug               Activate Debug Mode
 ```
 
-## Prepare inputs and launch WorkPlan 
+## Prepare inputs and launch WorkPlan
 
 Second step is to prepare WorkPlan inputs before launch.
 In order to generate a plan you'll need some information specific to each AEZ :
@@ -32,11 +32,12 @@ In order to generate a plan you'll need some information specific to each AEZ :
 - l8_enable_sr : if True, L8 SR will be used to complete optical time series
 - enable_sw : if True, spring wheat map will be produced
 
-### Steps:
+### Steps
+
 - Get the list of tiles that correspond to user needs
 - Group tiles by AEZ as one WorkPlan will be generated for each AEZ
-- Get and format tiles information needed to launch the WorkPlan 
-- Launch WP (need the last version of ewoc_workplan-x.y.z.tar.gz)
+- Get and format tiles information needed to launch the WorkPlan
+- Launch WP
 
 Several modes are proposed to extract tiles information :
 
@@ -51,13 +52,16 @@ Several modes are proposed to extract tiles information :
 Args --tile_id, --aez_id, --user_aoi, --user_tiles, --user_list_tiles are optional and must not be used at the same time. Season_type is mandatory for these 5 modes (if metaseason mode is deactivated ; see above).
 If none of them are declared, a date will be used and season_type becomes unused.
 
-### Metaseason mode:
+### Metaseason mode
+
 I addition, it is possible to activate a "metaseason" mode with argument --metaseason (will be used in production). It corresponds to a custom season that will cover all the seasons. This mode requires either --tile_id, --aez_id, --user_aoi, --user_tiles or --user_list_tiles but it does not work with --prod_start_date and continuous monitoring mode. The --season_type is not used when --metaseason is activated.
 
-### Orbit file:
+### Orbit file
+
 Do not forget to use the sentinel 1 orbit file if you want to force some tiles orbit direction. This can be activated using the --orbit option
 
-### Full help (ewoc_prod):
+### Full help (ewoc_prod)
+
 ```bash
 usage: ewoc_prod [-h] [-in S2TILES_AEZ_FILE] [-pd PROD_START_DATE]
                  [-t TILE_ID] [-aid AEZ_ID] [-aoi USER_AOI] [-ut USER_TILES]
@@ -120,7 +124,8 @@ optional arguments:
   -vv, --very-verbose   set loglevel to DEBUG
 ```
 
-### Examples:
+### Examples
+
     * ewoc_prod -v -in /path/to/s2tile_selection_aez.geojson -orbit /path/to/s1_orbit_tiles_ASC_DES_prod.csv (continuous mode)
     * ewoc_prod -v -in /path/to/s2tile_selection_aez.geojson -orbit /path/to/s1_orbit_tiles_ASC_DES_prod.csv -pd '2021-10-10'
     * ewoc_prod -v -in /path/to/s2tile_selection_aez.geojson -orbit /path/to/s1_orbit_tiles_ASC_DES_prod.csv -t '37MBS' -season winter
@@ -132,9 +137,10 @@ optional arguments:
 
 ## Use the supervisor
 
-A random error occured several times while using ewoc_prod. The supervisor allows to launch ewoc_prod several times until the tiles concerned are produced. It also creates an error_tiles.csv file. If some tiles have not been produced (for a real error ; not random), this file contains the tiles_id and the associated errors (empty file if all tiles are done)
+A random error occurred several times while using ewoc_prod. The supervisor allows to launch ewoc_prod several times until the tiles concerned are produced. It also creates an error_tiles.csv file. If some tiles have not been produced (for a real error ; not random), this file contains the tiles_id and the associated errors (empty file if all tiles are done)
 
-### Full help (supervisor):
+### Full help (supervisor)
+
 ```bash
 usage: supervisor.py [-h] [-in S2TILES_AEZ_FILE]
                      [-aez AEZ_LIST [AEZ_LIST ...]] [-orbit ORBIT_FILE]
@@ -161,7 +167,8 @@ optional arguments:
   -vv, --very-verbose   set loglevel to DEBUG
 ```
 
-### Steps for production (example for AEZ 34119 in the RUN6 for year 2021):
+### Steps for production (example for AEZ 34119 in the RUN6 for year 2021)
+
 - Preparation :
     * connect on creodias vm (mng)
     * create config.sh (containing AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY) in ~/dev
@@ -170,7 +177,7 @@ optional arguments:
     * check supervisor.py (s2prov, strategy, user etc.) and change if needed
     * upload the files : ~/dev/s2tile_selection_aez_prod_details_RUN6.geojson, ~/dev/s1_orbit_tiles_ASC_DES_prod.csv
     * create output directory : ~/dev/WorkPlan/prod_RUN6
-- Source files : 
+- Source files :
     * cd ~/dev
     * source config.sh
     * source .venv/bin/activate

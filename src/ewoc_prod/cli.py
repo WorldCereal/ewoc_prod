@@ -390,7 +390,7 @@ def main(args: List[str])->None:
                                         season_type=season_type,
                                         detector_set=detector_set,
                                         enable_sw=enable_sw,
-                                        eodag_config_filepath="../../../eodag_config.yml",
+                                        eodag_config_filepath=f"{os.getenv('HOME')}/.config/eodag/eodag.yml",
                                         cloudcover=cloudcover,
                                         min_nb_prods=min_nb_prods,
                                         orbit_dir=orbit_dir,
