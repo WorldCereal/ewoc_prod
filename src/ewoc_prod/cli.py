@@ -45,10 +45,11 @@ def parse_date(date_str: str)->date:
     try:
         # With python 3.7 it could be replaced by
         # return date.isoformat(date_str)
-        return datetime.strptime(date_str, "%Y-%m-%d").date()
-    except ValueError:
+        return date.fromisoformat(date_str)
+    except ValueError as exc:
         msg = f"Not a valid date: '{date_str}'"
-        raise argparse.ArgumentTypeError(msg)
+        raise argparse.ArgumentTypeError(msg) from exc
+
 
 def parse_args(args: List[str])->argparse.Namespace:
     """Parse command line parameters
@@ -224,7 +225,7 @@ def main(args: List[str])->None:
     if not args.output_path:
         raise ValueError("Argument output_path is missing")
     if args.metaseason:
-        logging.info("The metaseason mode is activated")
+        _logger.info("The metaseason mode is activated")
         if all(arg is None for arg in (args.tile_id, args.aez_id, args.user_aoi, args.user_tiles, args.user_list_tiles)):
             raise ValueError("The metaseason mode requires -t, -aid, -aoi, -ut or -ult inputs and is not compatible with -pd input")
 
@@ -236,19 +237,19 @@ def main(args: List[str])->None:
                                         args.user_tiles,
                                         args.user_list_tiles,
                                         args.prod_start_date)
-    logging.debug("Tiles = %s", s2tiles_list)
+    _logger.debug("Tiles = %s", s2tiles_list)
 
     if not s2tiles_list:
-        logging.info("No tile found")
+        _logger.info("No tile found")
         sys.exit(0)
 
     #Check number of AEZ
     aez_list = check_number_of_aez_for_selected_tiles(args.s2tiles_aez_file, s2tiles_list)
-    logging.debug("AEZ = %s", aez_list)
+    _logger.debug("AEZ = %s", aez_list)
 
     #Get tiles info for each AEZ
     for aez_id in aez_list:
-        logging.debug("Current AEZ = %s", aez_id)
+        _logger.debug("Current AEZ = %s", aez_id)
         aez_id = str(int(aez_id)) #Remove .0
 
         #Create output folder
@@ -266,7 +267,7 @@ def main(args: List[str])->None:
 
         #Get season_type info
         if args.metaseason:
-            logging.info("Argument season_type is not used in the metaseason mode")
+            _logger.info("Argument season_type is not used in the metaseason mode")
             season_type = None
         else:
             if all(arg is None for arg in (args.tile_id,
@@ -275,7 +276,7 @@ def main(args: List[str])->None:
                                             args.user_tiles,
                                             args.user_list_tiles)):
                 if args.season_type:
-                    logging.info("Argument season_type is not used, \
+                    _logger.info("Argument season_type is not used, \
                         value retrieved from the date provided")
                 season_type = get_aez_season_type_from_date(args.s2tiles_aez_file,
                                                             aez_id,
@@ -346,33 +347,33 @@ def main(args: List[str])->None:
                         for row in reader:
                             if row[0] == tile:
                                 orbit_dir = row[1]
-                                logging.info("Force orbit direction to %s for tile %s", orbit_dir, tile)
+                                _logger.info("Force orbit direction to %s for tile %s", orbit_dir, tile)
 
                 #Print tile info
-                logging.info("aez_id = %s", aez_id)
+                _logger.info("aez_id = %s", aez_id)
                 if all(arg is None for arg in (season_start, season_end)) and not metaseason:
-                    logging.info("No %s season", season_type)
+                    _logger.info("No %s season", season_type)
                 else:
-                    logging.info("s1_data_provider = %s", s1_data_provider)
-                    logging.info("s2_data_provider = %s", s2_data_provider)
-                    logging.info("strategy = %s", s2_strategy)
-                    logging.info("user = %s", user)
-                    logging.info("visibility = %s", visibility)
-                    logging.info("cloudcover = %s", cloudcover)
-                    logging.info("min_nb_prods = %s", min_nb_prods)
-                    logging.info("orbit_dir = %s", orbit_dir)
-                    logging.info("remove_l1c = %s", remove_l1c)
-                    logging.info("extract_only_s2 = %s", extract_only_s2)
-                    logging.info("extract_only_s1 = %s", extract_only_s1)
-                    logging.info("extract_only_l8 = %s", extract_only_l8)
-                    logging.info("season_type = %s", season_type)
-                    logging.info("meta_dict = %s", meta_dict)
-                    logging.info("wp_processing_start = %s", wp_processing_start)
-                    logging.info("wp_processing_end = %s", wp_processing_end)
-                    logging.info("l8_enable_sr = %s", l8_enable_sr)
-                    logging.info("enable_sw = %s", enable_sw)
-                    logging.info("detector_set = %s", detector_set)
-                    logging.info("tiles = %s", tile_lst)
+                    _logger.info("s1_data_provider = %s", s1_data_provider)
+                    _logger.info("s2_data_provider = %s", s2_data_provider)
+                    _logger.info("strategy = %s", s2_strategy)
+                    _logger.info("user = %s", user)
+                    _logger.info("visibility = %s", visibility)
+                    _logger.info("cloudcover = %s", cloudcover)
+                    _logger.info("min_nb_prods = %s", min_nb_prods)
+                    _logger.info("orbit_dir = %s", orbit_dir)
+                    _logger.info("remove_l1c = %s", remove_l1c)
+                    _logger.info("extract_only_s2 = %s", extract_only_s2)
+                    _logger.info("extract_only_s1 = %s", extract_only_s1)
+                    _logger.info("extract_only_l8 = %s", extract_only_l8)
+                    _logger.info("season_type = %s", season_type)
+                    _logger.info("meta_dict = %s", meta_dict)
+                    _logger.info("wp_processing_start = %s", wp_processing_start)
+                    _logger.info("wp_processing_end = %s", wp_processing_end)
+                    _logger.info("l8_enable_sr = %s", l8_enable_sr)
+                    _logger.info("enable_sw = %s", enable_sw)
+                    _logger.info("detector_set = %s", detector_set)
+                    _logger.info("tiles = %s", tile_lst)
 
                 #Create the associated workplan
                 try:
@@ -404,13 +405,13 @@ def main(args: List[str])->None:
                     filepath = pa.join(json_path, f'{aez_id}_{tile}_{user_short}_{date_now}.json')
                     wp_for_tile.to_json(filepath)
                 except AttributeError as att_err:
-                    logging.error(att_err)
+                    _logger.error(att_err)
                     error_tiles.append([tile, att_err])
                 except ValueError as val_err:
-                    logging.error(val_err)
+                    _logger.error(val_err)
                     error_tiles.append([tile, val_err])
                 except Exception as exception:
-                    logging.error(exception)
+                    _logger.error(exception)
                     error_tiles.append([tile, exception])
 
             return error_tiles
@@ -450,30 +451,30 @@ def main(args: List[str])->None:
             error_tiles = np.array(error_tiles)[0]
         else:
             error_tiles = np.squeeze(np.array(error_tiles))
-        logging.info('Number of tiles with errors = %s', str(len(error_tiles)))
+        _logger.info('Number of tiles with errors = %s', str(len(error_tiles)))
 
         error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
         with open(error_file, 'w', encoding='utf8') as err_file:
             w = csv.writer(err_file, delimiter=';')
             for row in error_tiles:
-                logging.info(row)
+                _logger.info(row)
                 w.writerow(row)
         err_file.close()
 
         if pa.isfile(error_file):
             with open(error_file, encoding="utf-8") as err_file:
                 nb_tiles_error = sum(1 for line in err_file if "Can't get attribute 'W3Segment'" not in line)
-                logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+                _logger.info("Number of tiles with error = %s", str(nb_tiles_error))
         else:
             nb_tiles_error = 0
-        logging.info("Number of tiles with error = %s", str(nb_tiles_error))
+        _logger.info("Number of tiles with error = %s", str(nb_tiles_error))
 
         if nb_tiles_processed == (len(s2tiles_list_subset)-nb_tiles_error):
-            logging.info('All the tiles are processed (%s tiles with error)', str(nb_tiles_error))
+            _logger.info('All the tiles are processed (%s tiles with error)', str(nb_tiles_error))
             wp_for_aez = pa.join(args.output_path, aez_id, f'{aez_id}_{user_short}_{date_now}.json')
 
             if nb_tiles_processed==0:
-                logging.info("No tile processed --> No merge")
+                _logger.info("No tile processed --> No merge")
             elif len(s2tiles_list_subset) == 1 or args.tile_id is not None: #only one tile
                 if not args.no_upload_s3:
                     ewoc_s3_upload(Path(list_files_aez[0]), args.s3_bucket, \
@@ -500,11 +501,11 @@ def main(args: List[str])->None:
                         f'{args.s3_key}/{Path(wp_for_aez).name}')
 
         else:
-            logging.info('Need to process %s missing tiles among %s tiles before merging to AEZ', \
+            _logger.info('Need to process %s missing tiles among %s tiles before merging to AEZ', \
                 (len(s2tiles_list_subset) - nb_tiles_processed), len(s2tiles_list_subset))
 
-    logging.info("END of the Process")
-    logging.info("--- Total time : %s seconds ---", (time.time() - start_time))
+    _logger.info("END of the Process")
+    _logger.info("--- Total time : %s seconds ---", (time.time() - start_time))
 
 def run()->None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`

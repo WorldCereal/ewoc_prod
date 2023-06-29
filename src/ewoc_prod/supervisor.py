@@ -14,8 +14,8 @@ import os
 import os.path as pa
 import subprocess
 import sys
-
 from typing import List
+
 from osgeo import ogr
 
 _logger = logging.getLogger(__name__)
@@ -245,7 +245,7 @@ def main(args: List[str])->None:
                         -s1prov astraea_eod -u c728b264-5c97-4f4c-81fe-1500d4c4dfbd  \
                             -o {args.output_path} -no_s3"
             logging.info(cmd_ewoc_prod)
-            
+
             logfile = pa.join(args.output_path, f'log_{aez_id}_part_{i}.txt')
             with open(logfile, 'wb') as outfile:
                 try:
