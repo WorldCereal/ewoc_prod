@@ -25,7 +25,7 @@ from multiprocessing.pool import ThreadPool as Pool
 from pathlib import Path
 from typing import List
 
-from ewoc_work_plan.workplan import WorkPlan
+from .ewoc_work_plan.workplan import WorkPlan
 
 from ewoc_prod.tiles_2_workplan import (extract_s2tiles_list,
     check_number_of_aez_for_selected_tiles, extract_s2tiles_list_per_aez,

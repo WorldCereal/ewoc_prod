@@ -8,7 +8,7 @@ import sys
 
 import docker
 
-from ewoc_work_plan.workplan import WorkPlan
+from .ewoc_work_plan.workplan import WorkPlan
 
 from ewoc_prod import __version__
 
