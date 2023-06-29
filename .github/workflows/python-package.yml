@@ -42,28 +42,10 @@ jobs:
         fileName: "ewoc_dag-${{ env.EWOC_DATASHIP_VERSION }}.tar.gz"
         token: ${{ secrets.CS_ORG_TOKEN }}
 
-    - name: Download EWoC DB
-      uses: robinraju/release-downloader@v1.5
-      with:
-        repository: "WorldCereal/ewoc_db"
-        tag: "${{ env.EWOC_DB_VERSION }}"
-        fileName: "ewoc_db-${{ env.EWOC_DB_VERSION }}.tar.gz"
-        token: ${{ secrets.CS_ORG_TOKEN }}
-
-    - name: Download Workplan
-      uses: robinraju/release-downloader@v1.5
-      with:
-        repository: "WorldCereal/ewoc_work_plan"
-        tag: "${{ env.EWOC_WORKPLAN_VERSION }}"
-        fileName: "ewoc_work_plan-${{ env.EWOC_WORKPLAN_VERSION }}.tar.gz"
-        token: ${{ secrets.CS_ORG_TOKEN }}
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install ewoc_dag-${{ env.EWOC_DATASHIP_VERSION }}.tar.gz
-        python -m pip install ewoc_db-${{ env.EWOC_DB_VERSION }}.tar.gz
-        python -m pip install ewoc_work_plan-${{ env.EWOC_WORKPLAN_VERSION }}.tar.gz
         pip install build
         pip install pylint
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi

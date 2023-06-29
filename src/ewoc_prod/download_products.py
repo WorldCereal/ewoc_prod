@@ -1,8 +1,9 @@
 import argparse
-import sys
 import csv
 import os
 from pathlib import Path
+import sys
+
 import boto3
 
 

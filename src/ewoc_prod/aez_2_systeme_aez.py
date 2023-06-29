@@ -7,17 +7,15 @@
 :created: 2021
 '''
 
-import sys
-import json
-
-import logging
 import argparse
-from osgeo import ogr
-from osgeo import osr
+import json
+import logging
+import sys
 
 from eotile import eotile_module
 from eodag.utils.logging import setup_logging
 from eodag.api.core import EODataAccessGateway
+from osgeo import ogr, osr
 
 
 def filter_tiles(s2_tiles, s2_exclusion_json):

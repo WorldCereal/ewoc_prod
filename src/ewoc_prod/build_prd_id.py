@@ -1,6 +1,6 @@
+import argparse
 import csv
 from pathlib import Path
-import argparse
 import sys
 
 

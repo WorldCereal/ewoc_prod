@@ -11,6 +11,7 @@ import logging
 from datetime import date
 from pathlib import Path
 from typing import List, Optional, Tuple
+
 import boto3
 from dateutil.relativedelta import relativedelta
 from ewoc_dag.bucket.ewoc import EWOCBucket

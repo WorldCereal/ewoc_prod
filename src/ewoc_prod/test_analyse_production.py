@@ -1,7 +1,8 @@
 import unittest
 from pathlib import Path
-from analyse_production import main
 import sys
+
+from .analyse_production import main
 
 out_filepath_geojson, status_filepath_geojson, out_filepath_csv = main(sys.argv)
 class TestCase(unittest.TestCase):

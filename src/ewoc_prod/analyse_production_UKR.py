@@ -1,13 +1,10 @@
 import argparse
 import csv
-from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import tarfile
-
-from datetime import datetime
-from pathlib import Path
 
 __author__ = "Mickael Savinaud"
 __copyright__ = "CS Group France"
@@ -43,7 +40,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version=f"TODO",
+        version="TODO",
     )
     parser.add_argument(
         dest="status_filepath",
@@ -112,11 +109,11 @@ def analyse_rows(ewoc_status_reader, type):
             nb_done_status+=1
             ewoc_status[row['Tile name']]=row[type]
         else:
-            raise ValueError('Unknow value: %s',row[type])
+            raise ValueError('Unknown value: %s',row[type])
 
     _logger.info(f'------- {ewoc_season} -------')
     if ewoc_season == 'Summer2':
-        nb_requested_tiles = nb_requested_tiles - nb_na_status    
+        nb_requested_tiles = nb_requested_tiles - nb_na_status
     _logger.info(f'Nb Tiles requested {nb_requested_tiles}')
     _logger.info(f'Nb Tiles not ingested {nb_unknown_status}')
     _logger.info(f'Nb Tiles scheduled {nb_scheduled_status}')
@@ -148,33 +145,32 @@ def main(args):
     ewoc_season_year=ewoc_status_filepath.stem.split('_')[1]
     ewoc_date_status=ewoc_status_filepath.stem.split('_')[2]
     ewoc_time_status=ewoc_status_filepath.stem.split('_')[3]
-    
+
     CROPMAP_KEY='Cropmap path'
     SUMMER1_KEY='Summer1 path'
     SUMMER2_KEY='Summer2 path'
     WINTER_KEY='Winter path'
-    
-   
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_cm_status= analyse_rows(ewoc_status_reader, CROPMAP_KEY)
 
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_s1_status=analyse_rows(ewoc_status_reader, SUMMER1_KEY)
 
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_s2_status=analyse_rows(ewoc_status_reader, SUMMER2_KEY)
 
-    with open(ewoc_status_filepath, 'r') as ewoc_status_file:
+    with open(ewoc_status_filepath, 'r', encoding='utf8') as ewoc_status_file:
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_w_status=analyse_rows(ewoc_status_reader, WINTER_KEY)
-    
+
     ewoc_tiles_filepath=Path('./ewoc_tiles_v2.1.geojson')
 
     out_filepath_geojson=Path(f'./ewoc_prd_tiles_{ewoc_season_year}_{ewoc_date_status}T{ewoc_time_status}.geojson')
@@ -186,7 +182,7 @@ def main(args):
 
     new_data={}
     status_data={}
-    with open(ewoc_tiles_filepath, 'r') as ewoc_tiles_file:
+    with open(ewoc_tiles_filepath, 'r', encoding='utf8') as ewoc_tiles_file:
         data = json.load(ewoc_tiles_file)
         new_data['type'] = data['type']
         new_data['name'] = "ewoc_prd_tiles"
@@ -198,7 +194,7 @@ def main(args):
         status_data['crs'] = data['crs']
         status_data['features']=[]
 
-        with open(out_filepath_csv, 'w', newline='') as csv_file:
+        with open(out_filepath_csv, 'w', newline='', encoding='utf8') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter='|',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(['s2_tile_name',
@@ -208,13 +204,13 @@ def main(args):
                                  'summer1_path',
                                  'summer2_path',
                                  'winter_path'])
-            
+
             # Iterating through the geojson features
             for i in data['features']:
                 if i['properties']['UKR']:
-                    # change the name of key and the type related to aez id    
+                    # change the name of key and the type related to aez id
                     tile_id = i['properties']['tile_id']
-                    
+
                     gp_v2_inclusion = i['properties']['GP_v2_include']
 
                     cropmap_path=None
@@ -252,27 +248,27 @@ def main(args):
                         i['properties'].pop('UKR')
 
                         new_data['features'].append(i)
-                        
+
                         if is_s3path(ewoc_cm_status[tile_id]):
                             i['properties']['cropmap_status']='ok'
                         else:
                             i['properties']['cropmap_status']=ewoc_cm_status[tile_id]
-                        
+
                         if is_s3path(ewoc_s1_status[tile_id]):
                             i['properties']['summer1_status']='ok'
                         else:
                             i['properties']['summer1_status']=ewoc_s1_status[tile_id]
-                        
+
                         if is_s3path(ewoc_s2_status[tile_id]):
                             i['properties']['summer2_status']='ok'
                         else:
                             i['properties']['summer2_status']=ewoc_s2_status[tile_id]
-                        
+
                         if is_s3path(ewoc_w_status[tile_id]):
                             i['properties']['winter_status']='ok'
                         else:
                             i['properties']['winter_status']=ewoc_w_status[tile_id]
-                        
+
                         i['properties'].pop('cropmap_path')
                         i['properties'].pop('summer1_path')
                         i['properties'].pop('summer2_path')
@@ -287,15 +283,15 @@ def main(args):
                                         summer2_path,
                                         winter_path])
 
-        _logger.info(f'Sucessfully write: {out_filepath_csv}')
+        _logger.info(f'Successfully write: {out_filepath_csv}')
 
-        with open(out_filepath_geojson, 'w') as geojson_file:
+        with open(out_filepath_geojson, 'w', encoding='utf8') as geojson_file:
             json.dump(new_data, geojson_file)
-            _logger.info(f'Sucessfully write: {out_filepath_geojson}')
+            _logger.info(f'Successfully write: {out_filepath_geojson}')
 
-        with open(status_filepath_geojson, 'w') as status_geojson_file:
+        with open(status_filepath_geojson, 'w', encoding='utf8') as status_geojson_file:
             json.dump(status_data, status_geojson_file)
-            _logger.info(f'Sucessfully write: {status_filepath_geojson}')
+            _logger.info(f'Successfully write: {status_filepath_geojson}')
 
 def run():
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
