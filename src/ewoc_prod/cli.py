@@ -8,29 +8,28 @@
 '''
 
 import argparse
+from collections import defaultdict
 import csv
+from datetime import date, datetime
 import glob
+from itertools import repeat
 import json
 import logging
-import numpy as np
+from multiprocessing.pool import ThreadPool as Pool
 import os
 import os.path as pa
+from pathlib import Path
 import sys
 import time
-
-from collections import defaultdict
-from datetime import date, datetime
-from itertools import repeat
-from multiprocessing.pool import ThreadPool as Pool
-from pathlib import Path
 from typing import List
 
-from .ewoc_work_plan.workplan import WorkPlan
+import numpy as np
 
 from ewoc_prod.tiles_2_workplan import (extract_s2tiles_list,
     check_number_of_aez_for_selected_tiles, extract_s2tiles_list_per_aez,
     get_aez_season_type_from_date, get_tiles_infos_from_tiles,
         get_tiles_metaseason_infos_from_tiles, ewoc_s3_upload)
+from .ewoc_work_plan.workplan import WorkPlan
 
 _logger = logging.getLogger(__name__)
 
@@ -175,7 +174,7 @@ def parse_args(args: List[str])->argparse.Namespace:
                         action='store_true')
     group2.add_argument('-only_l8', "--extract_only_l8",
                         help="Extract only L8 products",
-                        action='store_true')         
+                        action='store_true')
     return parser.parse_args(args)
 
 def setup_logging(loglevel: int)->None:
@@ -341,7 +340,7 @@ def main(args: List[str])->None:
 		        #Get s1 orbit direction
                 orbit_dir = None
                 if orbit_file:
-                    with open(orbit_file, "r") as csv_file:
+                    with open(orbit_file, "r", encoding='utf8') as csv_file:
                         reader = csv.reader(csv_file, delimiter=';')
                         headers = next(reader)
                         for row in reader:
@@ -454,7 +453,7 @@ def main(args: List[str])->None:
         logging.info('Number of tiles with errors = %s', str(len(error_tiles)))
 
         error_file = pa.join(args.output_path, f'error_tiles_{aez_id}.csv')
-        with open(error_file, 'w') as err_file:
+        with open(error_file, 'w', encoding='utf8') as err_file:
             w = csv.writer(err_file, delimiter=';')
             for row in error_tiles:
                 logging.info(row)
