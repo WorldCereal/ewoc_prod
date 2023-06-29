@@ -1,12 +1,12 @@
 import argparse
 import csv
 import logging
+from pathlib import Path
 import sys
 import tarfile
 import shutil
 
-from pathlib import Path
-from analyse_production import is_s3path
+from .analyse_production import is_s3path
 
 __author__ = "Romain Buguet de Chargere"
 __copyright__ = "CS Group France"
@@ -99,7 +99,7 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
                 logging.debug("OPTICAL product %s is in error", row['product'])
                 nb_error_opt+=1
                 ard_list.append([tile,'OPTICAL', row['product']])
-            elif row['status']=='scheluded':
+            elif row['status']=='scheduled':
                 logging.debug("OPTICAL product %s of tile %s is scheduled", row['product'], tile)
             elif not is_s3path(row['status']):
                 logging.debug("OPTICAL product %s status of tile %s is unknown", row['product'], tile)
@@ -115,7 +115,7 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
                 logging.info("TIR product %s of tile %s is in error", row['product'], tile)
                 nb_error_tir+=1
                 ard_list.append([tile,'TIR', row['product']])
-            elif row['status']=='scheluded':
+            elif row['status']=='scheduled':
                 logging.debug("TIR product %s of tile %s is scheduled", row['product'], tile)
             elif not is_s3path(row['status']):
                 logging.debug("TIR product %s status of tile %s is unknown", row['product'], tile)
@@ -131,7 +131,7 @@ def analyse_ard_rows(csv_dict_reader, tile, file_name):
                 logging.info("SAR product %s of tile %s is in error", row['product'], tile)
                 nb_error_sar+=1
                 ard_list.append([tile,'SAR', row['product']])
-            elif row['status']=='scheluded':
+            elif row['status']=='scheduled':
                 logging.debug("SAR product %s of tile %s is scheduled", row['product'], tile)
             elif not is_s3path(row['status']):
                 logging.debug("SAR product %s status of tile %s is unknown", row['product'], tile)
@@ -182,11 +182,11 @@ def main(args):
         csv_writer.writerow(['tile_name','type','ard_product'])
         csv_writer.writerows(ard_list)
 
-    logging.info("File %s/ard_error.csv succesfully created ", args.out_dirpath)
+    logging.info("File %s/ard_error.csv successfully created ", args.out_dirpath)
 
     #deleting csv file extracted from .tag.gz file
     shutil.rmtree(Path(args.out_dirpath,first_folder))
-    logging.info("File %s/%s succesfully deleted ", args.out_dirpath, first_folder)
+    logging.info("File %s/%s successfully deleted ", args.out_dirpath, first_folder)
 
 
 def run():

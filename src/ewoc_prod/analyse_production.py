@@ -1,13 +1,12 @@
 import argparse
 import csv
-from datetime import datetime
 import json
 import logging
-import sys
-import tarfile
-import shutil
-
 from pathlib import Path
+import sys
+import shutil
+import tarfile
+
 
 __author__ = "Mickael Savinaud"
 __copyright__ = "CS Group France"
@@ -43,7 +42,7 @@ def parse_args(args):
     parser.add_argument(
         "--version",
         action="version",
-        version=f"TODO",
+        version="TODO",
     )
     parser.add_argument(
         dest="status_filepath",
@@ -124,11 +123,11 @@ def analyse_rows(ewoc_status_reader, type):
             nb_done_status+=1
             ewoc_status[row['Tile name']]=row[type]
         else:
-            raise ValueError(f'Unknow value: {row[type]}')
+            raise ValueError(f'Unknown value: {row[type]}')
 
     _logger.info(f'------- {ewoc_season} -------')
     if ewoc_season == 'Summer2':
-        nb_requested_tiles = nb_requested_tiles - nb_na_status    
+        nb_requested_tiles = nb_requested_tiles - nb_na_status
     _logger.info(f'Nb Tiles requested {nb_requested_tiles}')
     _logger.info(f'Nb Tiles not ingested {nb_unknown_status}')
     _logger.info(f'Nb Tiles scheduled {nb_scheduled_status}')
@@ -193,7 +192,7 @@ def main(args):
         ewoc_status_reader = csv.DictReader(ewoc_status_file, delimiter=',')
 
         ewoc_w_status=analyse_rows(ewoc_status_reader, WINTER_KEY)
-    
+
     ewoc_tiles_filepath=Path('./tile_selection.geojson')
 
     ewoc_tiles_filepath=Path(args.selection_filepath)
@@ -312,15 +311,15 @@ def main(args):
                                      summer2_path,
                                      winter_path])
 
-        _logger.info(f'Sucessfully write: {out_filepath_csv}')
+        _logger.info(f'Successfully write: {out_filepath_csv}')
 
         with open(out_filepath_geojson, 'w', encoding='utf8') as geojson_file:
             json.dump(new_data, geojson_file)
-            _logger.info(f'Sucessfully write: {out_filepath_geojson}')
+            _logger.info(f'Successfully write: {out_filepath_geojson}')
 
-        with open(status_filepath_geojson, 'w') as status_geojson_file:
+        with open(status_filepath_geojson, 'w', encoding='utf8') as status_geojson_file:
             json.dump(status_data, status_geojson_file)
-            _logger.info(f'Sucessfully write: {status_filepath_geojson}')
+            _logger.info(f'Successfully write: {status_filepath_geojson}')
 
     #deleting csv file and its folder extracted from .tag.gz file
     shutil.rmtree(Path('.',first_folder))
